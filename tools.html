@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools DB</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #000000; display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; height: 100vh;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px; line-height: 1.4; overflow: hidden; color: #00ff41;
+        }
+
+        .terminal {
+            background: #050505; border-radius: 8px; padding: 12px; width: 850px; max-width: 95vw;
+            height: 90vh; box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 20px rgba(0, 255, 65, 0.05);
+            position: relative; display: flex; flex-direction: column;
+            border: 1px solid rgba(0, 255, 65, 0.2);
+            clip-path: inset(0 round 8px);
+        }
+
+        .layer-fg {
+            position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%;
+            overflow-y: auto; overflow-x: hidden; padding-right: 4px; scroll-behavior: smooth;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 255, 65, 0.3) transparent;
+        }
+        .layer-fg::-webkit-scrollbar { width: 6px; }
+        .layer-fg::-webkit-scrollbar-track { background: transparent; }
+        .layer-fg::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.3); border-radius: 3px; }
+
+        .layer-bg {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;
+            pointer-events: none; font-family: 'DejaVu Sans Mono', monospace; line-height: 1.1;
+            white-space: pre; overflow: hidden;
+        }
+        .bg-element { position: absolute; }
+
+        .bg-skull { color: #00cc44; top: 10%; left: 50%; transform: translateX(-50%); opacity: 0.11; font-size: 15px; font-weight: bold; text-shadow: 0 0 10px rgba(0,255,65,0.2); }
+        .bg-cathedral { color: #00ff41; bottom: 8%; right: 2%; opacity: 0.13; font-size: 11px; }
+        .bg-spider { color: #00ff41; position: absolute; opacity: 0.24; font-size: 11px; text-shadow: 0 0 5px rgba(0,255,65,0.5); }
+        .spider-1 { left: 6%; top: 2%; }
+        .spider-2 { right: 18%; top: 5%; }
+        .bg-graveyard {
+            color: #003b00; bottom: 1%; left: 0; width: 100%; display: flex;
+            justify-content: space-around; opacity: 0.4; font-size: 12px; font-weight: bold;
+        }
+
+        .terminal-header {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.15); position: sticky; top: 0;
+            background: rgba(5, 5, 5, 0.95); z-index: 10;
+            font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
+            -webkit-backdrop-filter: blur(3px);
+            backdrop-filter: blur(3px);
+        }
+
+        .gothic-dot { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; font-size: 14px; text-shadow: 0 0 5px currentColor; }
+        .gothic-dot.red { color: #003b00; }
+        .gothic-dot.yellow { color: #00cc44; }
+        .gothic-dot.green { color: #00ff41; }
+
+        .terminal-title { color: #00cc44; font-size: 12px; margin-left: 6px; letter-spacing: 0.5px; text-shadow: 0 0 3px rgba(0,255,65,0.3); }
+
+        .bg-eye {
+            color: #004800; top: 42%; right: 1%; opacity: 0.22; font-size: 56px;
+            font-family: 'Segoe UI Historic', 'Apple Symbols', serif;
+            transform: translateY(-50%); text-shadow: 0 0 28px rgba(0,255,65,0.12);
+        }
+
+        .bg-rain {
+            color: #003300; font-size: 10px; opacity: 0.28;
+            font-family: 'DejaVu Sans Mono', 'Courier New', monospace;
+            writing-mode: vertical-rl; text-orientation: upright;
+            top: 0; width: 12px; height: 100%; overflow: hidden; white-space: nowrap; letter-spacing: 1px;
+        }
+        .rain-1 { left: 4px; }
+        .rain-2 { right: 4px; }
+
+        .terminal::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 4;
+            background:
+                repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.055) 2px, rgba(0,0,0,0.055) 4px),
+                radial-gradient(ellipse at 50% 50%, transparent 48%, rgba(0,0,0,0.42) 100%);
+        }
+
+        .tools-content { padding: 10px; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .btn-return {
+            display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #ef2929;
+            border: 1px solid #ef2929; padding: 8px 16px; margin-bottom: 20px; border-radius: 6px;
+            font-weight: bold; background: rgba(239, 41, 41, 0.05); text-decoration: none;
+            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; font-size: 12px;
+        }
+        .btn-return:hover { background: rgba(239, 41, 41, 0.15); box-shadow: 0 0 15px rgba(239, 41, 41, 0.4); text-shadow: 0 0 5px #ef2929; }
+
+        .tools-ascii-title {
+            color: #00ff41; text-shadow: 0 0 10px rgba(0,255,65,0.6); font-family: 'DejaVu Sans Mono', monospace;
+            font-size: 10px; line-height: 1.2; text-align: center; margin-bottom: 25px; white-space: pre;
+        }
+
+        .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding-bottom: 30px; }
+        .tool-card {
+            border: 1px solid rgba(0, 255, 65, 0.2); background: rgba(0, 0, 0, 0.6); padding: 16px;
+            border-radius: 8px; transition: all 0.3s ease;
+            -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+            display: flex; flex-direction: column;
+        }
+        .tool-card:hover {
+            transform: translateY(-4px); border-color: rgba(0, 255, 65, 0.7);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 65, 0.15);
+        }
+        .tool-title { font-size: 16px; font-weight: bold; color: #00ff41; text-shadow: 0 0 5px rgba(0,255,65,0.4); margin-bottom: 4px; }
+        .tool-url { font-size: 12px; color: #00cc44; margin-bottom: 10px; text-decoration: none; display: inline-block; word-break: break-all; transition: 0.2s; }
+        .tool-url:hover { color: #00ff41; text-shadow: 0 0 5px #00ff41; }
+        .tool-desc { font-size: 13px; color: #eeeeec; opacity: 0.85; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div class="terminal">
+        <div class="layer-bg">
+            <div class="bg-element bg-skull">
+               _,.-------.,_
+            ,;~'             '~;,
+          ,;                      ;,
+         ;                        ;
+        ,'                        ',
+       ,;                          ;,
+       ; ;      .          .      ; ;
+       | ;   ______      ______   ; |
+       |  `/~"      ~" . "~      "~\'  |
+       |  ~  ,-~~~^~, | ,~^~~~-,  ~  |
+        |   |        }:{        |   |
+        |   l       / | \       !   |
+        .~  (__,.--" .^. "--.,__)  ~.
+        |     ---;' / | \ `;---     |
+         \__.       \/^\/       .__/
+          V| \                 / |V
+           | |T~\___!___!___/~T| |
+           | |`IIII_I_I_I_IIII'| |
+           |  \,III I I I III,/  |
+            \   `~~~~~~~~~~'    /
+              \   .       .   /
+                \.    ^    ./
+                  ^~~~^~~~^
+            </div>
+
+            <div class="bg-element bg-cathedral">
+                 |
+                / \
+               /   \
+              /_____\
+             |       |
+             |  ___  |
+             | |_|_| |
+             | |_|_| |
+            /|       |\
+           / |  ___  | \
+          /  | |_|_| |  \
+         /___|_______|___\
+        |                 |
+        |   _   ___   _   |
+        |  | | |   | | |  |
+        |  | | |   | | |  |
+        |  |_| |___| |_|  |
+       /|                 |\
+      / |                 | \
+     /__|_________________|__\
+            </div>
+
+            <div class="bg-element bg-spider spider-1">
+      ___
+     /╲ |/╲
+    / ꍘ|ꍘ \
+   |   --   |
+    \  __  /
+     \/  \/
+    /|    |\
+   / |    | \
+            </div>
+
+            <div class="bg-element bg-spider spider-2">
+       |
+    /╲ | /╲
+   / ꍘ|ꍘ \
+  |  \__/  |
+   \      /
+    \/\/\/
+            </div>
+
+            <div class="bg-element bg-eye">𓂀</div>
+            <div class="bg-element bg-rain rain-1">ﾊﾐﾋｰｳｼﾅﾓﾆｺﾑﾘｱﾒｶｷﾑﾕﾗｾﾈｽﾀﾇﾍｦ01010110010110100101ﾊﾐﾋｰｳｼﾅﾓﾆｺ</div>
+            <div class="bg-element bg-rain rain-2">011001010ﾓﾆｺﾑﾘｱﾒｶｷﾑﾕﾗｾﾈｽﾀﾇﾍﾊﾐﾋｰｳｼﾅ1101010010110ﾑﾘｱﾒｶ</div>
+
+            <div class="bg-element bg-graveyard">
+                <span>
+      ✞
+  ┌──────┐
+  │      │
+  │ RIP  │
+  │      │
+  └──────┘
+                </span>
+                <span>
+    ✟─✟─✟
+  ┌──────┐
+  │      │
+  │R·I·P │
+  │      │
+  └──────┘
+                </span>
+                <span>
+      ✞
+  ┌──────┐
+  │ ░░░░ │
+  │ RIP  │
+  │ ░░░░ │
+  └──────┘
+                </span>
+                <span>
+    ☩  ☩
+  ┌──────┐
+  │      │
+  │ R.I.P│
+  │      │
+  └──────┘
+                </span>
+            </div>
+        </div>
+
+        <div class="layer-fg">
+            <div class="terminal-header">
+                <span class="gothic-dot red">✟</span>
+                <span class="gothic-dot yellow">✟</span>
+                <span class="gothic-dot green">✟</span>
+                <span class="terminal-title">neo@matrix: ~/tools</span>
+                <span class="terminal-title" id="clock" style="margin-left: auto;"></span>
+            </div>
+
+            <div class="tools-content">
+                <a class="btn-return" href="index.html">&#x2190; Return to Nexus</a>
+
+                <div class="tools-ascii-title">
+ ▄▄▄█████▓▒█████   ▒█████   ██▓      ██████
+ ▓  ██▒ ▓▒██▒  ██▒▒██▒  ██▒▓██▒    ▒██    ▒
+ ▒ ▓██░ ▒░██░  ██▒▒██░  ██▒▒██░    ░ ▓██▄
+ ░ ▓██▓ ░▒██   ██░▒██   ██░▒██░      ▒   ██▒
+   ▒██▒ ░░ ████▓▒░░ ████▓▒░░██████▒▒██████▒▒
+   ▒ ░░  ░ ▒░▒░▒░ ░ ▒░▒░▒░ ░ ▒░▓  ░▒ ▒▓▒ ▒ ░
+     ░     ░ ▒ ▒░   ░ ▒ ▒░ ░ ░ ▒  ░░ ░▒  ░ ░
+   ░     ░ ░ ░ ▒  ░ ░ ░ ▒    ░ ░   ░  ░  ░
+             ░ ░      ░ ░      ░  ░      ░
+                </div>
+
+                <div class="tools-grid" id="tools-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        const toolsData = [
+            { name: "MapIt", url: "mapitapp.cc", desc: "A tool for designing custom map posters with various color styles and captions." },
+            { name: "SVG Pattern Builder", url: "svg.designcode.io", desc: "An interactive generator for creating and animating SVG patterns." },
+            { name: "PaperAnimator", url: "paperanimator.com", desc: "A web-based application for creating paper-style graphics and text animations." },
+            { name: "Zperiod", url: "zperiod.app", desc: "An interactive periodic table that includes chemical equation balancing and visual element data." },
+            { name: "Napkin AI", url: "napkin.ai", desc: "A tool that uses AI to transform text into visual diagrams and graphics." },
+            { name: "RayonMaps", url: "maps.rayon.design", desc: "A utility to export OpenStreetMap data as CAD geometry for architectural and design use." },
+            { name: "StartMyCar", url: "startmycar.com", desc: "A database of owner's manuals and car repair guides for various vehicle models." },
+            { name: "Slow Roads", url: "slowroads.io", desc: "A procedurally generated, endless driving simulator designed for relaxation." },
+            { name: "Codédex", url: "codedex.io", desc: "A gamified platform for learning programming through a pixel-art RPG environment." },
+            { name: "Screen Studio", url: "screen.studio", desc: "A screen recording tool that automatically adds zooms and editing effects to captures." },
+            { name: "Waitlist", url: "getwaitlist.com", desc: "A platform for building customizable waitlists and referral programs for product launches." },
+            { name: "Typeframes", url: "typeframes.com", desc: "A video creation tool designed to turn text and screenshots into marketing videos." },
+            { name: "Magic Pattern", url: "magicpattern.design", desc: "A collection of design tools to generate custom SVG/CSS patterns and backgrounds." },
+            { name: "Uncut", url: "uncut.wtf", desc: "A curated directory of free, high-quality fonts for designers." },
+            { name: "Relume", url: "relume.io", desc: "A component library that provides pre-built structures for Webflow and Figma." }
+        ];
+
+        const grid = document.getElementById('tools-grid');
+        toolsData.forEach(tool => {
+            const card = document.createElement('div');
+            card.className = 'tool-card';
+            card.innerHTML = `
+                <div class="tool-title">${tool.name}</div>
+                <a href="https://${tool.url}" target="_blank" class="tool-url">https://${tool.url}</a>
+                <div class="tool-desc">${tool.desc}</div>
+            `;
+            grid.appendChild(card);
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

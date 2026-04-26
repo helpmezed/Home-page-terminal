@@ -193,38 +193,6 @@
         .btn-save:hover { background: rgba(0, 255, 65, 0.15); box-shadow: 0 0 15px rgba(0, 255, 65, 0.4); }
         .btn-delete:hover { background: rgba(239, 41, 41, 0.15); box-shadow: 0 0 10px rgba(239, 41, 41, 0.3); color: #ff4444; border-color: #ff4444; }
 
-        #tools-view { display: none; padding: 10px; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .tools-ascii-title {
-            color: #00ff41; text-shadow: 0 0 10px rgba(0,255,65,0.6); font-family: 'DejaVu Sans Mono', monospace;
-            font-size: 10px; line-height: 1.2; text-align: center; margin-bottom: 25px; white-space: pre;
-        }
-
-        .btn-return {
-            display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #ef2929; border: 1px solid #ef2929;
-            padding: 8px 16px; margin-bottom: 20px; border-radius: 6px; font-weight: bold; background: rgba(239, 41, 41, 0.05);
-            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; font-size: 12px;
-        }
-        .btn-return:hover { background: rgba(239, 41, 41, 0.15); box-shadow: 0 0 15px rgba(239, 41, 41, 0.4); text-shadow: 0 0 5px #ef2929; }
-
-        .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding-bottom: 30px; }
-        .tool-card {
-            border: 1px solid rgba(0, 255, 65, 0.2); background: rgba(0, 0, 0, 0.6); padding: 16px; border-radius: 8px;
-            transition: all 0.3s ease;
-            -webkit-backdrop-filter: blur(4px);
-            backdrop-filter: blur(4px);
-            display: flex; flex-direction: column;
-        }
-        .tool-card:hover {
-            transform: translateY(-4px); border-color: rgba(0, 255, 65, 0.7);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 65, 0.15);
-        }
-        .tool-title { font-size: 16px; font-weight: bold; color: #00ff41; text-shadow: 0 0 5px rgba(0, 255, 65, 0.4); margin-bottom: 4px; }
-        .tool-url { font-size: 12px; color: #00cc44; margin-bottom: 10px; text-decoration: none; display: inline-block; word-break: break-all; transition: 0.2s; }
-        .tool-url:hover { color: #00ff41; text-shadow: 0 0 5px #00ff41; }
-        .tool-desc { font-size: 13px; color: #eeeeec; opacity: 0.85; line-height: 1.5; }
-
         .terminal::after {
             content: '';
             position: absolute;
@@ -426,24 +394,6 @@
                 </div>
             </div>
 
-            <div id="tools-view">
-                <div class="btn-return" onclick="hideTools()">&#x2190; Return to Nexus</div>
-
-                <div class="tools-ascii-title">
- ▄▄▄█████▓▒█████   ▒█████   ██▓      ██████
- ▓  ██▒ ▓▒██▒  ██▒▒██▒  ██▒▓██▒    ▒██    ▒
- ▒ ▓██░ ▒░██░  ██▒▒██░  ██▒▒██░    ░ ▓██▄
- ░ ▓██▓ ░▒██   ██░▒██   ██░▒██░      ▒   ██▒
-   ▒██▒ ░░ ████▓▒░░ ████▓▒░░██████▒▒██████▒▒
-   ▒ ░░  ░ ▒░▒░▒░ ░ ▒░▒░▒░ ░ ▒░▓  ░▒ ▒▓▒ ▒ ░
-     ░     ░ ▒ ▒░   ░ ▒ ▒░ ░ ░ ▒  ░░ ░▒  ░ ░
-   ░     ░ ░ ░ ▒  ░ ░ ░ ▒    ░ ░   ░  ░  ░
-             ░ ░      ░ ░      ░  ░      ░
-                </div>
-
-                <div class="tools-grid" id="tools-grid"></div>
-            </div>
-
         </div>
 
         <div class="modal-overlay" id="addModal">
@@ -480,24 +430,6 @@
                 { name: "YouTube", url: "https://youtube.com", icon: "" }
             ]
         };
-
-        const toolsData = [
-            { name: "MapIt", url: "mapitapp.cc", desc: "A tool for designing custom map posters with various color styles and captions." },
-            { name: "SVG Pattern Builder", url: "svg.designcode.io", desc: "An interactive generator for creating and animating SVG patterns." },
-            { name: "PaperAnimator", url: "paperanimator.com", desc: "A web-based application for creating paper-style graphics and text animations." },
-            { name: "Zperiod", url: "zperiod.app", desc: "An interactive periodic table that includes chemical equation balancing and visual element data." },
-            { name: "Napkin AI", url: "napkin.ai", desc: "A tool that uses AI to transform text into visual diagrams and graphics." },
-            { name: "RayonMaps", url: "maps.rayon.design", desc: "A utility to export OpenStreetMap data as CAD geometry for architectural and design use." },
-            { name: "StartMyCar", url: "startmycar.com", desc: "A database of owner's manuals and car repair guides for various vehicle models." },
-            { name: "Slow Roads", url: "slowroads.io", desc: "A procedurally generated, endless driving simulator designed for relaxation." },
-            { name: "Codédex", url: "codedex.io", desc: "A gamified platform for learning programming through a pixel-art RPG environment." },
-            { name: "Screen Studio", url: "screen.studio", desc: "A screen recording tool that automatically adds zooms and editing effects to captures." },
-            { name: "Waitlist", url: "getwaitlist.com", desc: "A platform for building customizable waitlists and referral programs for product launches." },
-            { name: "Typeframes", url: "typeframes.com", desc: "A video creation tool designed to turn text and screenshots into marketing videos." },
-            { name: "Magic Pattern", url: "magicpattern.design", desc: "A collection of design tools to generate custom SVG/CSS patterns and backgrounds." },
-            { name: "Uncut", url: "uncut.wtf", desc: "A curated directory of free, high-quality fonts for designers." },
-            { name: "Relume", url: "relume.io", desc: "A component library that provides pre-built structures for Webflow and Figma." }
-        ];
 
         let editingIdx = null;
 
@@ -629,33 +561,6 @@
             requestAnimationFrame(updateLiveMsClock);
         }
 
-        function populateTools() {
-            const grid = document.getElementById('tools-grid');
-            toolsData.forEach(tool => {
-                const card = document.createElement('div');
-                card.className = 'tool-card';
-                card.innerHTML = `
-                    <div class="tool-title">${tool.name}</div>
-                    <a href="https://${tool.url}" target="_blank" class="tool-url">https://${tool.url}</a>
-                    <div class="tool-desc">${tool.desc}</div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        function showTools() {
-            document.getElementById('main-view').style.display = 'none';
-            document.getElementById('tools-view').style.display = 'block';
-            document.getElementById('layer-fg').scrollTop = 0;
-        }
-
-        function hideTools() {
-            document.getElementById('tools-view').style.display = 'none';
-            document.getElementById('main-view').style.display = 'block';
-            document.getElementById('layer-fg').scrollTop = 0;
-            document.getElementById('searchInput').focus();
-        }
-
         const shortcutsEl = document.getElementById('shortcuts');
         const promptEl = document.getElementById('prompt');
         const searchInput = document.getElementById('searchInput');
@@ -712,9 +617,9 @@
                 shortcutsEl.appendChild(ph);
             }
 
-            const toolsLinkBtn = document.createElement('div');
+            const toolsLinkBtn = document.createElement('a');
             toolsLinkBtn.className = 'shortcut-card';
-            toolsLinkBtn.onclick = showTools;
+            toolsLinkBtn.href = 'tools.html';
             if (animate) {
                 toolsLinkBtn.classList.add('animate-in');
                 toolsLinkBtn.style.animationDelay = `${slotCount * 0.04}s`;
@@ -837,7 +742,6 @@
 
         window.addEventListener('load', () => {
             typeAscii();
-            populateTools();
             setTimeout(typeChar, 300);
         });
 
@@ -921,7 +825,7 @@
             }
 
             if (primary === 'tools') {
-                showTools();
+                window.location.href = 'tools.html';
                 return;
             }
 
@@ -959,20 +863,14 @@
 
         document.addEventListener('keydown', e => {
             const modalOpen = addModal.classList.contains('show');
-            const toolsOpen = document.getElementById('tools-view').style.display === 'block';
-
             if (modalOpen && e.key === 'Escape') closeModal();
-            if (toolsOpen && e.key === 'Escape') hideTools();
-
-            if (!modalOpen && !toolsOpen && !e.ctrlKey && !e.metaKey && !e.altKey && document.activeElement !== searchInput) {
-                if(e.target.tagName !== 'INPUT') searchInput.focus();
+            if (!modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey && document.activeElement !== searchInput) {
+                if (e.target.tagName !== 'INPUT') searchInput.focus();
             }
         });
 
-        document.querySelector('.terminal').addEventListener('click', (e) => {
-            if(e.target === addModal) closeModal();
-            const toolsOpen = document.getElementById('tools-view').style.display === 'block';
-            if(window.getSelection().toString().length === 0 && !addModal.classList.contains('show') && !toolsOpen) {
+        document.querySelector('.terminal').addEventListener('click', () => {
+            if (window.getSelection().toString().length === 0 && !addModal.classList.contains('show')) {
                 searchInput.focus();
             }
         });
