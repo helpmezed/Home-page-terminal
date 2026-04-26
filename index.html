@@ -274,14 +274,31 @@
 
         .tools-btn-header {
             margin-left: auto; margin-right: 10px;
-            color: #005c18; border: 1px solid rgba(0,255,65,0.15);
-            padding: 2px 8px; border-radius: 4px; font-size: 10px;
+            color: #00ff41; border: 1px solid rgba(0,255,65,0.5);
+            padding: 2px 10px; border-radius: 4px; font-size: 10px;
             font-family: 'DejaVu Sans Mono', monospace; text-decoration: none;
             letter-spacing: 0.5px; transition: all 0.2s; white-space: nowrap;
+            text-shadow: 0 0 6px rgba(0,255,65,0.7);
+            animation: toolsBtnPulse 2.4s ease-in-out infinite;
+        }
+        @keyframes toolsBtnPulse {
+            0%, 100% {
+                box-shadow: 0 0 4px rgba(0,255,65,0.3), inset 0 0 4px rgba(0,255,65,0.05);
+                border-color: rgba(0,255,65,0.4);
+                color: #00ff41;
+            }
+            50% {
+                box-shadow: 0 0 14px rgba(0,255,65,0.7), 0 0 28px rgba(0,255,65,0.25), inset 0 0 8px rgba(0,255,65,0.1);
+                border-color: rgba(0,255,65,0.9);
+                color: #ccffdd;
+            }
         }
         .tools-btn-header:hover {
-            color: #00ff41; border-color: rgba(0,255,65,0.4);
-            background: rgba(0,255,65,0.05); text-shadow: 0 0 5px rgba(0,255,65,0.4);
+            animation: none;
+            color: #ccffdd; border-color: #00ff41;
+            background: rgba(0,255,65,0.1);
+            box-shadow: 0 0 18px rgba(0,255,65,0.8), inset 0 0 10px rgba(0,255,65,0.1);
+            text-shadow: 0 0 8px rgba(0,255,65,0.9);
         }
 
         .mini-matrix-canvas {
