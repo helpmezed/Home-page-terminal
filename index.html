@@ -303,30 +303,43 @@
         .rain-1 { left: 4px; }
         .rain-2 { right: 4px; }
 
-        .tools-btn-header {
-            margin-left: auto; margin-right: 10px;
-            color: #00ff41; border: 1px solid rgba(0,255,65,0.5);
-            padding: 2px 10px; border-radius: 4px; font-size: 10px;
-            font-family: 'DejaVu Sans Mono', monospace; text-decoration: none;
-            letter-spacing: 0.5px; transition: all 0.2s; white-space: nowrap;
-            text-shadow: 0 0 6px rgba(0,255,65,0.7);
-            animation: toolsBtnPulse 2.4s ease-in-out infinite;
-        }
         @keyframes toolsBtnPulse {
             0%, 100% {
                 box-shadow: 0 0 4px rgba(0,255,65,0.3), inset 0 0 4px rgba(0,255,65,0.05);
-                border-color: rgba(0,255,65,0.4);
-                color: #00ff41;
+                border-color: rgba(0,255,65,0.4); color: #00ff41;
             }
             50% {
                 box-shadow: 0 0 14px rgba(0,255,65,0.7), 0 0 28px rgba(0,255,65,0.25), inset 0 0 8px rgba(0,255,65,0.1);
-                border-color: rgba(0,255,65,0.9);
-                color: #ccffdd;
+                border-color: rgba(0,255,65,0.9); color: #ccffdd;
             }
         }
-        .tools-btn-header:hover {
-            animation: none;
-            color: #ccffdd; border-color: #00ff41;
+        .left-nav-btn {
+            display: block; width: 190px; text-align: center;
+            font-family: 'DejaVu Sans Mono', monospace; font-size: 10px;
+            text-decoration: none; padding: 5px 0; border-radius: 4px;
+            letter-spacing: 0.5px; transition: all 0.2s; white-space: nowrap;
+        }
+        .disc-btn {
+            color: #00cc44; border: 1px solid rgba(0,255,65,0.22);
+            animation: discPulse 3.8s ease-in-out infinite;
+        }
+        @keyframes discPulse {
+            0%, 100% { border-color: rgba(0,255,65,0.18); box-shadow: none; }
+            50%       { border-color: rgba(0,255,65,0.42); box-shadow: 0 0 8px rgba(0,255,65,0.15); }
+        }
+        .disc-btn:hover {
+            animation: none; color: #00ff41;
+            border-color: rgba(0,255,65,0.7);
+            background: rgba(0,255,65,0.055);
+            box-shadow: 0 0 12px rgba(0,255,65,0.28);
+        }
+        .tools-btn-left {
+            color: #00ff41; border: 1px solid rgba(0,255,65,0.5);
+            text-shadow: 0 0 6px rgba(0,255,65,0.7);
+            animation: toolsBtnPulse 2.4s ease-in-out infinite;
+        }
+        .tools-btn-left:hover {
+            animation: none; color: #ccffdd; border-color: #00ff41;
             background: rgba(0,255,65,0.1);
             box-shadow: 0 0 18px rgba(0,255,65,0.8), inset 0 0 10px rgba(0,255,65,0.1);
             text-shadow: 0 0 8px rgba(0,255,65,0.9);
@@ -526,8 +539,7 @@
                 <span class="gothic-dot yellow">✟</span>
                 <span class="gothic-dot green">✟</span>
                 <span class="terminal-title" id="terminal-title">user@local: ~</span>
-                <a class="tools-btn-header" href="tools.html">{...} Tools DB</a>
-                <span class="terminal-title" id="clock"></span>
+                <span class="terminal-title" id="clock" style="margin-left:auto;"></span>
             </div>
 
             <div id="main-view">
@@ -536,6 +548,8 @@
                         <div class="ascii-wrapper">
                             <div class="ascii-art" id="ascii"></div>
                         </div>
+                        <a class="left-nav-btn disc-btn" href="discipline.html">⌖ Discipline</a>
+                        <a class="left-nav-btn tools-btn-left" href="tools.html">{...} Tools DB</a>
                         <canvas id="mini-matrix" class="mini-matrix-canvas" width="190" height="48"></canvas>
                         <div class="signal-monitor">
                             <div class="signal-header">
