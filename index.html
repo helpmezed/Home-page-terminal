@@ -97,15 +97,20 @@
 
         .shortcuts-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; opacity: 1; }
         .shortcut-card {
-            background: rgba(0, 255, 65, 0.02); border: 1px solid rgba(0, 255, 65, 0.1); border-radius: 7px;
+            background: rgba(0, 255, 65, 0.04); border: 1px solid rgba(0, 255, 65, 0.28); border-radius: 7px;
             padding: 5px; color: #00cc44; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
             aspect-ratio: 1 / 1; opacity: 0; transform: translateY(20px) scale(0.9);
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             cursor: pointer; text-align: center; position: relative; overflow: hidden;
             -webkit-backdrop-filter: blur(2px);
             backdrop-filter: blur(2px);
+            animation: cardPulse 3.5s ease-in-out infinite;
         }
-        .shortcut-card.animate-in { animation: springIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        @keyframes cardPulse {
+            0%, 100% { border-color: rgba(0,255,65,0.28); box-shadow: 0 0 6px rgba(0,255,65,0.1), inset 0 0 5px rgba(0,255,65,0.04); }
+            50% { border-color: rgba(0,255,65,0.65); box-shadow: 0 0 18px rgba(0,255,65,0.22), 0 0 6px rgba(0,255,65,0.1), inset 0 0 10px rgba(0,255,65,0.07); }
+        }
+        .shortcut-card.animate-in { animation: springIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, cardPulse 3.5s ease-in-out infinite; }
         @keyframes springIn { to { opacity: 1; transform: translateY(0) scale(1); } }
 
         .shortcut-card::before {
@@ -124,10 +129,10 @@
         .shortcut-card:hover .shortcut-icon { color: #ffffff; transform: scale(1.1); filter: drop-shadow(0 0 10px rgba(200,255,220,0.9)); }
         .shortcut-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; transition: transform 0.3s; }
 
-        .shortcut-name { font-weight: bold; font-size: 10px; letter-spacing: 0.5px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8; transition: opacity 0.3s; }
+        .shortcut-name { font-weight: bold; font-size: 10px; letter-spacing: 0.5px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.9; text-shadow: 0 0 6px rgba(0,255,65,0.4); transition: opacity 0.3s; }
         .shortcut-card:hover .shortcut-name { opacity: 1; text-shadow: 0 0 5px rgba(0,255,65,0.5); }
 
-        .shortcut-placeholder { border-style: dashed; border-color: rgba(0,255,65,0.15) !important; opacity: 0.35 !important; }
+        .shortcut-placeholder { border-style: dashed; border-color: rgba(0,255,65,0.15) !important; opacity: 0.35 !important; animation: none !important; }
         .shortcut-placeholder:hover { opacity: 0.85 !important; border-color: rgba(0,255,65,0.5) !important; }
         .placeholder-x { font-size: 28px; color: #00ff41; line-height: 1; text-shadow: 0 0 10px rgba(0,255,65,0.6); }
 
@@ -620,8 +625,8 @@
                 "gh": "https://github.com/search?q="
             },
             defaultBookmarks: [
-                { name: "Google", url: "https://google.com", icon: "" },
-                { name: "YouTube", url: "https://youtube.com", icon: "" }
+                { name: "Google", url: "https://google.com", icon: "https://www.google.com/s2/favicons?domain=google.com&sz=64" },
+                { name: "YouTube", url: "https://youtube.com", icon: "https://www.google.com/s2/favicons?domain=youtube.com&sz=64" }
             ]
         };
 
@@ -629,7 +634,21 @@
 
         function getBookmarks() {
             const stored = localStorage.getItem('startpage_bms');
-            if (stored) return JSON.parse(stored);
+            if (stored) {
+                const bms = JSON.parse(stored);
+                let changed = false;
+                bms.forEach(bm => {
+                    if (!bm.iconData && !bm.icon && bm.url) {
+                        try {
+                            const domain = new URL(bm.url).hostname;
+                            bm.icon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+                            changed = true;
+                        } catch {}
+                    }
+                });
+                if (changed) localStorage.setItem('startpage_bms', JSON.stringify(bms));
+                return bms;
+            }
             const oldCustom = localStorage.getItem('startpage_custom_bms');
             const defaults = config.defaultBookmarks.map(b => ({ ...b }));
             if (oldCustom) {
@@ -765,15 +784,19 @@
                 a.className = 'shortcut-card';
                 if (animate) {
                     a.classList.add('animate-in');
-                    a.style.animationDelay = `${i * 0.04}s`;
+                    // first delay = springIn, second = cardPulse stagger
+                    a.style.animationDelay = `${i * 0.04}s, ${i * 0.38}s`;
                 } else {
                     a.style.opacity = '1';
                     a.style.transform = 'translateY(0) scale(1)';
+                    a.style.animationDelay = `${(i * 0.38) % 3.5}s`;
                 }
 
                 const displayIcon = bm.iconData
                     ? `<img src="${bm.iconData}" alt="icon">`
-                    : (bm.icon || '');
+                    : bm.icon && bm.icon.startsWith('http')
+                        ? `<img src="${bm.icon}" alt="icon" onerror="this.parentElement.textContent=''">`
+                        : (bm.icon || '');
 
                 a.innerHTML = `<span class="shortcut-icon">${displayIcon}</span><span class="shortcut-name">${bm.name}</span>`;
 
@@ -881,9 +904,16 @@
 
             const finish = (iconData) => {
                 const existing = editingIdx !== null ? bookmarks[editingIdx] : null;
+                let autoIcon = existing ? (existing.icon || '') : '';
+                if (!iconData && !autoIcon) {
+                    try {
+                        const domain = new URL(url).hostname;
+                        autoIcon = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+                    } catch {}
+                }
                 const bm = {
                     name, url,
-                    icon: existing ? (existing.icon || '') : '',
+                    icon: autoIcon,
                     iconData: iconData || (existing ? existing.iconData : null)
                 };
                 if (editingIdx !== null) {
