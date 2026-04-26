@@ -14,8 +14,8 @@
         }
 
         .terminal {
-            background: #050505; border-radius: 8px; padding: 12px; width: 850px; max-width: 95vw;
-            height: 90vh; box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 20px rgba(0, 255, 65, 0.05);
+            background: #050505; border-radius: 8px; padding: 10px; width: 1120px; max-width: 98vw;
+            height: 96vh; box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 20px rgba(0, 255, 65, 0.05);
             position: relative; display: flex; flex-direction: column;
             border: 1px solid rgba(0, 255, 65, 0.2);
             clip-path: inset(0 round 8px);
@@ -49,7 +49,7 @@
         }
 
         .terminal-header {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 8px;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-bottom: 6px;
             border-bottom: 1px solid rgba(0, 255, 65, 0.15); position: sticky; top: 0;
             background: rgba(5, 5, 5, 0.95); z-index: 10;
             font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
@@ -64,11 +64,11 @@
 
         .terminal-title { color: #00cc44; font-size: 12px; margin-left: 6px; letter-spacing: 0.5px; text-shadow: 0 0 3px rgba(0,255,65,0.3); }
 
-        .content { display: flex; gap: 24px; color: #00cc44; align-items: center; min-height: 250px; padding: 5px 10px; }
+        .content { display: flex; gap: 16px; color: #00cc44; align-items: center; min-height: 200px; padding: 4px 8px; }
         .left-panel { display: flex; flex-direction: column; gap: 10px; align-items: center; }
 
         .ascii-wrapper {
-            perspective: 800px; width: 280px; height: 220px; display: flex; align-items: center; justify-content: center;
+            perspective: 800px; width: 220px; height: 175px; display: flex; align-items: center; justify-content: center;
             animation: float 6s ease-in-out infinite;
             isolation: isolate;
         }
@@ -85,8 +85,8 @@
         @keyframes spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
-        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-        .info-container { line-height: 1.6; font-size: 14px; white-space: pre-wrap; min-height: 125px; font-variant-numeric: tabular-nums; }
+        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .info-container { line-height: 1.5; font-size: 13px; white-space: pre-wrap; min-height: 90px; font-variant-numeric: tabular-nums; }
         .ascii-divider { color: #005c18; text-align: center; margin: 5px 0; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #00cc44; opacity: 0.85; }
 
         .title { color: #00ff41; font-weight: bold; text-shadow: 0 0 8px rgba(0, 255, 65, 0.6); font-size: 16px; margin-bottom: 4px; display: inline-block; }
@@ -95,10 +95,10 @@
         .cursor { display: inline-block; width: 7px; height: 14px; background: #00ff41; animation: blink 1s ease-in-out infinite; vertical-align: middle; margin-left: 3px; box-shadow: 0 0 8px #00ff41; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        .shortcuts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; opacity: 1; }
+        .shortcuts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; opacity: 1; }
         .shortcut-card {
             background: rgba(0, 255, 65, 0.02); border: 1px solid rgba(0, 255, 65, 0.1); border-radius: 8px;
-            padding: 12px; color: #00cc44; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+            padding: 8px; color: #00cc44; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
             aspect-ratio: 1; opacity: 0; transform: translateY(20px) scale(0.9);
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             cursor: pointer; text-align: center; position: relative; overflow: hidden;
@@ -144,8 +144,8 @@
         .command-result { margin-bottom: 8px; color: #00cc44; }
 
         .prompt-line {
-            margin-top: 15px; display: flex; align-items: center; opacity: 0; transform: translateY(10px);
-            transition: all 0.5s ease; padding: 10px; font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
+            margin-top: 8px; display: flex; align-items: center; opacity: 0; transform: translateY(10px);
+            transition: all 0.5s ease; padding: 8px; font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
             font-size: 14px; background: rgba(0,0,0,0.4); border-top: 1px solid rgba(0, 255, 65, 0.1);
             -webkit-backdrop-filter: blur(2px);
             backdrop-filter: blur(2px);

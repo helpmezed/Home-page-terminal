@@ -14,8 +14,8 @@
         }
 
         .terminal {
-            background: #050505; border-radius: 8px; padding: 12px; width: 850px; max-width: 95vw;
-            height: 90vh; box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 20px rgba(0, 255, 65, 0.05);
+            background: #050505; border-radius: 8px; padding: 10px; width: 1120px; max-width: 98vw;
+            height: 96vh; box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 20px rgba(0, 255, 65, 0.05);
             position: relative; display: flex; flex-direction: column;
             border: 1px solid rgba(0, 255, 65, 0.2);
             clip-path: inset(0 round 8px);
@@ -49,7 +49,7 @@
         }
 
         .terminal-header {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 8px;
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-bottom: 6px;
             border-bottom: 1px solid rgba(0, 255, 65, 0.15); position: sticky; top: 0;
             background: rgba(5, 5, 5, 0.95); z-index: 10;
             font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
@@ -86,12 +86,12 @@
                 radial-gradient(ellipse at 50% 50%, transparent 48%, rgba(0,0,0,0.42) 100%);
         }
 
-        .tools-content { padding: 10px; animation: fadeIn 0.4s ease; }
+        .tools-content { padding: 6px; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .btn-return {
             display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #ef2929;
-            border: 1px solid #ef2929; padding: 8px 16px; margin-bottom: 20px; border-radius: 6px;
+            border: 1px solid #ef2929; padding: 6px 14px; margin-bottom: 12px; border-radius: 6px;
             font-weight: bold; background: rgba(239, 41, 41, 0.05); text-decoration: none;
             transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; font-size: 12px;
         }
@@ -99,12 +99,12 @@
 
         .tools-ascii-title {
             color: #00ff41; text-shadow: 0 0 10px rgba(0,255,65,0.6); font-family: 'DejaVu Sans Mono', monospace;
-            font-size: 10px; line-height: 1.2; text-align: center; margin-bottom: 25px; white-space: pre;
+            font-size: 10px; line-height: 1.2; text-align: center; margin-bottom: 12px; white-space: pre;
         }
 
-        .tools-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding-bottom: 30px; }
+        .tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-bottom: 20px; }
         .tool-card {
-            border: 1px solid rgba(0, 255, 65, 0.2); background: rgba(0, 0, 0, 0.6); padding: 16px;
+            border: 1px solid rgba(0, 255, 65, 0.2); background: rgba(0, 0, 0, 0.6); padding: 10px;
             border-radius: 8px; transition: all 0.3s ease;
             -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
             display: flex; flex-direction: column;
@@ -113,8 +113,8 @@
             transform: translateY(-4px); border-color: rgba(0, 255, 65, 0.7);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 65, 0.15);
         }
-        .tool-title { font-size: 16px; font-weight: bold; color: #00ff41; text-shadow: 0 0 5px rgba(0,255,65,0.4); margin-bottom: 4px; }
-        .tool-url { font-size: 12px; color: #00cc44; margin-bottom: 10px; text-decoration: none; display: inline-block; word-break: break-all; transition: 0.2s; }
+        .tool-title { font-size: 14px; font-weight: bold; color: #00ff41; text-shadow: 0 0 5px rgba(0,255,65,0.4); margin-bottom: 2px; }
+        .tool-url { font-size: 11px; color: #00cc44; margin-bottom: 6px; text-decoration: none; display: inline-block; word-break: break-all; transition: 0.2s; }
         .tool-url:hover { color: #00ff41; text-shadow: 0 0 5px #00ff41; }
         .tool-desc { font-size: 13px; color: #eeeeec; opacity: 0.85; line-height: 1.5; }
     </style>
