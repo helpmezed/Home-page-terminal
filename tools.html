@@ -86,8 +86,12 @@
                 radial-gradient(ellipse at 50% 50%, transparent 48%, rgba(0,0,0,0.42) 100%);
         }
 
-        .tools-content { padding: 6px; animation: fadeIn 0.4s ease; }
+        .tools-content { padding: 6px; animation: fadeIn 0.4s ease; display: flex; gap: 14px; align-items: flex-start; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .tools-left-panel { display: flex; flex-direction: column; gap: 10px; align-items: center; flex-shrink: 0; }
+
+        .tools-right-panel { flex: 1; min-width: 0; }
 
         .btn-return {
             display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #ef2929;
@@ -117,6 +121,51 @@
         .tool-url { font-size: 11px; color: #00cc44; margin-bottom: 6px; text-decoration: none; display: inline-block; word-break: break-all; transition: 0.2s; }
         .tool-url:hover { color: #00ff41; text-shadow: 0 0 5px #00ff41; }
         .tool-desc { font-size: 13px; color: #eeeeec; opacity: 0.85; line-height: 1.5; }
+
+        .mini-matrix-canvas {
+            border: 1px solid rgba(0, 255, 65, 0.12); border-radius: 4px; opacity: 0.72;
+            animation: canvasPulse 4s ease-in-out infinite;
+        }
+        @keyframes canvasPulse {
+            0%, 100% { box-shadow: 0 0 4px rgba(0,255,65,0.1); }
+            50% { box-shadow: 0 0 12px rgba(0,255,65,0.22); }
+        }
+
+        .signal-monitor {
+            width: 190px; font-family: 'DejaVu Sans Mono', monospace; font-size: 10px;
+            border: 1px solid rgba(0, 255, 65, 0.12); border-radius: 4px; padding: 5px 7px;
+            color: #00cc44; background: rgba(0,255,65,0.015);
+        }
+        .signal-header {
+            color: #005c18; margin-bottom: 3px; letter-spacing: 0.5px;
+            display: flex; justify-content: space-between;
+        }
+        .signal-header .glitch-status {
+            color: #00ff41; text-shadow: 0 0 5px rgba(0,255,65,0.5);
+            animation: glitchFlicker 0.08s ease infinite;
+        }
+        @keyframes glitchFlicker { 0%, 94%, 100% { opacity: 1; } 95% { opacity: 0.4; } 97% { opacity: 0.8; } }
+        .signal-wave { color: #00cc44; letter-spacing: 1px; line-height: 1.3; }
+        .signal-wave-row { display: block; }
+
+        .left-glyph {
+            width: 190px; font-family: 'DejaVu Sans Mono', monospace; font-size: 11px;
+            text-align: center; color: #003b00; letter-spacing: 3px;
+            border: 1px solid rgba(0,255,65,0.08); border-radius: 4px; padding: 4px 0;
+            animation: glyphCycle 3s ease-in-out infinite;
+        }
+        @keyframes glyphCycle {
+            0%, 100% { color: #003b00; text-shadow: none; }
+            50% { color: #005c18; text-shadow: 0 0 8px rgba(0,255,65,0.2); }
+        }
+
+        .tools-stat-box {
+            width: 190px; font-family: 'DejaVu Sans Mono', monospace; font-size: 10px;
+            border: 1px solid rgba(0,255,65,0.08); border-radius: 4px; padding: 5px 7px;
+            color: #005c18; background: rgba(0,255,65,0.01);
+        }
+        .tools-stat-box .stat-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+        .tools-stat-box .stat-val { color: #00cc44; }
     </style>
 </head>
 <body>
@@ -241,9 +290,28 @@
             </div>
 
             <div class="tools-content">
-                <a class="btn-return" href="index.html">&#x2190; Return to Nexus</a>
+                <div class="tools-left-panel">
+                    <canvas id="mini-matrix" class="mini-matrix-canvas" width="190" height="65"></canvas>
+                    <div class="signal-monitor">
+                        <div class="signal-header">
+                            <span>SIG&nbsp;▶</span>
+                            <span id="glitch-status" class="glitch-status">ONLINE ●</span>
+                        </div>
+                        <span id="signal-wave-1" class="signal-wave signal-wave-row"></span>
+                        <span id="signal-wave-2" class="signal-wave signal-wave-row" style="color:#005c18;"></span>
+                    </div>
+                    <div class="left-glyph" id="left-glyph">⌖ ✦ ✟ ⊗ ◈ ⟁</div>
+                    <div class="tools-stat-box" id="tools-stat-box">
+                        <div class="stat-row"><span>TOOLS</span><span class="stat-val" id="stat-count">—</span></div>
+                        <div class="stat-row"><span>INDEX</span><span class="stat-val">DB·v1</span></div>
+                        <div class="stat-row"><span>STATUS</span><span class="stat-val" id="stat-status">LOADING</span></div>
+                    </div>
+                </div>
 
-                <div class="tools-ascii-title">
+                <div class="tools-right-panel">
+                    <a class="btn-return" href="index.html">&#x2190; Return to Nexus</a>
+
+                    <div class="tools-ascii-title">
  ▄▄▄█████▓▒█████   ▒█████   ██▓      ██████
  ▓  ██▒ ▓▒██▒  ██▒▒██▒  ██▒▓██▒    ▒██    ▒
  ▒ ▓██░ ▒░██░  ██▒▒██░  ██▒▒██░    ░ ▓██▄
@@ -253,9 +321,10 @@
      ░     ░ ▒ ▒░   ░ ▒ ▒░ ░ ░ ▒  ░░ ░▒  ░ ░
    ░     ░ ░ ░ ▒  ░ ░ ░ ▒    ░ ░   ░  ░  ░
              ░ ░      ░ ░      ░  ░      ░
-                </div>
+                    </div>
 
-                <div class="tools-grid" id="tools-grid"></div>
+                    <div class="tools-grid" id="tools-grid"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -298,9 +367,83 @@
             grid.appendChild(card);
         });
 
+        document.getElementById('stat-count').textContent = toolsData.length;
+        document.getElementById('stat-status').textContent = 'READY';
+
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') window.location.href = 'index.html';
         });
+
+        // ── Mini Matrix Rain ──
+        (function() {
+            const canvas = document.getElementById('mini-matrix');
+            const ctx = canvas.getContext('2d');
+            const CHARS = 'ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ01';
+            const FONT_SIZE = 10;
+            const cols = Math.floor(canvas.width / FONT_SIZE);
+            const drops = Array.from({length: cols}, () => (Math.random() * -canvas.height / FONT_SIZE) | 0);
+
+            function draw() {
+                ctx.fillStyle = 'rgba(0,0,0,0.045)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.font = `${FONT_SIZE}px monospace`;
+                drops.forEach((y, i) => {
+                    const x = i * FONT_SIZE;
+                    ctx.fillStyle = '#ccffdd';
+                    ctx.fillText(CHARS[Math.random() * CHARS.length | 0], x, y * FONT_SIZE);
+                    ctx.fillStyle = '#00ff41';
+                    ctx.fillText(CHARS[Math.random() * CHARS.length | 0], x, (y - 1) * FONT_SIZE);
+                    ctx.fillStyle = '#00801f';
+                    ctx.fillText(CHARS[Math.random() * CHARS.length | 0], x, (y - 2) * FONT_SIZE);
+                    if (y * FONT_SIZE > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                });
+            }
+            setInterval(draw, 55);
+        })();
+
+        // ── Signal Waveform ──
+        (function() {
+            const WAVE = ['▁','▂','▃','▄','▅','▆','▇','█'];
+            let phase = 0;
+            const w1 = document.getElementById('signal-wave-1');
+            const w2 = document.getElementById('signal-wave-2');
+            function update() {
+                const cols = 18;
+                let r1 = '', r2 = '';
+                for (let i = 0; i < cols; i++) {
+                    const v1 = (Math.sin((i / cols * Math.PI * 4) - phase) + 1) / 2;
+                    const v2 = (Math.sin((i / cols * Math.PI * 2) - phase * 0.7 + 1) + 1) / 2;
+                    r1 += WAVE[Math.floor(v1 * (WAVE.length - 1))];
+                    r2 += WAVE[Math.floor(v2 * (WAVE.length - 1))];
+                }
+                if (w1) w1.textContent = r1;
+                if (w2) w2.textContent = r2;
+                phase += 0.13;
+            }
+            setInterval(update, 60);
+        })();
+
+        // ── Glitch Status & Glyph Cycle ──
+        (function() {
+            const STATES = ['ONLINE ●', 'SYN·ACK ⟁', 'ENCRYPT ✦', 'UPLINK ⌖', 'SECURE ⊗', 'ACTIVE ◈', 'STREAM ∿'];
+            const GLYPHS = [
+                '⌖ ✦ ✟ ⊗ ◈ ⟁', '✟ ⌖ ◈ ✦ ⊗ ∿',
+                '⊗ ⟁ ✦ ✟ ⌖ ◈', '◈ ∿ ⊗ ⌖ ✟ ⟁',
+                '∿ ◈ ⌖ ⊗ ⟁ ✦'
+            ];
+            let si = 0, gi = 0;
+            const statusEl = document.getElementById('glitch-status');
+            const glyphEl = document.getElementById('left-glyph');
+            setInterval(() => {
+                if (Math.random() > 0.55 && statusEl) {
+                    statusEl.textContent = STATES[si++ % STATES.length];
+                }
+            }, 1400);
+            setInterval(() => {
+                if (glyphEl) glyphEl.textContent = GLYPHS[gi++ % GLYPHS.length];
+            }, 2800);
+        })();
     </script>
 </body>
 </html>
