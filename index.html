@@ -74,13 +74,13 @@
         }
         .ascii-art {
             font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
-            white-space: pre; font-size: 10px; line-height: 1.1;
+            white-space: pre; font-size: 11px; line-height: 1.25;
             transform-style: preserve-3d;
-            animation: spin 20s linear infinite;
+            animation: spin 14s linear infinite;
             will-change: transform;
         }
-        .ascii-art .color1 { color: #00ff41; }
-        .ascii-art .color2 { color: #00ff41; }
+        .ascii-art .color1 { color: #00ff41; text-shadow: 0 0 6px rgba(0,255,65,0.5); }
+        .ascii-art .color2 { color: #00cc44; }
 
         @keyframes spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
@@ -663,23 +663,15 @@
         }
 
         const asciiLines = [
-            { text: "·  ·  ·  ·  ·  ·  ·   ", color: "color1" },
-            { text: "░░░░░░░░░░░░░░░░░░░░░░", color: "color1" },
-            { text: "▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒", color: "color1" },
-            { text: "     ...     ...     ", color: "color1" },
-            { text: "  .=*8888n..\"%888:   ", color: "color1" },
-            { text: " X    ?8888f '8888   ", color: "color1" },
-            { text: " 88x. '8888X  8888>  ", color: "color1" },
-            { text: "'8888k 8888X  '\"*8h. ", color: "color1" },
-            { text: " \"8888 X888X .xH8    ", color: "color1" },
-            { text: "   `8\" X888!:888X    ", color: "color2" },
-            { text: "  =~`  X888 X888X    ", color: "color2" },
-            { text: "   :h. X8*` !888X    ", color: "color2" },
-            { text: "  X888xX\"   '8888..: ", color: "color2" },
-            { text: ":~`888f     '*888*\"  ", color: "color2" },
-            { text: "    \"\"        `\"`    ", color: "color2" },
-            { text: "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓", color: "color2" },
-            { text: "·  ·  ·  ·  ·  ·  ·   ", color: "color2" }
+            { text: "▓▒░                     ░▒▓", color: "color1" },
+            { text: "   ▓▒░               ░▒▓   ", color: "color1" },
+            { text: "      ▓▒░         ░▒▓      ", color: "color1" },
+            { text: "         ▓▒░   ░▒▓         ", color: "color1" },
+            { text: "            ▒█▒            ", color: "color1" },
+            { text: "         ░▒▓   ▓▒░         ", color: "color2" },
+            { text: "      ░▒▓         ▓▒░      ", color: "color2" },
+            { text: "   ░▒▓               ▓▒░   ", color: "color2" },
+            { text: "░▒▓                     ▓▒░", color: "color2" },
         ];
 
         const asciiEl = document.getElementById('ascii');
