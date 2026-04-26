@@ -64,11 +64,11 @@
 
         .terminal-title { color: #00cc44; font-size: 12px; margin-left: 6px; letter-spacing: 0.5px; text-shadow: 0 0 3px rgba(0,255,65,0.3); }
 
-        .content { display: flex; gap: 16px; color: #00cc44; align-items: flex-start; min-height: 150px; padding: 4px 8px; }
-        .left-panel { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        .content { display: flex; gap: 10px; color: #00cc44; align-items: flex-start; padding: 2px 6px; }
+        .left-panel { display: flex; flex-direction: column; gap: 7px; align-items: center; }
 
         .ascii-wrapper {
-            perspective: 800px; width: 200px; height: 155px; display: flex; align-items: center; justify-content: center;
+            perspective: 800px; width: 190px; height: 120px; display: flex; align-items: center; justify-content: center;
             animation: float 6s ease-in-out infinite;
             isolation: isolate;
         }
@@ -85,9 +85,9 @@
         @keyframes spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
-        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        .info-container { line-height: 1.45; font-size: 13px; white-space: pre-wrap; min-height: 70px; font-variant-numeric: tabular-nums; }
-        .ascii-divider { color: #005c18; text-align: center; margin: 3px 0; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #00cc44; opacity: 0.85; }
+        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+        .info-container { line-height: 1.35; font-size: 12px; white-space: pre-wrap; min-height: 45px; font-variant-numeric: tabular-nums; }
+        .ascii-divider { color: #005c18; text-align: center; margin: 1px 0; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #00cc44; opacity: 0.85; }
 
         .title { color: #00ff41; font-weight: bold; text-shadow: 0 0 8px rgba(0, 255, 65, 0.6); font-size: 16px; margin-bottom: 4px; display: inline-block; }
         .label { color: #00cc44; font-weight: bold; margin-right: 4px; }
@@ -95,10 +95,10 @@
         .cursor { display: inline-block; width: 7px; height: 14px; background: #00ff41; animation: blink 1s ease-in-out infinite; vertical-align: middle; margin-left: 3px; box-shadow: 0 0 8px #00ff41; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        .shortcuts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; opacity: 1; }
+        .shortcuts-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; opacity: 1; }
         .shortcut-card {
-            background: rgba(0, 255, 65, 0.02); border: 1px solid rgba(0, 255, 65, 0.1); border-radius: 8px;
-            padding: 8px; color: #00cc44; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+            background: rgba(0, 255, 65, 0.02); border: 1px solid rgba(0, 255, 65, 0.1); border-radius: 7px;
+            padding: 5px; color: #00cc44; text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
             aspect-ratio: 1 / 1; opacity: 0; transform: translateY(20px) scale(0.9);
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             cursor: pointer; text-align: center; position: relative; overflow: hidden;
@@ -120,7 +120,7 @@
         .shortcut-card:hover::before { left: 150%; }
         .shortcut-card:active { transform: translateY(-2px) scale(0.98); transition: 0.1s; }
 
-        .shortcut-icon { font-size: 32px; color: #00cc44; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; width: 58%; height: 58%; text-shadow: 0 0 5px rgba(0,255,65,0.3); flex-shrink: 0; }
+        .shortcut-icon { font-size: 26px; color: #00cc44; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; width: 55%; height: 55%; text-shadow: 0 0 5px rgba(0,255,65,0.3); flex-shrink: 0; }
         .shortcut-card:hover .shortcut-icon { color: #00ff41; transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(0,255,65,0.8)); }
         .shortcut-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; transition: transform 0.3s; }
 
@@ -144,7 +144,7 @@
         .command-result { margin-bottom: 8px; color: #00cc44; }
 
         .prompt-line {
-            margin-top: 8px; display: flex; align-items: center; opacity: 0; transform: translateY(10px);
+            margin-top: 4px; display: flex; align-items: center; opacity: 0; transform: translateY(10px);
             transition: all 0.5s ease; padding: 8px; font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
             font-size: 14px; background: rgba(0,0,0,0.4); border-top: 1px solid rgba(0, 255, 65, 0.1);
             -webkit-backdrop-filter: blur(2px);
@@ -505,7 +505,7 @@
                         <div class="ascii-wrapper">
                             <div class="ascii-art" id="ascii"></div>
                         </div>
-                        <canvas id="mini-matrix" class="mini-matrix-canvas" width="190" height="65"></canvas>
+                        <canvas id="mini-matrix" class="mini-matrix-canvas" width="190" height="48"></canvas>
                         <div class="signal-monitor">
                             <div class="signal-header">
                                 <span>SIG&nbsp;▶</span>
@@ -711,7 +711,7 @@
         const promptEl = document.getElementById('prompt');
         const searchInput = document.getElementById('searchInput');
 
-        const MIN_SLOTS = 8;
+        const MIN_SLOTS = 12;
 
         function renderShortcuts(animate = false) {
             shortcutsEl.innerHTML = '';
