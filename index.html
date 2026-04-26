@@ -18,24 +18,19 @@
             height: 90vh; box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 20px rgba(0, 255, 65, 0.05);
             position: relative; display: flex; flex-direction: column;
             border: 1px solid rgba(0, 255, 65, 0.2);
-            /* overflow:hidden breaks preserve-3d in Firefox; clip instead */
             clip-path: inset(0 round 8px);
         }
 
-        /* Foreground Content Layer */
         .layer-fg {
             position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%;
             overflow-y: auto; overflow-x: hidden; padding-right: 4px; scroll-behavior: smooth;
-            /* Firefox scrollbar */
             scrollbar-width: thin;
             scrollbar-color: rgba(0, 255, 65, 0.3) transparent;
         }
-        /* Chromium scrollbar */
         .layer-fg::-webkit-scrollbar { width: 6px; }
         .layer-fg::-webkit-scrollbar-track { background: transparent; }
         .layer-fg::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.3); border-radius: 3px; }
 
-        /* Background Gothic ASCII Art Layer */
         .layer-bg {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;
             pointer-events: none; font-family: 'DejaVu Sans Mono', monospace; line-height: 1.1;
@@ -53,18 +48,15 @@
             justify-content: space-around; opacity: 0.4; font-size: 12px; font-weight: bold;
         }
 
-        /* UI Elements */
         .terminal-header {
             display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding-bottom: 8px;
             border-bottom: 1px solid rgba(0, 255, 65, 0.15); position: sticky; top: 0;
             background: rgba(5, 5, 5, 0.95); z-index: 10;
             font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
-            /* backdrop-filter works in Firefox 103+; bg fallback covers older versions */
             -webkit-backdrop-filter: blur(3px);
             backdrop-filter: blur(3px);
         }
 
-        /* Gothic Cross Window Controls */
         .gothic-dot { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; font-size: 14px; text-shadow: 0 0 5px currentColor; }
         .gothic-dot.red { color: #003b00; }
         .gothic-dot.yellow { color: #008f11; }
@@ -72,14 +64,12 @@
 
         .terminal-title { color: #008f11; font-size: 12px; margin-left: 6px; letter-spacing: 0.5px; text-shadow: 0 0 3px rgba(0,255,65,0.3); }
 
-        .content { display: flex; gap: 24px; color: #008f11; align-items: flex-start; min-height: 250px; padding: 5px 10px; }
+        .content { display: flex; gap: 24px; color: #008f11; align-items: center; min-height: 250px; padding: 5px 10px; }
         .left-panel { display: flex; flex-direction: column; gap: 10px; align-items: center; }
 
-        /* 3D Spinning Art */
         .ascii-wrapper {
             perspective: 800px; width: 280px; height: 220px; display: flex; align-items: center; justify-content: center;
             animation: float 6s ease-in-out infinite;
-            /* isolate stacking context so Firefox honours preserve-3d */
             isolation: isolate;
         }
         .ascii-art {
@@ -96,7 +86,7 @@
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
         .right-panel { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-        .info-container { line-height: 1.6; font-size: 14px; white-space: pre-wrap; min-height: 110px; font-variant-numeric: tabular-nums; }
+        .info-container { line-height: 1.6; font-size: 14px; white-space: pre-wrap; min-height: 125px; font-variant-numeric: tabular-nums; }
         .ascii-divider { color: #003b00; text-align: center; margin: 5px 0; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #008f11; opacity: 0.7; }
 
         .title { color: #00ff41; font-weight: bold; text-shadow: 0 0 8px rgba(0, 255, 65, 0.6); font-size: 16px; margin-bottom: 4px; display: inline-block; }
@@ -105,7 +95,6 @@
         .cursor { display: inline-block; width: 7px; height: 14px; background: #00ff41; animation: blink 1s ease-in-out infinite; vertical-align: middle; margin-left: 3px; box-shadow: 0 0 8px #00ff41; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* Shortcuts Grid */
         .shortcuts-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; opacity: 1; }
         .shortcut-card {
             background: rgba(0, 255, 65, 0.02); border: 1px solid rgba(0, 255, 65, 0.1); border-radius: 8px;
@@ -138,7 +127,14 @@
         .shortcut-name { font-weight: bold; font-size: 13px; letter-spacing: 0.5px; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.8; transition: opacity 0.3s; }
         .shortcut-card:hover .shortcut-name { opacity: 1; text-shadow: 0 0 5px rgba(0,255,65,0.5); }
 
-        /* Output & Prompt Areas */
+        /* Tasks Module Styles */
+        .tasks-list { display: flex; flex-direction: column; gap: 6px; font-family: 'DejaVu Sans Mono', monospace; font-size: 13px; color: #008f11; margin-top: 8px; opacity: 0; transition: opacity 0.5s;}
+        .tasks-list.visible { opacity: 1; }
+        .task-item { display: flex; align-items: flex-start; gap: 8px; }
+        .task-box { color: #00ff41; font-weight: bold; white-space: pre; }
+        .task-text { color: #008f11; word-break: break-word; }
+        .task-text.done { text-decoration: line-through; opacity: 0.5; }
+
         .output-area { margin-top: auto; display: flex; flex-direction: column; gap: 4px; padding: 0 10px; font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace; font-size: 13px; z-index: 2;}
         .command-echo { margin-bottom: 2px; color: #00ff41; }
         .command-result { margin-bottom: 8px; color: #008f11; }
@@ -161,13 +157,12 @@
         }
 
         .search-input { background: transparent; border: none; color: #00ff41; font-family: inherit; font-size: inherit; flex: 1; margin-left: 12px; outline: none; caret-color: #00ff41; text-shadow: 0 0 4px rgba(0,255,65,0.4); }
-        .search-input::placeholder { color: rgba(0,255,65,0.3); opacity: 1; /* Firefox dims placeholder by default */ }
+        .search-input::placeholder { color: rgba(0,255,65,0.3); opacity: 1; }
         .user { color: #00ff41; font-weight: bold; text-shadow: 0 0 5px rgba(0,255,65,0.4); }
         .host { color: #008f11; font-weight: bold; }
         .separator { color: #005500; font-weight: bold; margin: 0 2px; }
         .pipe-sep { color: #005500; margin-left: 8px; opacity: 0.5; }
 
-        /* Animated Modal */
         .modal-overlay {
             position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 50;
             border-radius: 8px; display: flex; align-items: center; justify-content: center;
@@ -192,8 +187,8 @@
         .btn-cancel:hover { background: rgba(0, 143, 17, 0.15); box-shadow: 0 0 10px rgba(0, 143, 17, 0.3); color: #00ff41; border-color: #00ff41; }
         .btn-save { border-color: #00ff41; color: #00ff41; text-shadow: 0 0 5px rgba(0,255,65,0.4); }
         .btn-save:hover { background: rgba(0, 255, 65, 0.15); box-shadow: 0 0 15px rgba(0, 255, 65, 0.4); }
+        .btn-delete:hover { background: rgba(239, 41, 41, 0.15); box-shadow: 0 0 10px rgba(239, 41, 41, 0.3); color: #ff4444; border-color: #ff4444; }
 
-        /* Tools View Styles */
         #tools-view { display: none; padding: 10px; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -226,7 +221,6 @@
         .tool-url:hover { color: #00ff41; text-shadow: 0 0 5px #00ff41; }
         .tool-desc { font-size: 13px; color: #eeeeec; opacity: 0.85; line-height: 1.5; }
 
-        /* CRT scanlines + edge vignette */
         .terminal::after {
             content: '';
             position: absolute;
@@ -248,7 +242,6 @@
                 );
         }
 
-        /* Egyptian Eye of Ra — occult watermark */
         .bg-eye {
             color: #004800;
             top: 42%;
@@ -260,7 +253,6 @@
             text-shadow: 0 0 28px rgba(0,255,65,0.12);
         }
 
-        /* Matrix code-rain columns */
         .bg-rain {
             color: #003300;
             font-size: 10px;
@@ -281,32 +273,31 @@
 </head>
 <body>
     <div class="terminal" id="terminal">
-
         <div class="layer-bg">
             <div class="bg-element bg-skull">
                _,.-------.,_
-           ,;~'             '~;,
-         ,;                     ;,
-        ;                         ;
-       ,'                         ',
-      ,;                           ;,
-      ; ;      .           .      ; ;
-      | ;   ______       ______   ; |
-      |  `/~"     ~" . "~     "~\'  |
-      |  ~  ,-~~~^~, | ,~^~~~-,  ~  |
-       |   |        }:{        |   |
-       |   l       / | \       !   |
-       .~  (__,.--" .^. "--.,__)  ~.
-       |     ---;' / | \ `;---     |
-        \__.       \/^\/       .__/
-         V| \                 / |V
-          | |T~\___!___!___/~T| |
-          | |`IIII_I_I_I_IIII'| |
-          |  \,III I I I III,/  |
-           \   `~~~~~~~~~~'    /
-             \   .       .   /
-               \.    ^    ./
-                 ^~~~^~~~^
+            ,;~'             '~;,
+          ,;                      ;,
+         ;                        ;
+        ,'                        ',
+       ,;                          ;,
+       ; ;      .          .      ; ;
+       | ;   ______      ______   ; |
+       |  `/~"      ~" . "~      "~\'  |
+       |  ~  ,-~~~^~, | ,~^~~~-,  ~  |
+        |   |        }:{        |   |
+        |   l       / | \       !   |
+        .~  (__,.--" .^. "--.,__)  ~.
+        |     ---;' / | \ `;---     |
+         \__.       \/^\/       .__/
+          V| \                 / |V
+           | |T~\___!___!___/~T| |
+           | |`IIII_I_I_I_IIII'| |
+           |  \,III I I I III,/  |
+            \   `~~~~~~~~~~'    /
+              \   .       .   /
+                \.    ^    ./
+                  ^~~~^~~~^
             </div>
 
             <div class="bg-element bg-cathedral">
@@ -412,6 +403,10 @@
                         <div class="info-container" id="terminal-text"></div>
                         <div class="ascii-divider">░▒▓ ✟━━━━━━━━━━━━━━━━━━━━━━━━━━━━☠━━━━━━━━━━━━━━━━━━━━━━━━━━━━✟ ▓▒░</div>
                         <div class="shortcuts-grid" id="shortcuts"></div>
+                        
+                        <!-- Tasks Container added here -->
+                        <div class="ascii-divider" style="margin-top: 15px;">░▒▓ ✟━━━━━━━━━━━━━━━━━━━ TASKS ━━━━━━━━━━━━━━━━━━━✟ ▓▒░</div>
+                        <div class="tasks-list" id="tasks-list"></div>
                     </div>
                 </div>
 
@@ -442,20 +437,20 @@
              ░ ░      ░ ░      ░  ░      ░
                 </div>
 
-                <div class="tools-grid" id="tools-grid">
-                    </div>
+                <div class="tools-grid" id="tools-grid"></div>
             </div>
 
         </div>
 
         <div class="modal-overlay" id="addModal">
             <div class="modal">
-                <span style="color:#00ff41; font-weight:bold; font-size: 16px; text-shadow: 0 0 8px rgba(0,255,65,0.5);">+ New Link</span>
+                <span id="modalTitle" style="color:#00ff41; font-weight:bold; font-size: 16px; text-shadow: 0 0 8px rgba(0,255,65,0.5);">+ New Link</span>
                 <input type="text" id="bmName" placeholder="Shortcut Name (e.g., Nexus)">
                 <input type="text" id="bmUrl" placeholder="URL (e.g., https://...)">
                 <span style="color:#008f11; font-size:12px; margin-bottom:-10px;">Upload Icon/GIF:</span>
                 <input type="file" id="bmIcon" accept="image/*">
                 <div class="modal-buttons">
+                    <button class="modal-btn btn-delete" id="btnDelete" onclick="deleteBookmark()" style="display:none; margin-right:auto; border-color:#ef2929; color:#ef2929;">Delete</button>
                     <button class="modal-btn btn-cancel" onclick="closeModal()">Cancel</button>
                     <button class="modal-btn btn-save" onclick="saveBookmark()">Save</button>
                 </div>
@@ -476,12 +471,13 @@
                 "a": "https://amazon.com/s?k=",
                 "gh": "https://github.com/search?q="
             },
+            // Updated bookmarks to reflect regular usage
             defaultBookmarks: [
                 { name: "github", url: "https://github.com", icon: "" },
-                { name: "reddit", url: "https://reddit.com", icon: "" },
-                { name: "youtube", url: "https://youtube.com", icon: "" },
-                { name: "mail", url: "https://mail.proton.me", icon: "" },
-                { name: "hackernews", url: "https://news.ycombinator.com", icon: "" }
+                { name: "react", url: "https://react.dev", icon: "" },
+                { name: "ogame", url: "https://lobby.ogame.gameforge.com", icon: "" },
+                { name: "steam", url: "https://store.steampowered.com", icon: "" },
+                { name: "doordash", url: "https://www.doordash.com", icon: "" }
             ]
         };
 
@@ -503,7 +499,32 @@
             { name: "Relume", url: "relume.io", desc: "A component library that provides pre-built structures for Webflow and Figma." }
         ];
 
-        let customBookmarks = JSON.parse(localStorage.getItem('startpage_custom_bms')) || [];
+        let editingIdx = null;
+
+        function getBookmarks() {
+            const stored = localStorage.getItem('startpage_bms');
+            if (stored) return JSON.parse(stored);
+            const oldCustom = localStorage.getItem('startpage_custom_bms');
+            const defaults = config.defaultBookmarks.map(b => ({ ...b }));
+            if (oldCustom) {
+                const migrated = [...defaults, ...JSON.parse(oldCustom)];
+                localStorage.setItem('startpage_bms', JSON.stringify(migrated));
+                localStorage.removeItem('startpage_custom_bms');
+                return migrated;
+            }
+            localStorage.setItem('startpage_bms', JSON.stringify(defaults));
+            return defaults;
+        }
+
+        function setBookmarks(arr) {
+            localStorage.setItem('startpage_bms', JSON.stringify(arr));
+        }
+        
+        // Task state initialization
+        let customTasks = JSON.parse(localStorage.getItem('startpage_tasks')) || [
+            { text: "Sync Project Ether Nexus DB", done: false },
+            { text: "Review Tailwind configurations", done: false }
+        ];
 
         document.getElementById('terminal-title').textContent = `${config.username}@${config.hostname}: ~`;
         document.getElementById('prompt-user').textContent = config.username;
@@ -516,28 +537,22 @@
         setInterval(updateTopClock, 1000);
         updateTopClock();
 
-        // 3D ASCII ART — fraktur "N" (art-master/art/data/fonts2.py fraktur_dic['N'])
-        // 22 cols wide × 17 rows; top 9 → color1 (dark), bottom 8 → color2 (bright).
         const asciiLines = [
-            // color1 — top halftone ramp (decorations wave3/wave6)
             { text: "·  ·  ·  ·  ·  ·  ·   ", color: "color1" },
             { text: "░░░░░░░░░░░░░░░░░░░░░░", color: "color1" },
             { text: "▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒", color: "color1" },
-            // color1 — fraktur N rows 1–6
-            { text: "     ...     ...      ", color: "color1" },
-            { text: "  .=*8888n..\"%888:    ", color: "color1" },
-            { text: "  X    ?8888f '8888   ", color: "color1" },
-            { text: "  88x. '8888X  8888>  ", color: "color1" },
-            { text: " '8888k 8888X  '\"*8h. ", color: "color1" },
-            { text: "  \"8888 X888X .xH8    ", color: "color1" },
-            // color2 — fraktur N rows 7–12
-            { text: "    `8\" X888!:888X    ", color: "color2" },
-            { text: "   =~`  X888 X888X    ", color: "color2" },
-            { text: "    :h. X8*` !888X    ", color: "color2" },
-            { text: "   X888xX\"   '8888..: ", color: "color2" },
-            { text: " :~`888f     '*888*\"  ", color: "color2" },
-            { text: "     \"\"        `\"`    ", color: "color2" },
-            // color2 — bottom halftone ramp
+            { text: "     ...     ...     ", color: "color1" },
+            { text: "  .=*8888n..\"%888:   ", color: "color1" },
+            { text: " X    ?8888f '8888   ", color: "color1" },
+            { text: " 88x. '8888X  8888>  ", color: "color1" },
+            { text: "'8888k 8888X  '\"*8h. ", color: "color1" },
+            { text: " \"8888 X888X .xH8    ", color: "color1" },
+            { text: "   `8\" X888!:888X    ", color: "color2" },
+            { text: "  =~`  X888 X888X    ", color: "color2" },
+            { text: "   :h. X8*` !888X    ", color: "color2" },
+            { text: "  X888xX\"   '8888..: ", color: "color2" },
+            { text: ":~`888f     '*888*\"  ", color: "color2" },
+            { text: "    \"\"        `\"`    ", color: "color2" },
             { text: "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓", color: "color2" },
             { text: "·  ·  ·  ·  ·  ·  ·   ", color: "color2" }
         ];
@@ -559,14 +574,16 @@
             }
         }
 
-        // TERMINAL TYPEWRITER EFFECT
         const textContainer = document.getElementById('terminal-text');
+        
+        // Added mocked weather personalization line
         const systemData = [
             { type: 'title', text: `${config.username}@${config.hostname}` },
             { type: 'empty' },
             { type: 'info', label: "Date", id: "info-date" },
             { type: 'info', label: "Time", id: "info-time" },
-            { type: 'info', label: "Location", id: "info-location", value: "Salem, NH, USA" },
+            { type: 'info', label: "Location", value: "Salem, NH" },
+            { type: 'info', label: "Weather", value: "62°F / Clear" },
             { type: 'info', label: "Engine", value: "DuckDuckGo" }
         ];
 
@@ -590,9 +607,7 @@
                 textContainer.innerHTML += `<span class="label">${line.label}:</span> <span class="value" ${idAttr}>${val}</span><br>`;
             }
             lineIndex++;
-
-            const delay = 30 + Math.random() * 60;
-            setTimeout(typeChar, delay);
+            setTimeout(typeChar, 30 + Math.random() * 60);
         }
 
         function updateLiveMsClock() {
@@ -614,7 +629,6 @@
             requestAnimationFrame(updateLiveMsClock);
         }
 
-        // POPULATE TOOLS GRID
         function populateTools() {
             const grid = document.getElementById('tools-grid');
             toolsData.forEach(tool => {
@@ -629,7 +643,6 @@
             });
         }
 
-        // VIEW TOGGLING
         function showTools() {
             document.getElementById('main-view').style.display = 'none';
             document.getElementById('tools-view').style.display = 'block';
@@ -643,16 +656,15 @@
             document.getElementById('searchInput').focus();
         }
 
-        // SHORTCUT RENDERING
         const shortcutsEl = document.getElementById('shortcuts');
         const promptEl = document.getElementById('prompt');
         const searchInput = document.getElementById('searchInput');
 
         function renderShortcuts(animate = false) {
             shortcutsEl.innerHTML = '';
-            const allBookmarks = [...config.defaultBookmarks, ...customBookmarks];
+            const bookmarks = getBookmarks();
 
-            allBookmarks.forEach((bm, i) => {
+            bookmarks.forEach((bm, i) => {
                 const a = document.createElement('a');
                 a.href = bm.url;
                 a.className = 'shortcut-card';
@@ -664,22 +676,26 @@
                     a.style.transform = 'translateY(0) scale(1)';
                 }
 
-                let displayIcon = bm.icon || '';
-                if (bm.isCustom && bm.iconData) {
-                    displayIcon = `<img src="${bm.iconData}" alt="icon">`;
-                }
+                const displayIcon = bm.iconData
+                    ? `<img src="${bm.iconData}" alt="icon">`
+                    : (bm.icon || '');
 
                 a.innerHTML = `<span class="shortcut-icon">${displayIcon}</span><span class="shortcut-name">${bm.name}</span>`;
+
+                a.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    openModal(i);
+                });
+
                 shortcutsEl.appendChild(a);
             });
 
-            // "Tools DB" Button
             const toolsLinkBtn = document.createElement('div');
             toolsLinkBtn.className = 'shortcut-card';
             toolsLinkBtn.onclick = showTools;
             if (animate) {
                 toolsLinkBtn.classList.add('animate-in');
-                toolsLinkBtn.style.animationDelay = `${allBookmarks.length * 0.04}s`;
+                toolsLinkBtn.style.animationDelay = `${bookmarks.length * 0.04}s`;
             } else {
                 toolsLinkBtn.style.opacity = '1';
                 toolsLinkBtn.style.transform = 'translateY(0) scale(1)';
@@ -687,13 +703,12 @@
             toolsLinkBtn.innerHTML = `<span class="shortcut-icon" style="font-family: monospace;">{...}</span><span class="shortcut-name">Tools DB</span>`;
             shortcutsEl.appendChild(toolsLinkBtn);
 
-            // "Add System" Button
             const addBtn = document.createElement('div');
             addBtn.className = 'shortcut-card';
-            addBtn.onclick = openModal;
+            addBtn.onclick = () => openModal();
             if (animate) {
                 addBtn.classList.add('animate-in');
-                addBtn.style.animationDelay = `${(allBookmarks.length + 1) * 0.04}s`;
+                addBtn.style.animationDelay = `${(bookmarks.length + 1) * 0.04}s`;
             } else {
                 addBtn.style.opacity = '1';
                 addBtn.style.transform = 'translateY(0) scale(1)';
@@ -701,24 +716,59 @@
             addBtn.innerHTML = `<span class="shortcut-icon">+</span><span class="shortcut-name">Add System</span>`;
             shortcutsEl.appendChild(addBtn);
         }
+        
+        // Render Tasks logic
+        function renderTasks(animate = false) {
+            const list = document.getElementById('tasks-list');
+            list.innerHTML = '';
+            
+            if (animate) list.classList.add('visible');
+            
+            if (customTasks.length === 0) {
+                list.innerHTML = `<div class="task-item"><span class="task-text" style="opacity:0.6;">No pending tasks.</span></div>`;
+                return;
+            }
+
+            customTasks.forEach((t, i) => {
+                const checkbox = t.done ? '[x]' : '[ ]';
+                const doneClass = t.done ? 'done' : '';
+                list.innerHTML += `<div class="task-item"><span class="task-box">${checkbox}</span><span class="task-text ${doneClass}">${i}: ${t.text}</span></div>`;
+            });
+        }
 
         function initShortcuts() {
             renderShortcuts(true);
-            const totalItems = config.defaultBookmarks.length + customBookmarks.length + 2;
+            renderTasks(true);
+            const totalItems = getBookmarks().length + 2;
             setTimeout(() => {
                 promptEl.classList.add('visible');
                 searchInput.focus();
             }, (totalItems * 40) + 100);
         }
 
-        // MODAL LOGIC
         const addModal = document.getElementById('addModal');
 
-        function openModal() {
+        function openModal(idx) {
+            editingIdx = (idx !== undefined && idx !== null) ? idx : null;
+            const modalTitle = document.getElementById('modalTitle');
+            const btnDelete = document.getElementById('btnDelete');
+
+            if (editingIdx !== null) {
+                const bm = getBookmarks()[editingIdx];
+                modalTitle.textContent = '✎ Edit Link';
+                document.getElementById('bmName').value = bm.name;
+                document.getElementById('bmUrl').value = bm.url;
+                document.getElementById('bmIcon').value = '';
+                btnDelete.style.display = '';
+            } else {
+                modalTitle.textContent = '+ New Link';
+                document.getElementById('bmName').value = '';
+                document.getElementById('bmUrl').value = '';
+                document.getElementById('bmIcon').value = '';
+                btnDelete.style.display = 'none';
+            }
+
             addModal.classList.add('show');
-            document.getElementById('bmName').value = '';
-            document.getElementById('bmUrl').value = '';
-            document.getElementById('bmIcon').value = '';
             setTimeout(() => document.getElementById('bmName').focus(), 100);
         }
 
@@ -739,21 +789,41 @@
                 url = 'https://' + url;
             }
 
-            if (fileInput.files && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    customBookmarks.push({ name, url, iconData: e.target.result, isCustom: true });
-                    localStorage.setItem('startpage_custom_bms', JSON.stringify(customBookmarks));
-                    closeModal();
-                    renderShortcuts(false);
+            const bookmarks = getBookmarks();
+
+            const finish = (iconData) => {
+                const existing = editingIdx !== null ? bookmarks[editingIdx] : null;
+                const bm = {
+                    name, url,
+                    icon: existing ? (existing.icon || '') : '',
+                    iconData: iconData || (existing ? existing.iconData : null)
                 };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                customBookmarks.push({ name, url, iconData: null, isCustom: true });
-                localStorage.setItem('startpage_custom_bms', JSON.stringify(customBookmarks));
+                if (editingIdx !== null) {
+                    bookmarks[editingIdx] = bm;
+                } else {
+                    bookmarks.push(bm);
+                }
+                setBookmarks(bookmarks);
                 closeModal();
                 renderShortcuts(false);
+            };
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => finish(e.target.result);
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                finish(null);
             }
+        }
+
+        function deleteBookmark() {
+            if (editingIdx === null) return;
+            const bookmarks = getBookmarks();
+            bookmarks.splice(editingIdx, 1);
+            setBookmarks(bookmarks);
+            closeModal();
+            renderShortcuts(false);
         }
 
         window.addEventListener('load', () => {
@@ -762,7 +832,6 @@
             setTimeout(typeChar, 300);
         });
 
-        // COMMAND HANDLING
         const outputEl = document.getElementById('output');
         const layerFgEl = document.getElementById('layer-fg');
         let commandHistory = [], historyIndex = -1;
@@ -771,6 +840,14 @@
             const div = document.createElement('div');
             div.className = 'command-echo';
             div.innerHTML = `<span class="user">${config.username}</span><span class="separator">@</span><span class="host">${config.hostname}</span><span class="separator">:$ </span>${cmd}`;
+            outputEl.appendChild(div);
+            layerFgEl.scrollTop = layerFgEl.scrollHeight;
+        }
+        
+        function printResult(text) {
+            const div = document.createElement('div');
+            div.className = 'command-result user';
+            div.textContent = text;
             outputEl.appendChild(div);
             layerFgEl.scrollTop = layerFgEl.scrollHeight;
         }
@@ -789,10 +866,13 @@
                 div.className = 'command-result';
                 div.innerHTML = `
                     <span class="help-text">Available commands:</span><br>
-                    <span class="user">tools</span>    - Open tools database<br>
-                    <span class="user">clear</span>    - Clear terminal output<br>
-                    <span class="user">help</span>     - Show this message<br>
-                    <span class="user">reset-bms</span>- Clear custom bookmarks<br><br>
+                    <span class="user">tools</span>     - Open tools database<br>
+                    <span class="user">clear</span>     - Clear terminal output<br>
+                    <span class="user">reset-bms</span> - Reset bookmarks to defaults<br><br>
+                    <span class="help-text">Task Manager:</span><br>
+                    <span class="user">task add [text]</span> - Add a new task<br>
+                    <span class="user">task done [id]</span>  - Toggle complete status<br>
+                    <span class="user">task clear</span>      - Remove completed tasks<br><br>
                     <span class="help-text">Search engines:</span><br>
                     <span class="user">g </span> [query]  - Google<br>
                     <span class="user">y </span> [query]  - YouTube<br>
@@ -802,20 +882,44 @@
                 layerFgEl.scrollTop = layerFgEl.scrollHeight;
                 return;
             }
+            
+            if (primary === 'task') {
+                const action = args[1];
+                if (action === 'add') {
+                    customTasks.push({ text: args.slice(2).join(' '), done: false });
+                    localStorage.setItem('startpage_tasks', JSON.stringify(customTasks));
+                    renderTasks();
+                    printResult("Task appended successfully.");
+                } else if (action === 'done') {
+                    const idx = parseInt(args[2]);
+                    if (customTasks[idx]) {
+                        customTasks[idx].done = !customTasks[idx].done;
+                        localStorage.setItem('startpage_tasks', JSON.stringify(customTasks));
+                        renderTasks();
+                        printResult(`Task [${idx}] status updated.`);
+                    } else {
+                        printResult(`Task ID [${idx}] not found.`);
+                    }
+                } else if (action === 'clear') {
+                    customTasks = customTasks.filter(t => !t.done);
+                    localStorage.setItem('startpage_tasks', JSON.stringify(customTasks));
+                    renderTasks();
+                    printResult("Completed tasks pruned.");
+                } else {
+                    printResult("Invalid task argument. Use 'add', 'done [id]', or 'clear'.");
+                }
+                return;
+            }
+
             if (primary === 'tools') {
                 showTools();
                 return;
             }
 
             if (primary === 'reset-bms') {
-                customBookmarks = [];
-                localStorage.removeItem('startpage_custom_bms');
+                localStorage.removeItem('startpage_bms');
                 renderShortcuts(false);
-                const div = document.createElement('div');
-                div.className = 'command-result user';
-                div.textContent = 'Custom bookmarks cleared.';
-                outputEl.appendChild(div);
-                layerFgEl.scrollTop = layerFgEl.scrollHeight;
+                printResult('Bookmarks reset to defaults.');
                 return;
             }
 
