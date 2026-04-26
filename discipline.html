@@ -5,464 +5,352 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DISCIPLINE :: Terminal</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
-            --g:   #00ff41;
-            --gm:  #00cc44;
-            --gd:  #005c18;
-            --gdd: #003b00;
-            --bg:  #000000;
-            --bg2: #050505;
-        }
-
-        body {
-            background: var(--bg);
-            color: var(--g);
-            font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
-            min-height: 100vh;
+        body, html {
+            background: #000;
+            color: #00ff41;
+            font-family: 'Share Tech Mono', 'DejaVu Sans Mono', 'Courier New', monospace;
+            height: 100%; min-height: 100vh;
             overflow-x: hidden;
+            font-size: 16px;
+            text-shadow: 0 0 2px rgba(0,255,65,0.55), 0 0 8px rgba(0,255,65,0.25);
+            display: flex; justify-content: center; align-items: flex-start;
         }
 
-        /* ── CRT & scanline ── */
+        /* ── CRT ── */
         .crt {
             position: fixed; inset: 0; z-index: 999; pointer-events: none;
             background:
-                repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px),
-                radial-gradient(ellipse at 50% 50%, transparent 48%, rgba(0,0,0,0.5) 100%);
+                linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.22) 50%),
+                linear-gradient(90deg, rgba(255,0,0,0.02), rgba(0,255,0,0.01), rgba(0,0,255,0.02));
+            background-size: 100% 4px, 4px 100%;
+            box-shadow: inset 0 0 120px rgba(0,0,0,0.8);
         }
         .scanline {
             position: fixed; width: 100%; height: 140px;
-            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0,255,65,0.055) 50%, rgba(0,0,0,0) 100%);
-            bottom: 100%; animation: scanroll 8s linear infinite;
+            background: linear-gradient(0deg, transparent 0%, rgba(0,255,65,0.07) 50%, transparent 100%);
+            bottom: 100%; animation: scan 7s linear infinite;
             pointer-events: none; z-index: 1000;
         }
-        @keyframes scanroll { to { transform: translateY(210vh); } }
+        @keyframes scan { to { transform: translateY(210vh); } }
 
-        /* ── Header ── */
-        .hdr {
-            display: flex; align-items: center; gap: 10px;
-            padding: 8px 20px;
-            border-bottom: 1px solid rgba(0,255,65,0.15);
-            background: rgba(5,5,5,0.97);
-            position: sticky; top: 0; z-index: 50;
-            font-size: 11px;
-            -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
-        }
+        /* ── Back button ── */
         .back-btn {
-            color: var(--gm); text-decoration: none;
-            border: 1px solid rgba(0,255,65,0.3);
+            position: fixed; top: 10px; left: 12px; z-index: 500;
+            color: #005c18; text-decoration: none;
+            border: 1px solid rgba(0,255,65,0.2);
             padding: 2px 9px; border-radius: 3px; font-size: 10px;
-            transition: all 0.2s; letter-spacing: 0.5px;
+            font-family: inherit; letter-spacing: 0.5px;
+            transition: all 0.2s;
         }
         .back-btn:hover {
-            color: var(--g); border-color: var(--g);
-            background: rgba(0,255,65,0.06);
-            box-shadow: 0 0 8px rgba(0,255,65,0.3);
-        }
-        .hdr-title {
-            color: var(--g); letter-spacing: 3px;
-            text-shadow: 0 0 6px rgba(0,255,65,0.4);
-        }
-        .hdr-sep { color: var(--gdd); }
-        .hdr-clock { color: var(--gd); margin-left: auto; font-variant-numeric: tabular-nums; }
-
-        /* ── Hero ── */
-        .hero {
-            padding: 52px 52px 36px;
-            border-bottom: 1px solid rgba(0,255,65,0.1);
-            position: relative;
-        }
-        .hero::after {
-            content: '';
-            position: absolute; right: 52px; top: 52px;
-            font-size: 140px; line-height: 1;
-            color: var(--gdd); opacity: 0.18;
-            font-family: serif;
-        }
-        .hero-word {
-            font-size: clamp(4.5rem, 11vw, 10rem);
-            font-weight: normal;
-            letter-spacing: -3px;
-            line-height: 0.88;
-            color: var(--g);
-            text-shadow: 0 0 50px rgba(0,255,65,0.25), 0 0 100px rgba(0,255,65,0.08);
-            margin-bottom: 28px;
-            text-transform: lowercase;
-            position: relative; display: inline-block;
-        }
-        /* glitch */
-        .hero-word::before, .hero-word::after {
-            content: attr(data-text);
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-        }
-        .hero-word::before {
-            left: 3px; color: rgba(0,220,180,0.65);
-            clip-path: inset(15% 0 65% 0);
-            animation: g1 4s infinite;
-        }
-        .hero-word::after {
-            left: -3px; color: rgba(0,60,255,0.35);
-            clip-path: inset(65% 0 8% 0);
-            animation: g2 5s infinite;
-        }
-        @keyframes g1 {
-            0%,90%  { clip-path: inset(15% 0 65% 0); transform: translate(0); }
-            91%     { clip-path: inset(5% 0 72% 0); transform: translate(-3px, 1px); }
-            93%     { clip-path: inset(45% 0 35% 0); transform: translate(2px, -1px); }
-            96%,100%{ transform: translate(0); }
-        }
-        @keyframes g2 {
-            0%,86%  { clip-path: inset(65% 0 8% 0); transform: translate(0); }
-            87%     { clip-path: inset(72% 0 4% 0); transform: translate(3px, 1px); }
-            90%     { clip-path: inset(40% 0 28% 0); transform: translate(-2px, -1px); }
-            93%,100%{ transform: translate(0); }
+            color: #00ff41; border-color: rgba(0,255,65,0.6);
+            background: rgba(0,255,65,0.05);
+            box-shadow: 0 0 8px rgba(0,255,65,0.25);
         }
 
-        .hero-phonetic {
-            color: var(--gd); font-size: 13px;
-            margin-bottom: 18px; letter-spacing: 1px;
-        }
-        .hero-def {
-            font-size: clamp(13px, 1.8vw, 19px);
-            color: var(--gm); line-height: 1.7;
-            max-width: 680px; margin-bottom: 10px;
-        }
-
-        /* ── 2-col content ── */
-        .content {
+        /* ── Dashboard grid ── */
+        .dashboard {
             display: grid;
-            grid-template-columns: 260px 1fr;
-            min-height: calc(100vh - 200px);
+            grid-template-columns: 1fr 2.5fr 1fr;
+            gap: 2rem;
+            padding: 3rem 2.5rem 2rem;
+            width: 100%; max-width: 1600px;
+            min-height: 100vh;
+            position: relative; z-index: 10;
         }
 
-        /* left sidebar */
-        .sidebar {
-            border-right: 1px solid rgba(0,255,65,0.1);
-            padding: 28px 22px;
-            display: flex; flex-direction: column; gap: 0;
+        /* ── Left col: process flow ── */
+        .process-flow {
+            display: flex; flex-direction: column; align-items: center;
+            font-size: 0.88rem; padding-top: 0.5rem;
         }
-        .sidebar-label {
-            font-size: 9px; color: var(--gdd);
-            letter-spacing: 3px; text-transform: uppercase;
-            margin-bottom: 18px;
-            padding-bottom: 7px;
-            border-bottom: 1px solid rgba(0,255,65,0.06);
+
+        .process-node {
+            padding: 0.4rem 0.6rem;
+            text-align: center; text-transform: uppercase;
+            letter-spacing: 1px; cursor: crosshair;
+            color: #00cc44;
         }
-        .flow-node {
-            padding: 7px 12px;
-            border: 1px solid rgba(0,255,65,0.18);
-            border-radius: 4px;
-            font-size: 11px; color: var(--gm);
-            text-align: center; letter-spacing: 1px;
-            background: rgba(0,255,65,0.015);
-            cursor: crosshair; transition: all 0.2s;
+
+        .arrow-down {
+            width: 2px; height: 28px; margin: 5px 0;
+            background: #00ff41; position: relative;
+            animation: arrowPulse 1.5s infinite alternate;
         }
-        .flow-node:hover {
-            color: var(--g); border-color: rgba(0,255,65,0.5);
-            box-shadow: 0 0 10px rgba(0,255,65,0.18);
+        @keyframes arrowPulse {
+            0%   { background: #00ff41; box-shadow: 0 0 4px rgba(0,255,65,0.6); }
+            100% { background: #fff;    box-shadow: 0 0 14px #fff, 0 0 28px #fff; }
         }
-        .flow-arrow {
-            text-align: center; color: var(--gd); font-size: 16px;
-            padding: 3px 0;
-            animation: aPulse 1.8s ease-in-out infinite alternate;
+        .arrow-down::after {
+            content: '';
+            position: absolute; bottom: -6px; left: -4px;
+            width: 0; height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 7px solid #00ff41;
         }
-        @keyframes aPulse {
-            0%   { color: var(--gd); }
-            100% { color: var(--gm); text-shadow: 0 0 6px rgba(0,255,65,0.4); }
+
+        .loop-container {
+            display: flex; align-items: center; justify-content: center;
+            position: relative; margin: 0.8rem 0;
+            width: 170px; height: 170px;
         }
-        .loop-label {
-            text-align: center; color: var(--gdd);
-            font-size: 9px; letter-spacing: 2px;
-            margin: 5px 0 3px;
-        }
-        .loop-wrap {
-            width: 150px; height: 150px;
-            margin: 0 auto 3px; position: relative;
-        }
-        .loop-wrap svg {
-            width: 100%; height: 100%;
-            filter: drop-shadow(0 0 4px rgba(0,255,65,0.25));
-            animation: spinLoop 9s linear infinite;
+
+        .loop-svg {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%; overflow: visible;
+            animation: spinLoop 7s linear infinite;
         }
         @keyframes spinLoop { to { transform: rotate(360deg); } }
-        .loop-center {
-            position: absolute; inset: 0;
+        .loop-svg path   { fill: none; stroke: #00cc44; stroke-width: 2; filter: drop-shadow(0 0 4px #00cc44); }
+        .loop-svg polygon { fill: #00cc44; stroke: none; }
+
+        .loop-text {
+            position: absolute; font-size: 0.72rem;
+            text-align: center; color: #00cc44; letter-spacing: 0.5px;
+        }
+        .lt-build    { top: -18px; left: 50%; transform: translateX(-50%); }
+        .lt-test     { right: -54px; top: 50%; transform: translateY(-50%); width: 75px; }
+        .lt-redesign { left: -56px; top: 50%; transform: translateY(-50%); }
+
+        /* ── Center col ── */
+        .center-col {
             display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            pointer-events: none; gap: 2px;
-        }
-        .lc { font-size: 9px; color: var(--gm); letter-spacing: 1px; }
-        .lc-sep { font-size: 11px; color: var(--gdd); }
-
-        /* right panel */
-        .main {
-            padding: 28px 40px;
-            display: flex; flex-direction: column; gap: 24px;
         }
 
-        .section-label {
-            font-size: 9px; color: var(--gdd);
-            letter-spacing: 3px; text-transform: uppercase;
-            margin-bottom: 10px;
+        h1 {
+            font-size: clamp(5rem, 9vw, 9rem);
+            font-weight: normal; margin: 0 0 0.4rem 0;
+            letter-spacing: -2px; text-transform: lowercase; line-height: 0.9;
+            color: #00ff41;
+            text-shadow: 0 0 20px rgba(0,255,65,0.45), 0 0 60px rgba(0,255,65,0.15);
         }
 
-        /* quotes */
-        .quote-block {
-            border-left: 2px solid rgba(0,255,65,0.3);
-            padding: 12px 20px;
-        }
-        .quote-text {
-            font-size: clamp(13px, 1.6vw, 18px);
-            color: var(--gm); line-height: 1.65;
-            cursor: crosshair;
+        .phonetic {
+            font-size: 1.1rem; margin-bottom: 1.8rem;
+            border-bottom: 1px solid rgba(0,255,65,0.5);
+            padding-bottom: 0.8rem; display: inline-block;
+            color: #00cc44; letter-spacing: 0.5px;
         }
 
-        /* Newton's cradle */
-        .cradle-row { display: flex; align-items: flex-end; gap: 32px; }
-        .cradle-svg {
-            width: 200px; height: 90px; flex-shrink: 0;
-            filter: drop-shadow(0 0 4px rgba(0,255,65,0.28));
-        }
-        .swing-left  { transform-origin: 70px 0;  animation: sL 0.9s infinite alternate cubic-bezier(.5,0,.5,1); }
-        .swing-right { transform-origin: 148px 0; animation: sR 0.9s infinite alternate cubic-bezier(.5,0,.5,1); }
-        @keyframes sL { 0%,49%{ transform:rotate(0);} 100%{ transform:rotate(32deg);} }
-        @keyframes sR { 0%{ transform:rotate(-32deg);} 51%,100%{ transform:rotate(0);} }
-        .cradle-note {
-            font-size: 12px; color: var(--gd);
-            line-height: 1.6; letter-spacing: 0.5px;
+        p.definition {
+            font-size: 1.3rem; line-height: 1.65;
+            margin-bottom: 1.5rem; max-width: 95%;
+            color: #00cc44;
         }
 
-        /* charts */
-        .charts-row { display: flex; gap: 20px; }
-        .chart-col { flex: 1; }
-        .chart-title {
-            font-size: 9px; color: var(--gd);
-            letter-spacing: 2px; text-transform: uppercase;
-            margin-bottom: 6px;
+        .charts-container {
+            display: flex; gap: 1.5rem;
+            margin-top: auto; padding-top: 2rem;
+            align-items: flex-end;
         }
+        .chart { flex: 1; }
         .chart-svg {
-            width: 100%; height: 65px;
-            border-bottom: 1px solid rgba(0,255,65,0.18);
-            margin-bottom: 0;
-            filter: drop-shadow(0 0 3px rgba(0,255,65,0.25));
+            width: 100%; height: 80px;
+            border-bottom: 1px dashed rgba(0,255,65,0.35);
+            margin-bottom: 0.4rem; overflow: visible;
+            filter: drop-shadow(0 0 3px rgba(0,255,65,0.35));
         }
-        .l-draw {
-            stroke-dasharray: 300;
-            animation: drawL 4s linear infinite;
+        .chart-label {
+            font-size: 0.82rem; text-transform: uppercase;
+            letter-spacing: 1px; color: #00cc44;
         }
+
+        .l-anim { stroke-dasharray: 300; animation: drawL 4s linear infinite; }
         @keyframes drawL {
             0%      { stroke-dashoffset: 300; }
             70%,100%{ stroke-dashoffset: 0; }
         }
-        .dp { animation: dpulse 1s infinite alternate; }
+
+        .dp { animation: dp 1s infinite alternate; }
         .dp:nth-child(even) { animation-delay: 0.5s; }
-        @keyframes dpulse {
-            0%   { r: 2; }
-            100% { r: 3.5; fill: #b0ffc8; filter: drop-shadow(0 0 3px #b0ffc8); }
+        @keyframes dp {
+            0%   { r: 2; fill: #00ff41; }
+            100% { r: 4; fill: #fff; filter: drop-shadow(0 0 4px #fff); }
         }
 
-        /* arrows + fall-stand */
-        .bottom-row {
-            display: flex; align-items: center; gap: 40px;
-            border-top: 1px solid rgba(0,255,65,0.08);
-            padding-top: 20px;
+        /* ── Right col ── */
+        .right-col {
+            display: flex; flex-direction: column;
+            gap: 1.5rem; padding-top: 0.5rem;
         }
-        .arrows-svg {
-            width: 160px; height: 110px; flex-shrink: 0;
-            filter: drop-shadow(0 0 4px rgba(0,255,65,0.25));
+
+        .newtons-cradle { width: 100%; height: 110px; }
+
+        .quote-small {
+            font-size: 0.82rem; text-align: center;
+            letter-spacing: 1px; text-transform: uppercase;
+            color: #00cc44; cursor: crosshair;
         }
-        .da { animation: da 0.38s infinite; }
-        .da:nth-child(even) { animation-delay: 0.19s; }
-        @keyframes da {
-            0%,74%{ opacity:1; }
-            84%   { opacity:0.1; transform:translateY(2px); }
-            100%  { opacity:1; }
+
+        .arrows-array { width: 100%; height: 160px; filter: drop-shadow(0 0 4px rgba(0,255,65,0.3)); }
+
+        .fall-stand {
+            font-size: 0.88rem; text-align: center;
+            line-height: 1.55; text-transform: uppercase;
+            letter-spacing: 1px; cursor: crosshair; color: #00cc44;
         }
-        .ua { animation: ua 0.6s infinite alternate; }
+
+        /* Swing */
+        .swing-l { transform-origin: 70px 0;  animation: sL 0.9s infinite alternate cubic-bezier(.5,0,.5,1); }
+        .swing-r { transform-origin: 148px 0; animation: sR 0.9s infinite alternate cubic-bezier(.5,0,.5,1); }
+        @keyframes sL { 0%,49%{ transform:rotate(0); } 100%{ transform:rotate(32deg); } }
+        @keyframes sR { 0%{ transform:rotate(-32deg); } 51%,100%{ transform:rotate(0); } }
+
+        /* Down arrows */
+        .da { animation: da 0.36s infinite; }
+        .da:nth-child(even) { animation-delay: 0.18s; }
+        @keyframes da { 0%,74%{ opacity:1; } 84%{ opacity:0.1; transform:translateY(2px); } 100%{ opacity:1; } }
+
+        .ua { animation: ua 0.58s infinite alternate; }
         @keyframes ua {
-            0%   { transform:translateY(0);  filter:drop-shadow(0 0 2px rgba(0,255,65,.5)); }
-            100% { transform:translateY(-10px); filter:drop-shadow(0 0 12px rgba(0,255,65,.9)); }
-        }
-        .fall-text {
-            font-size: clamp(14px, 2.2vw, 24px);
-            color: var(--g); line-height: 1.5;
-            text-shadow: 0 0 12px rgba(0,255,65,0.4);
-            text-transform: uppercase; letter-spacing: 2px;
-            cursor: crosshair;
+            0%   { transform:translateY(0);   filter:drop-shadow(0 0 2px rgba(0,255,65,.6)); }
+            100% { transform:translateY(-10px); filter:drop-shadow(0 0 14px rgba(0,255,65,1)); }
         }
 
-        /* scramble targets */
         .st { cursor: crosshair; }
     </style>
 </head>
 <body>
     <div class="crt"></div>
     <div class="scanline"></div>
+    <a class="back-btn" href="index.html">← back</a>
 
-    <div class="hdr">
-        <a class="back-btn" href="index.html">← back</a>
-        <span class="hdr-sep">✟</span>
-        <span class="hdr-title">DISCIPLINE_TERMINAL</span>
-        <span class="hdr-clock" id="hdr-clock"></span>
-    </div>
+    <div class="dashboard">
 
-    <!-- Hero -->
-    <div class="hero">
-        <div class="hero-word st" data-text="discipline">discipline</div>
-        <div class="hero-phonetic st" data-text="['dɪs.ɪ.plɪn] noun">['dɪs.ɪ.plɪn] noun</div>
-        <p class="hero-def st" data-text="the practice of doing what you don't want to do when you don't want to do it.">
-            the practice of doing what you don't want to do when you don't want to do it.
-        </p>
-        <p class="hero-def st" data-text="pushing yourself further when no one else is going to do it for you, towards making your dreams into a reality.">
-            pushing yourself further when no one else is going to do it for you, towards making your dreams into a reality.
-        </p>
-    </div>
+        <!-- Left: Process Flow -->
+        <div>
+            <div class="process-flow">
+                <div class="process-node st" data-text="IDENTIFY PROBLEM">IDENTIFY PROBLEM</div>
+                <div class="arrow-down"></div>
+                <div class="process-node st" data-text="BRAINSTORM">BRAINSTORM</div>
+                <div class="arrow-down"></div>
+                <div class="process-node st" data-text="DESIGN">DESIGN</div>
+                <div class="arrow-down"></div>
 
-    <!-- Content -->
-    <div class="content">
-
-        <!-- Sidebar: process flow -->
-        <div class="sidebar">
-            <div class="sidebar-label">// process.flow</div>
-            <div class="flow-node st" data-text="IDENTIFY PROBLEM">IDENTIFY PROBLEM</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node st" data-text="BRAINSTORM">BRAINSTORM</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node st" data-text="DESIGN">DESIGN</div>
-            <div class="flow-arrow">↓</div>
-            <div class="loop-label">// iteration loop</div>
-            <div class="loop-wrap">
-                <svg viewBox="0 0 100 100">
-                    <path d="M50 10 A40 40 0 0 1 90 50" fill="none" stroke="#00cc44" stroke-width="2"/>
-                    <polygon points="90,45 85,55 95,55" fill="#00cc44" transform="rotate(30 90 50)"/>
-                    <path d="M90 50 A40 40 0 0 1 50 90" fill="none" stroke="#00cc44" stroke-width="2"/>
-                    <polygon points="45,90 55,85 55,95" fill="#00cc44" transform="rotate(120 50 90)"/>
-                    <path d="M50 90 A40 40 0 0 1 10 50" fill="none" stroke="#00cc44" stroke-width="2"/>
-                    <polygon points="10,45 5,55 15,55" fill="#00cc44" transform="rotate(210 10 50)"/>
-                    <path d="M10 50 A40 40 0 0 1 50 10" fill="none" stroke="#00cc44" stroke-width="2"/>
-                    <polygon points="45,10 55,5 55,15" fill="#00cc44" transform="rotate(300 50 10)"/>
-                </svg>
-                <div class="loop-center">
-                    <span class="lc st" data-text="BUILD">BUILD</span>
-                    <span class="lc-sep">↺</span>
-                    <span class="lc st" data-text="TEST">TEST</span>
-                    <span class="lc-sep">↺</span>
-                    <span class="lc st" data-text="REDESIGN">REDESIGN</span>
-                </div>
-            </div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node st" data-text="SHARE SOLUTION">SHARE SOLUTION</div>
-        </div>
-
-        <!-- Main content -->
-        <div class="main">
-
-            <!-- Quote -->
-            <div>
-                <div class="section-label">// signal.received</div>
-                <div class="quote-block">
-                    <div class="quote-text st" data-text="THE FIRST STEP IS NEVER JUST A FIRST STEP">
-                        THE FIRST STEP IS NEVER JUST A FIRST STEP
-                    </div>
-                </div>
-            </div>
-
-            <!-- Newton's cradle -->
-            <div>
-                <div class="section-label">// momentum.transfer</div>
-                <div class="cradle-row">
-                    <svg class="cradle-svg" viewBox="0 0 200 90">
-                        <line x1="70" y1="0" x2="148" y2="0" stroke="#005c18" stroke-width="1" stroke-dasharray="2 3"/>
-                        <g class="swing-left">
-                            <line x1="70" y1="0" x2="70" y2="65" stroke="#00cc44" stroke-width="2"/>
-                            <circle cx="70" cy="65" r="11" fill="none" stroke="#00cc44" stroke-width="2"/>
-                        </g>
-                        <line x1="96" y1="0" x2="96" y2="65" stroke="#00cc44" stroke-width="2"/>
-                        <circle cx="96" cy="65" r="11" fill="none" stroke="#00cc44" stroke-width="2"/>
-                        <line x1="122" y1="0" x2="122" y2="65" stroke="#00cc44" stroke-width="2"/>
-                        <circle cx="122" cy="65" r="11" fill="none" stroke="#00cc44" stroke-width="2"/>
-                        <g class="swing-right">
-                            <line x1="148" y1="0" x2="148" y2="65" stroke="#005c18" stroke-width="2"/>
-                            <circle cx="148" cy="65" r="11" fill="none" stroke="#005c18" stroke-width="2"/>
-                        </g>
+                <div class="loop-container">
+                    <svg class="loop-svg" viewBox="0 0 100 100">
+                        <path d="M50 10 A40 40 0 0 1 90 50"/>
+                        <polygon points="90,45 85,55 95,55" transform="rotate(30 90 50)"/>
+                        <path d="M90 50 A40 40 0 0 1 50 90"/>
+                        <polygon points="45,90 55,85 55,95" transform="rotate(120 50 90)"/>
+                        <path d="M50 90 A40 40 0 0 1 10 50"/>
+                        <polygon points="10,45 5,55 15,55" transform="rotate(210 10 50)"/>
+                        <path d="M10 50 A40 40 0 0 1 50 10"/>
+                        <polygon points="45,10 55,5 55,15" transform="rotate(300 50 10)"/>
                     </svg>
-                    <div class="cradle-note st" data-text="every action transfers energy. momentum compounds. motion persists.">
-                        every action transfers energy.<br>momentum compounds.<br>motion persists.
-                    </div>
+                    <div class="loop-text lt-build st" data-text="BUILD">BUILD</div>
+                    <div class="loop-text lt-test st" data-text="TEST & EVALUATE">TEST &amp;<br>EVALUATE</div>
+                    <div class="loop-text lt-redesign st" data-text="REDESIGN">REDESIGN</div>
                 </div>
-            </div>
 
-            <!-- Charts -->
-            <div>
-                <div class="section-label">// metrics.live</div>
-                <div class="charts-row">
-                    <div class="chart-col">
-                        <div class="chart-title">intensity</div>
-                        <svg class="chart-svg" viewBox="0 0 200 65" preserveAspectRatio="none">
-                            <path class="l-draw" d="M0 60 Q15 -8 30 60 Q45 18 60 60 Q70 38 80 60 Q85 55 90 60 L200 60"
-                                  fill="none" stroke="#00cc44" stroke-width="1.5"/>
-                            <circle cx="30" cy="60" r="2" fill="#00ff41" class="dp"/>
-                            <circle cx="60" cy="60" r="2" fill="#00ff41" class="dp"/>
-                            <circle cx="80" cy="60" r="2" fill="#00ff41" class="dp"/>
-                            <line x1="90" y1="60" x2="200" y2="60" stroke="#005c18" stroke-dasharray="2 4" stroke-width="1"/>
-                            <polygon points="196,57 200,60 196,63" fill="#00cc44"/>
-                        </svg>
-                    </div>
-                    <div class="chart-col">
-                        <div class="chart-title">consistency</div>
-                        <svg class="chart-svg" viewBox="0 0 200 65" preserveAspectRatio="none">
-                            <path class="l-draw" d="M0 60 Q10 44 20 60 Q30 44 40 60 Q50 44 60 60 Q70 44 80 60 Q90 44 100 60 Q110 44 120 60 Q130 44 140 60 Q150 44 160 60 Q170 44 180 60"
-                                  fill="none" stroke="#00cc44" stroke-width="1.5"/>
-                            <circle cx="20" cy="60" r="2" fill="#00ff41" class="dp"/>
-                            <circle cx="60" cy="60" r="2" fill="#00ff41" class="dp"/>
-                            <circle cx="100" cy="60" r="2" fill="#00ff41" class="dp"/>
-                            <circle cx="140" cy="60" r="2" fill="#00ff41" class="dp"/>
-                            <line x1="180" y1="60" x2="200" y2="60" stroke="#00cc44" stroke-width="1"/>
-                            <polygon points="196,57 200,60 196,63" fill="#00cc44"/>
-                        </svg>
-                    </div>
-                </div>
+                <div class="arrow-down"></div>
+                <div class="process-node st" data-text="SHARE SOLUTION">SHARE SOLUTION</div>
             </div>
-
-            <!-- Arrows + fall-stand -->
-            <div class="bottom-row">
-                <svg class="arrows-svg" viewBox="0 0 160 110">
-                    <g class="da" transform="translate(10,0)"><line x1="0" y1="0" x2="0" y2="96" stroke="#005c18" stroke-width="2"/><polygon points="-4,92 4,92 0,100" fill="#005c18"/></g>
-                    <g class="da" transform="translate(28,0)"><line x1="0" y1="0" x2="0" y2="96" stroke="#005c18" stroke-width="2"/><polygon points="-4,92 4,92 0,100" fill="#005c18"/></g>
-                    <g class="da" transform="translate(46,0)"><line x1="0" y1="0" x2="0" y2="96" stroke="#005c18" stroke-width="2"/><polygon points="-4,92 4,92 0,100" fill="#005c18"/></g>
-                    <g class="da" transform="translate(64,0)"><line x1="0" y1="0" x2="0" y2="96" stroke="#005c18" stroke-width="2"/><polygon points="-4,92 4,92 0,100" fill="#005c18"/></g>
-                    <g class="da" transform="translate(82,0)"><line x1="0" y1="0" x2="0" y2="96" stroke="#005c18" stroke-width="2"/><polygon points="-4,92 4,92 0,100" fill="#005c18"/></g>
-                    <g class="da" transform="translate(100,0)"><line x1="0" y1="0" x2="0" y2="96" stroke="#005c18" stroke-width="2"/><polygon points="-4,92 4,92 0,100" fill="#005c18"/></g>
-                    <g class="ua" transform="translate(130,0)">
-                        <line x1="0" y1="18" x2="0" y2="96" stroke="#00ff41" stroke-width="2"/>
-                        <polygon points="-4,23 4,23 0,16" fill="#00ff41"/>
-                    </g>
-                </svg>
-                <div class="fall-text st" data-text="FALL SEVEN TIMES, STAND UP EIGHT.">
-                    FALL SEVEN TIMES,<br>STAND UP EIGHT.
-                </div>
-            </div>
-
         </div>
+
+        <!-- Center -->
+        <div class="center-col">
+            <h1 class="st" data-text="discipline">discipline</h1>
+            <div class="phonetic st" data-text="['dɪs.ɪ.plɪn] noun">['dɪs.ɪ.plɪn] noun</div>
+
+            <p class="definition st" data-text="the practice of doing what you don't want to do when you don't want to do it.">
+                the practice of doing what you don't want to do<br>when you don't want to do it.
+            </p>
+
+            <p class="definition st" data-text="pushing yourself further when no one else is going to do it for you, towards making your dreams into a reality.">
+                pushing yourself further when no one else is going<br>to do it for you, towards making your dreams into<br>a reality.
+            </p>
+
+            <div class="charts-container">
+                <div class="chart">
+                    <svg class="chart-svg" viewBox="0 0 200 80" preserveAspectRatio="none">
+                        <path class="l-anim" d="M0 75 Q15 -15 30 75 Q45 20 60 75 Q70 48 80 75 Q85 68 90 75 L200 75"
+                              fill="none" stroke="#00cc44" stroke-width="1.5"/>
+                        <circle cx="0"  cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="30" cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="60" cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="80" cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="90" cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <line x1="90" y1="75" x2="200" y2="75" stroke="rgba(0,255,65,0.35)" stroke-dasharray="2 4" stroke-width="1"/>
+                        <polygon points="196,72 200,75 196,78" fill="#00cc44"/>
+                    </svg>
+                    <div class="chart-label st" data-text="INTENSITY">INTENSITY</div>
+                </div>
+                <div class="chart">
+                    <svg class="chart-svg" viewBox="0 0 200 80" preserveAspectRatio="none">
+                        <path class="l-anim" d="M0 75 Q10 56 20 75 Q30 56 40 75 Q50 56 60 75 Q70 56 80 75 Q90 56 100 75 Q110 56 120 75 Q130 56 140 75 Q150 56 160 75 Q170 56 180 75"
+                              fill="none" stroke="#00cc44" stroke-width="1.5"/>
+                        <circle cx="0"   cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="20"  cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="40"  cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="60"  cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="80"  cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="100" cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="120" cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="140" cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="160" cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <circle cx="180" cy="75" r="2" class="dp" fill="#00ff41"/>
+                        <line x1="180" y1="75" x2="200" y2="75" stroke="#00cc44" stroke-width="1"/>
+                        <polygon points="196,72 200,75 196,78" fill="#00cc44"/>
+                    </svg>
+                    <div class="chart-label st" data-text="CONSISTENCY">CONSISTENCY</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right -->
+        <div class="right-col">
+            <svg class="newtons-cradle" viewBox="0 0 200 110">
+                <g class="swing-l">
+                    <line x1="70" y1="0" x2="70" y2="80" stroke="#00cc44" stroke-width="2"/>
+                    <circle cx="70" cy="80" r="12" fill="none" stroke="#00cc44" stroke-width="2"/>
+                </g>
+                <line x1="96"  y1="0" x2="96"  y2="80" stroke="#00cc44" stroke-width="2"/>
+                <circle cx="96"  cy="80" r="12" fill="none" stroke="#00cc44" stroke-width="2"/>
+                <line x1="122" y1="0" x2="122" y2="80" stroke="#00cc44" stroke-width="2"/>
+                <circle cx="122" cy="80" r="12" fill="none" stroke="#00cc44" stroke-width="2"/>
+                <g class="swing-r">
+                    <line x1="148" y1="0" x2="148" y2="80" stroke="#005c18" stroke-width="2"/>
+                    <circle cx="148" cy="80" r="12" fill="none" stroke="#005c18" stroke-width="2" stroke-opacity="0.5"/>
+                </g>
+            </svg>
+
+            <div class="quote-small st" data-text="THE FIRST STEP IS NEVER JUST A FIRST STEP">
+                THE FIRST STEP IS NEVER JUST A FIRST STEP
+            </div>
+
+            <svg class="arrows-array" viewBox="0 0 160 160">
+                <g class="da" transform="translate(10,0)"><line x1="0" y1="0" x2="0" y2="142" stroke="#005c18" stroke-width="2"/><polygon points="-4,138 4,138 0,146" fill="#005c18"/></g>
+                <g class="da" transform="translate(30,0)"><line x1="0" y1="0" x2="0" y2="142" stroke="#005c18" stroke-width="2"/><polygon points="-4,138 4,138 0,146" fill="#005c18"/></g>
+                <g class="da" transform="translate(50,0)"><line x1="0" y1="0" x2="0" y2="142" stroke="#005c18" stroke-width="2"/><polygon points="-4,138 4,138 0,146" fill="#005c18"/></g>
+                <g class="da" transform="translate(70,0)"><line x1="0" y1="0" x2="0" y2="142" stroke="#005c18" stroke-width="2"/><polygon points="-4,138 4,138 0,146" fill="#005c18"/></g>
+                <g class="da" transform="translate(90,0)"><line x1="0" y1="0" x2="0" y2="142" stroke="#005c18" stroke-width="2"/><polygon points="-4,138 4,138 0,146" fill="#005c18"/></g>
+                <g class="da" transform="translate(110,0)"><line x1="0" y1="0" x2="0" y2="142" stroke="#005c18" stroke-width="2"/><polygon points="-4,138 4,138 0,146" fill="#005c18"/></g>
+                <g class="ua" transform="translate(140,0)">
+                    <line x1="0" y1="22" x2="0" y2="142" stroke="#00ff41" stroke-width="2"/>
+                    <polygon points="-4,28 4,28 0,20" fill="#00ff41"/>
+                </g>
+            </svg>
+
+            <div class="fall-stand st" data-text="FALL SEVEN TIMES, STAND UP EIGHT.">
+                FALL SEVEN TIMES,<br>STAND UP EIGHT.
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // Clock
-        function tick() {
-            const n = new Date();
-            document.getElementById('hdr-clock').textContent =
-                n.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-        }
-        setInterval(tick, 1000); tick();
-
-        // Text scramble
-        const CH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*░▒▓';
+        const CH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/\\~`';
         const els = document.querySelectorAll('.st');
 
         function scramble(el, ms = 28) {
-            const orig = el.dataset.text || el.innerText;
+            const orig = el.dataset.text;
+            if (!orig) return;
             let iter = 0;
             clearInterval(el._si);
             el._si = setInterval(() => {
@@ -477,15 +365,15 @@
         }
 
         els.forEach(el => {
-            setTimeout(() => scramble(el), Math.random() * 1400);
+            setTimeout(() => scramble(el), Math.random() * 1500);
             el.addEventListener('mouseover', () => scramble(el, 16));
         });
 
         function randGlitch() {
             scramble(els[Math.floor(Math.random() * els.length)]);
-            setTimeout(randGlitch, 1100 + Math.random() * 3800);
+            setTimeout(randGlitch, 1000 + Math.random() * 4000);
         }
-        setTimeout(randGlitch, 2200);
+        setTimeout(randGlitch, 2000);
     </script>
 </body>
 </html>
