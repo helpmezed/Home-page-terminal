@@ -1114,10 +1114,10 @@
         let webDebounce = null;
         async function fetchWebSuggestions(query) {
             try {
-                const res = await fetch(`https://ac.duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=list`);
+                const res = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
-                if (Array.isArray(data) && Array.isArray(data[1])) {
-                    return data[1].slice(0, 5).map(s => ({ text: s, type: 'web', hint: 'web' }));
+                if (Array.isArray(data) && data.length) {
+                    return data.slice(0, 5).map(s => ({ text: s.phrase, type: 'web', hint: 'web' }));
                 }
             } catch(e) {}
             return [];
