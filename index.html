@@ -1112,15 +1112,20 @@
         }
 
         let webDebounce = null;
-        async function fetchWebSuggestions(query) {
-            try {
-                const res = await fetch(`https://duckduckgo.com/ac/?q=${encodeURIComponent(query)}`);
-                const data = await res.json();
-                if (Array.isArray(data) && data.length) {
-                    return data.slice(0, 5).map(s => ({ text: s.phrase, type: 'web', hint: 'web' }));
-                }
-            } catch(e) {}
-            return [];
+        function fetchWebSuggestions(query) {
+            return new Promise(resolve => {
+                const cb = '__sg' + (Date.now() % 1e6);
+                const s = document.createElement('script');
+                window[cb] = data => {
+                    delete window[cb]; s.remove();
+                    try { resolve(data[1].slice(0, 6).map(t => ({ text: t, type: 'web', hint: '↵' }))); }
+                    catch { resolve([]); }
+                };
+                s.onerror = () => { delete window[cb]; s.remove(); resolve([]); };
+                s.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}&callback=${cb}`;
+                document.head.appendChild(s);
+                setTimeout(() => { if (window[cb]) { delete window[cb]; s.remove(); resolve([]); } }, 3000);
+            });
         }
 
         function navigateSuggestions(dir) {
@@ -1149,7 +1154,7 @@
                         currentSuggestions = [...existing, ...webSuggs].slice(0, 8);
                         renderSuggestions();
                     }
-                }, 280);
+                }, 180);
             }
         });
         searchInput.addEventListener('focus', () => { if (!searchInput.value) buildSuggestions(''); });
