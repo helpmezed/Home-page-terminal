@@ -8,7 +8,7 @@
     <style>
         :root {
             --bg: #000000;
-            --card-bg: rgba(0,5,0,0.92);
+            --card-bg: rgba(0,5,0,0.93);
             --green: #00ff41;
             --green-mid: #00cc44;
             --green-dim: #008800;
@@ -42,11 +42,10 @@
             height: 32px;
             display: flex; align-items: center; gap: 10px;
             padding: 0 12px;
-            background: rgba(0,0,0,0.88);
+            background: rgba(0,0,0,0.9);
             border-bottom: 1px solid rgba(0,255,65,0.12);
             backdrop-filter: blur(4px);
-            font-size: 10px;
-            letter-spacing: 0.5px;
+            font-size: 10px; letter-spacing: 0.5px;
         }
 
         .back-btn {
@@ -60,25 +59,18 @@
             background: rgba(0,255,65,0.05);
         }
 
-        .top-divider { color: #002200; }
+        .top-sep { color: #002200; }
 
-        #status-dot {
-            font-size: 9px;
-            color: #005c18;
-            transition: color 0.5s;
-        }
-        #status-dot.live { color: var(--green); animation: statusPulse 2s ease-in-out infinite; }
-        @keyframes statusPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        #status-dot { font-size: 9px; color: #005c18; transition: color 0.5s; }
+        #status-dot.live { color: var(--green); animation: blink 2s ease-in-out infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
 
         #status-text { color: #005c18; transition: color 0.5s; }
         #status-text.live { color: var(--green-mid); }
 
-        #pin-count { color: var(--green-dim); margin-left: auto; }
+        #pin-count { color: var(--green-dim); }
 
-        #help-text {
-            color: #003300; text-align: right;
-            display: flex; gap: 14px;
-        }
+        #help-bar { margin-left: auto; display: flex; gap: 14px; color: #003300; }
 
         /* ── Node cards ── */
         .node-card {
@@ -86,40 +78,63 @@
             background: var(--card-bg);
             border: 1px solid var(--border);
             padding: 10px 12px;
-            min-width: 160px; max-width: 300px;
+            min-width: 165px; max-width: 300px;
             backdrop-filter: blur(4px);
             transform: translate(-50%, -50%);
             transition: border-color 0.2s, box-shadow 0.2s;
-            box-shadow: 0 0 16px 1px rgba(0,255,65,0.3), inset 0 0 8px rgba(0,255,65,0.1);
+            box-shadow: 0 0 16px 1px rgba(0,255,65,0.28), inset 0 0 8px rgba(0,255,65,0.08);
             cursor: move;
-            animation: nodeAppear 0.25s cubic-bezier(0.34,1.56,0.64,1);
+            animation: nodeIn 0.22s cubic-bezier(0.34,1.56,0.64,1);
         }
-        @keyframes nodeAppear {
-            from { transform: translate(-50%,-50%) scale(0.7); opacity: 0; }
-            to   { transform: translate(-50%,-50%) scale(1);   opacity: 1; }
+        @keyframes nodeIn {
+            from { transform: translate(-50%,-50%) scale(0.65); opacity:0; }
+            to   { transform: translate(-50%,-50%) scale(1);    opacity:1; }
         }
         .node-card:hover {
             border-color: #fff;
-            box-shadow: 0 0 28px 4px rgba(0,255,65,0.7), inset 0 0 12px rgba(0,255,65,0.3);
+            box-shadow: 0 0 26px 3px rgba(0,255,65,0.65), inset 0 0 12px rgba(0,255,65,0.25);
             z-index: 100 !important;
         }
 
+        /* urgent pin flicker when < 10 min */
+        .node-card.urgent-pin {
+            animation: urgentFlicker 2.5s ease-in-out infinite;
+        }
+        @keyframes urgentFlicker {
+            0%,100% { border-color: var(--border); }
+            50%      { border-color: #ffaa00; box-shadow: 0 0 16px 1px rgba(255,170,0,0.4), inset 0 0 8px rgba(255,170,0,0.1); }
+        }
+
         .node-header {
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.7rem; color: var(--green-dim);
+            display: flex; align-items: center; gap: 5px;
+            font-size: 0.68rem; color: var(--green-dim);
             margin-bottom: 6px;
             border-bottom: 1px dashed var(--border-dim);
-            padding-bottom: 4px; gap: 6px;
+            padding-bottom: 4px;
         }
-        .node-id { font-size: 0.65rem; color: #005c18; }
-        .node-time { flex: 1; text-align: center; }
-        .delete-btn { color: #004400; cursor: pointer; transition: color 0.15s; font-size: 0.8rem; }
+        .node-id { color: #005c18; flex-shrink: 0; }
+
+        /* Timer badge — clickable to extend duration */
+        .node-timer {
+            flex: 1; text-align: center;
+            cursor: pointer;
+            border-radius: 2px;
+            padding: 0 3px;
+            transition: color 0.3s, background 0.2s;
+            user-select: none;
+        }
+        .node-timer:hover { background: rgba(0,255,65,0.08); }
+        .node-timer.t-ok      { color: var(--green-dim); }
+        .node-timer.t-warn    { color: #ccaa00; }
+        .node-timer.t-urgent  { color: #ff8800; font-weight: 600; }
+        .node-timer.t-maxed   { color: #005c18; cursor: default; }
+
+        .delete-btn { color: #004400; cursor: pointer; transition: color 0.15s; flex-shrink: 0; }
         .delete-btn:hover { color: #ff4444; }
 
         .node-body {
             font-size: 0.85rem; word-break: break-word;
-            white-space: pre-wrap; line-height: 1.45;
-            color: var(--green);
+            white-space: pre-wrap; line-height: 1.45; color: var(--green);
         }
 
         .node-image {
@@ -134,17 +149,12 @@
             position: absolute;
             background: rgba(0,0,0,0.97);
             border: 1px solid var(--green);
-            padding: 12px; width: 280px;
+            padding: 12px; width: 290px;
             display: none; flex-direction: column; gap: 8px;
-            box-shadow: 0 0 24px rgba(0,255,65,0.25);
+            box-shadow: 0 0 24px rgba(0,255,65,0.2);
             z-index: 1000;
             transform: translate(-50%, -50%);
             cursor: default;
-            animation: composerIn 0.18s ease;
-        }
-        @keyframes composerIn {
-            from { transform: translate(-50%,-50%) scale(0.92); opacity:0; }
-            to   { transform: translate(-50%,-50%) scale(1);    opacity:1; }
         }
 
         .composer-header { font-size: 0.75rem; color: var(--green); font-weight: 600; }
@@ -153,10 +163,8 @@
         .composer-input {
             background: transparent;
             border: 1px solid var(--border-dim);
-            color: var(--green);
-            font-family: var(--font); font-size: 0.85rem;
-            padding: 6px; outline: none; resize: none;
-            transition: border-color 0.15s;
+            color: var(--green); font-family: var(--font); font-size: 0.85rem;
+            padding: 6px; outline: none; resize: none; transition: border-color 0.15s;
         }
         .composer-input:focus { border-color: var(--green-dim); }
         .composer-input::placeholder { color: #004400; }
@@ -168,13 +176,27 @@
         #attachBtn { cursor: pointer; text-decoration: underline; }
         #attachBtn:hover { color: var(--green); }
 
-        .composer-actions { display: flex; gap: 8px; }
+        /* Duration row */
+        .composer-dur {
+            display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: #005c18;
+        }
+        .dur-btn {
+            background: transparent; border: 1px solid var(--border-dim);
+            color: #005c18; padding: 2px 7px; cursor: pointer;
+            font-family: var(--font); font-size: 0.68rem;
+            border-radius: 3px; transition: all 0.15s;
+        }
+        .dur-btn:hover { color: var(--green-mid); border-color: var(--green-mid); }
+        .dur-btn.active {
+            color: var(--green); border-color: var(--green-dim);
+            background: rgba(0,255,65,0.06);
+        }
 
+        .composer-actions { display: flex; gap: 8px; }
         .btn {
             background: transparent; border: 1px solid var(--border-dim);
             color: var(--green-dim); padding: 4px 10px; cursor: pointer;
-            font-family: var(--font); font-size: 0.78rem; flex: 1;
-            transition: all 0.15s;
+            font-family: var(--font); font-size: 0.78rem; flex: 1; transition: all 0.15s;
         }
         .btn:hover { color: var(--green); border-color: var(--green); }
         .btn-primary { color: var(--green); border-color: var(--green-dim); }
@@ -185,15 +207,16 @@
 
     <div id="top-bar">
         <a class="back-btn" href="index.html">← back</a>
-        <span class="top-divider">|</span>
+        <span class="top-sep">|</span>
         <span id="status-dot">●</span>
         <span id="status-text">CONNECTING</span>
-        <span class="top-divider">|</span>
+        <span class="top-sep">|</span>
         <span id="pin-count">0 PINS</span>
-        <div id="help-text">
-            <span>CLICK·SPAWN</span>
+        <div id="help-bar">
+            <span>CLICK·PIN</span>
             <span>DRAG·MOVE</span>
             <span>SCROLL·ZOOM</span>
+            <span>TIMER·EXTEND</span>
         </div>
     </div>
 
@@ -209,6 +232,12 @@
             <span id="attachBtn">[attach image]</span>
         </div>
         <input type="file" id="fileInput" accept="image/*" style="display:none;">
+        <div class="composer-dur">
+            <span>expires:</span>
+            <button class="dur-btn active" data-h="1">1h</button>
+            <button class="dur-btn" data-h="2">2h</button>
+            <button class="dur-btn" data-h="3">3h</button>
+        </div>
         <div class="composer-actions">
             <button class="btn btn-primary" id="saveBtn">PIN IT</button>
             <button class="btn" id="cancelBtn">cancel</button>
@@ -217,59 +246,54 @@
 
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <script>
-    (function() {
-        const board    = document.getElementById('canvas-board');
-        const composer = document.getElementById('composer');
+    (function () {
+        const board      = document.getElementById('canvas-board');
+        const composer   = document.getElementById('composer');
         const nodeInput  = document.getElementById('nodeInput');
         const saveBtn    = document.getElementById('saveBtn');
         const cancelBtn  = document.getElementById('cancelBtn');
         const attachBtn  = document.getElementById('attachBtn');
         const fileInput  = document.getElementById('fileInput');
         const uploadStatus = document.getElementById('uploadStatus');
-        const compX = document.getElementById('compX');
-        const compY = document.getElementById('compY');
+        const compX      = document.getElementById('compX');
+        const compY      = document.getElementById('compY');
         const statusDot  = document.getElementById('status-dot');
         const statusText = document.getElementById('status-text');
         const pinCountEl = document.getElementById('pin-count');
 
-        // ── Gun.js init ──
+        // ── Gun.js ──
         const gun = Gun({
             peers: [
                 'https://gun-manhattan.herokuapp.com/gun',
-                'https://peer.wallie.io/gun'
+                'https://peer.wallie.io/gun',
+                'wss://gundb-relay-production.up.railway.app/gun'
             ]
         });
-        const BOARD = gun.get('matrix-bulletin-board-v1');
+        const BOARD = gun.get('matrix-bulletin-board-v2');
 
-        // Connection health check — if we get a Gun response within 3s, mark live
         let isLive = false;
-        const liveTimer = setTimeout(() => setStatus(false), 3000);
+        const liveTimer = setTimeout(() => setStatus(false), 4000);
 
         function setStatus(live) {
             isLive = live;
-            if (live) {
-                clearTimeout(liveTimer);
-                statusDot.className = 'live';
-                statusText.className = 'live';
-                statusText.textContent = 'LIVE';
-            } else {
-                statusDot.className = '';
-                statusText.className = '';
-                statusText.textContent = 'LOCAL';
-            }
+            clearTimeout(liveTimer);
+            statusDot.className  = live ? 'live' : '';
+            statusText.className = live ? 'live' : '';
+            statusText.textContent = live ? 'LIVE' : 'LOCAL';
         }
 
         // ── State ──
-        let posts   = {};   // id → data
-        let nodeEls = {};   // id → DOM element
+        let posts   = {};
+        let nodeEls = {};
         let scale = 1;
         let isDragging = false;
         let dragTarget = null;
         let currentSpawn = { x: 50, y: 50 };
         let pendingImageData = null;
+        let selectedDuration = 1; // hours
         let moveSaveTimers = {};
 
-        // ── Real-time Gun listener ──
+        // ── Gun real-time listener ──
         BOARD.map().on((data, id) => {
             if (!isLive) setStatus(true);
 
@@ -280,14 +304,21 @@
                 return;
             }
 
+            // Skip if already expired
+            if (data.expiresAt && Date.now() > data.expiresAt) {
+                BOARD.get(id).put({ _deleted: true });
+                return;
+            }
+
             posts[id] = data;
 
             if (nodeEls[id]) {
-                // Sync remote position if we're not dragging this node
                 if (!dragTarget || dragTarget.id !== id) {
                     nodeEls[id].style.left = data.x + '%';
                     nodeEls[id].style.top  = data.y + '%';
                 }
+                // Refresh timer display in case expiresAt changed
+                refreshTimer(id);
             } else {
                 const el = createNodeEl(data);
                 board.appendChild(el);
@@ -298,8 +329,66 @@
 
         function updatePinCount() {
             const n = Object.keys(nodeEls).length;
-            pinCountEl.textContent = n + ' PIN' + (n !== 1 ? 'S' : '');
+            pinCountEl.textContent = n + (n === 1 ? ' PIN' : ' PINS');
         }
+
+        // ── Time helpers ──
+        function formatRemaining(expiresAt) {
+            const ms = expiresAt - Date.now();
+            if (ms <= 0) return 'EXPIRED';
+            const totalSec = Math.floor(ms / 1000);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            if (h > 0) return h + 'h ' + m + 'm';
+            if (m > 0) return m + 'm';
+            return '<1m';
+        }
+
+        function timerClass(expiresAt) {
+            const ms = expiresAt - Date.now();
+            if (ms <= 0)             return 't-urgent';
+            if (ms < 10 * 60000)     return 't-urgent';
+            if (ms < 30 * 60000)     return 't-warn';
+            return 't-ok';
+        }
+
+        function getDurationHours(post) {
+            if (!post.createdAt || !post.expiresAt) return 1;
+            return Math.round((post.expiresAt - post.createdAt) / 3600000);
+        }
+
+        // ── Refresh timer badge on a single node ──
+        function refreshTimer(id) {
+            const post = posts[id];
+            const el   = nodeEls[id];
+            if (!post || !el) return;
+            const t = el.querySelector('.node-timer');
+            if (!t) return;
+            const cls = timerClass(post.expiresAt);
+            t.textContent = formatRemaining(post.expiresAt);
+            t.className = 'node-timer ' + cls;
+            const maxed = getDurationHours(post) >= 3;
+            if (maxed) t.classList.add('t-maxed');
+
+            if (cls === 't-urgent') {
+                el.classList.add('urgent-pin');
+            } else {
+                el.classList.remove('urgent-pin');
+            }
+        }
+
+        // ── Periodic expiry check + timer refresh ──
+        function tick() {
+            const now = Date.now();
+            Object.entries(posts).forEach(([id, post]) => {
+                if (post.expiresAt && now > post.expiresAt) {
+                    BOARD.get(id).put({ _deleted: true });
+                } else {
+                    refreshTimer(id);
+                }
+            });
+        }
+        setInterval(tick, 20000); // every 20s
 
         // ── Create node DOM element ──
         function createNodeEl(post) {
@@ -307,12 +396,12 @@
             div.className = 'node-card';
             div.style.left   = post.x + '%';
             div.style.top    = post.y + '%';
-            div.style.zIndex = Date.now() % 900;
+            div.style.zIndex = (Date.now() % 800) + 10;
             div.dataset.id   = post.id;
 
-            const time = post.timestamp
-                ? new Date(post.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                : '--:--';
+            const remaining = post.expiresAt ? formatRemaining(post.expiresAt) : '1h 0m';
+            const tCls      = post.expiresAt ? timerClass(post.expiresAt) : 't-ok';
+            const maxed     = getDurationHours(post) >= 3;
 
             let mediaHtml = '';
             if (post.type === 'image' && (post.imageData || post.imageUrl)) {
@@ -322,35 +411,50 @@
             div.innerHTML = `
                 <div class="node-header">
                     <span class="node-id">#${post.id.slice(-4)}</span>
-                    <span class="node-time">${time}</span>
+                    <span class="node-timer ${tCls}${maxed ? ' t-maxed' : ''}" title="click to extend (max 3h)">${remaining}</span>
                     <span class="delete-btn" title="remove">✕</span>
                 </div>
                 ${mediaHtml}
                 <div class="node-body">${esc(post.body || '')}</div>
             `;
 
+            if (tCls === 't-urgent') div.classList.add('urgent-pin');
+
+            // Extend duration on timer click
+            div.querySelector('.node-timer').addEventListener('click', e => {
+                e.stopPropagation();
+                const currentHours = getDurationHours(post);
+                if (currentHours >= 3) return; // already maxed
+                const nextHours = Math.min(currentHours + 1, 3);
+                const newExpiry = (post.createdAt || Date.now()) + nextHours * 3600000;
+                BOARD.get(post.id).put({ expiresAt: newExpiry });
+                // Optimistic local update
+                post.expiresAt = newExpiry;
+                posts[post.id] = post;
+                refreshTimer(post.id);
+            });
+
+            // Delete
             div.querySelector('.delete-btn').addEventListener('click', e => {
                 e.stopPropagation();
                 BOARD.get(post.id).put({ _deleted: true });
             });
 
+            // Drag start
             div.addEventListener('mousedown', e => {
-                if (e.target.classList.contains('delete-btn')) return;
+                if (e.target.classList.contains('delete-btn') ||
+                    e.target.classList.contains('node-timer')) return;
                 isDragging = true;
-
                 const rect = board.getBoundingClientRect();
                 const bw = board.offsetWidth, bh = board.offsetHeight;
                 const mx = (e.clientX - rect.left) / scale;
                 const my = (e.clientY - rect.top)  / scale;
-                const nx = (post.x / 100) * bw;
-                const ny = (post.y / 100) * bh;
-
                 dragTarget = {
                     id: post.id,
                     element: div,
                     post: post,
-                    offX: mx - nx,
-                    offY: my - ny
+                    offX: mx - (post.x / 100) * bw,
+                    offY: my - (post.y / 100) * bh
                 };
                 div.style.zIndex = 990;
             });
@@ -374,28 +478,26 @@
             board.style.transform = `scale(${scale})`;
         }, { passive: false });
 
-        // ── Click canvas to spawn composer ──
+        // ── Canvas click → open composer ──
         board.addEventListener('mousedown', e => {
             if (e.target.closest('.node-card') || e.target.closest('#composer')) return;
-
             const rect = board.getBoundingClientRect();
             const trueX = (e.clientX - rect.left) / scale;
             const trueY = (e.clientY - rect.top)  / scale;
             currentSpawn.x = Math.max(5, Math.min(95, (trueX / board.offsetWidth)  * 100));
             currentSpawn.y = Math.max(5, Math.min(95, (trueY / board.offsetHeight) * 100));
-
             composer.style.left    = e.clientX + 'px';
             composer.style.top     = e.clientY + 'px';
             composer.style.display = 'flex';
             compX.textContent = Math.round(currentSpawn.x);
             compY.textContent = Math.round(currentSpawn.y);
-            nodeInput.value   = '';
-            pendingImageData  = null;
+            nodeInput.value  = '';
+            pendingImageData = null;
             uploadStatus.textContent = 'no media';
             setTimeout(() => nodeInput.focus(), 40);
         });
 
-        // ── Drag ──
+        // ── Drag move ──
         window.addEventListener('mousemove', e => {
             if (!isDragging || !dragTarget) return;
             const rect = board.getBoundingClientRect();
@@ -410,22 +512,30 @@
             dragTarget.post.y = py;
         });
 
+        // ── Drag end ──
         window.addEventListener('mouseup', () => {
             if (isDragging && dragTarget) {
-                const id = dragTarget.id;
-                const x  = dragTarget.post.x;
-                const y  = dragTarget.post.y;
+                const { id, post } = dragTarget;
                 dragTarget.element.style.zIndex = '';
                 clearTimeout(moveSaveTimers[id]);
                 moveSaveTimers[id] = setTimeout(() => {
-                    BOARD.get(id).put({ x, y });
+                    BOARD.get(id).put({ x: post.x, y: post.y });
                 }, 80);
             }
             isDragging = false;
             dragTarget = null;
         });
 
-        // ── Composer ──
+        // ── Duration selector ──
+        document.querySelectorAll('.dur-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedDuration = parseInt(btn.dataset.h, 10);
+            });
+        });
+
+        // ── Composer save / close ──
         function closeComposer() {
             composer.style.display = 'none';
             nodeInput.value  = '';
@@ -436,15 +546,18 @@
             const body = nodeInput.value.trim();
             if (!body && !pendingImageData) { closeComposer(); return; }
 
-            const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            const now = Date.now();
+            const id  = now.toString(36) + Math.random().toString(36).slice(2, 6);
             BOARD.get(id).put({
                 id,
-                body: body,
+                body,
                 type: pendingImageData ? 'image' : 'text',
                 imageData: pendingImageData || null,
                 x: currentSpawn.x,
                 y: currentSpawn.y,
-                timestamp: new Date().toISOString(),
+                createdAt: now,
+                timestamp: new Date(now).toISOString(),
+                expiresAt: now + selectedDuration * 3600000,
                 _deleted: false
             });
             closeComposer();
@@ -452,16 +565,18 @@
 
         saveBtn.addEventListener('click', handleSave);
         cancelBtn.addEventListener('click', closeComposer);
-
         nodeInput.addEventListener('keydown', e => {
             if (e.key === 'Escape') closeComposer();
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSave(); }
         });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeComposer();
+        });
 
-        // ── Image attachment ──
+        // ── Image attach ──
         attachBtn.addEventListener('click', () => fileInput.click());
 
-        fileInput.addEventListener('change', async function() {
+        fileInput.addEventListener('change', async function () {
             const file = this.files[0];
             if (!file || !file.type.startsWith('image/')) return;
             try {
@@ -489,12 +604,11 @@
                 reader.onload = e => {
                     const img = new Image();
                     img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const ratio = Math.min(400 / img.width, 400 / img.height, 1);
-                        canvas.width  = img.width  * ratio;
-                        canvas.height = img.height * ratio;
-                        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.65));
+                        const c = document.createElement('canvas');
+                        const r = Math.min(400 / img.width, 400 / img.height, 1);
+                        c.width = img.width * r; c.height = img.height * r;
+                        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                        resolve(c.toDataURL('image/jpeg', 0.65));
                     };
                     img.onerror = reject;
                     img.src = e.target.result;
@@ -503,10 +617,6 @@
                 reader.readAsDataURL(file);
             });
         }
-
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') closeComposer();
-        });
 
     })();
     </script>
