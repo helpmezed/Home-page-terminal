@@ -24,7 +24,7 @@
 
         .layer-fg {
             position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%;
-            overflow-y: auto; overflow-x: hidden; padding-right: 4px; scroll-behavior: smooth;
+            overflow-y: auto; overflow-x: hidden; padding-right: 4px; padding-bottom: 28px; scroll-behavior: smooth;
             scrollbar-width: thin;
             scrollbar-color: rgba(0, 255, 65, 0.3) transparent;
         }
@@ -32,22 +32,6 @@
         .layer-fg::-webkit-scrollbar-track { background: transparent; }
         .layer-fg::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.3); border-radius: 3px; }
 
-        .layer-bg {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;
-            pointer-events: none; font-family: 'DejaVu Sans Mono', monospace; line-height: 1.1;
-            white-space: pre; overflow: hidden;
-        }
-        .bg-element { position: absolute; }
-
-        .bg-skull { color: #00cc44; top: 10%; left: 50%; transform: translateX(-50%); opacity: 0.11; font-size: 15px; font-weight: bold; text-shadow: 0 0 10px rgba(0,255,65,0.2); }
-        .bg-cathedral { color: #00ff41; bottom: 8%; right: 2%; opacity: 0.13; font-size: 11px; }
-        .bg-spider { color: #00ff41; position: absolute; opacity: 0.24; font-size: 11px; text-shadow: 0 0 5px rgba(0,255,65,0.5); }
-        .spider-1 { left: 6%; top: 2%; }
-        .spider-2 { right: 18%; top: 5%; }
-        .bg-graveyard {
-            color: #003b00; bottom: 1%; left: 0; width: 100%; display: flex;
-            justify-content: space-around; opacity: 0.4; font-size: 12px; font-weight: bold;
-        }
 
         .terminal-header {
             display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-bottom: 6px;
@@ -87,7 +71,7 @@
 
         .right-panel { flex: 1; display: flex; flex-direction: column; gap: 5px; }
         .info-container { line-height: 1.35; font-size: 12px; white-space: pre-wrap; font-variant-numeric: tabular-nums; }
-        .ascii-divider { color: #005c18; text-align: center; margin: 1px 0; font-family: monospace; letter-spacing: 1px; text-shadow: 0 0 5px #00cc44; opacity: 0.85; }
+
 
         .title { color: #00ff41; font-weight: bold; text-shadow: 0 0 8px rgba(0, 255, 65, 0.6); font-size: 16px; margin-bottom: 4px; display: inline-block; }
         .label { color: #00cc44; font-weight: bold; margin-right: 4px; }
@@ -257,17 +241,6 @@
                 );
         }
 
-        .bg-eye {
-            color: #004800;
-            top: 42%;
-            right: 1%;
-            opacity: 0.22;
-            font-size: 56px;
-            font-family: 'Segoe UI Historic', 'Apple Symbols', serif;
-            transform: translateY(-50%);
-            text-shadow: 0 0 28px rgba(0,255,65,0.12);
-        }
-
         /* ── Login Screen ── */
         #login-screen {
             position: fixed; inset: 0; z-index: 200;
@@ -297,48 +270,6 @@
         #login-hint { color: #005c18; font-size: 11px; margin-top: 10px; display: none; }
         #login-error { color: #ef2929; font-size: 12px; margin-top: 8px; min-height: 16px; display: none; }
 
-        .bg-rain {
-            color: #003300;
-            font-size: 10px;
-            opacity: 0.28;
-            font-family: 'DejaVu Sans Mono', 'Courier New', monospace;
-            writing-mode: vertical-rl;
-            text-orientation: upright;
-            top: 0;
-            width: 12px;
-            height: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-            letter-spacing: 1px;
-        }
-        .rain-1 { left: 4px; }
-        .rain-2 { right: 4px; }
-
-        @keyframes toolsBtnPulse {
-            0%, 100% {
-                box-shadow: 0 0 4px rgba(0,255,65,0.3), inset 0 0 4px rgba(0,255,65,0.05);
-                border-color: rgba(0,255,65,0.4); color: #00ff41;
-            }
-            50% {
-                box-shadow: 0 0 14px rgba(0,255,65,0.7), 0 0 28px rgba(0,255,65,0.25), inset 0 0 8px rgba(0,255,65,0.1);
-                border-color: rgba(0,255,65,0.9); color: #ccffdd;
-            }
-        }
-        .left-nav-btn {
-            display: block; width: 190px; text-align: center;
-            font-size: 10px;
-            text-decoration: none; padding: 5px 0; border-radius: 4px;
-            letter-spacing: 0.5px; transition: all 0.2s; white-space: nowrap;
-        }
-        .disc-btn {
-            color: #00cc44; border: 1px solid rgba(0,255,65,0.22);
-        }
-        .disc-btn:hover {
-            color: #00ff41;
-            border-color: rgba(0,255,65,0.7);
-            background: rgba(0,255,65,0.055);
-            box-shadow: 0 0 12px rgba(0,255,65,0.28);
-        }
         .tp-launch-widget {
             width: 190px;
             border: 1px solid rgba(0,255,65,0.14);
@@ -515,6 +446,58 @@
             0%, 100% { color: #003b00; text-shadow: none; }
             50% { color: #005c18; text-shadow: 0 0 8px rgba(0,255,65,0.2); }
         }
+
+        /* ── HN Nexus Wire ── */
+        #hn-wire {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 28px;
+            z-index: 3;
+            display: flex;
+            align-items: center;
+            background: rgba(0, 2, 0, 0.97);
+            border-top: 1px solid rgba(0, 255, 65, 0.18);
+            overflow: hidden;
+        }
+        .hn-wire-label {
+            flex-shrink: 0; display: flex; align-items: center; gap: 5px;
+            padding: 0 11px; border-right: 1px solid rgba(0,255,65,0.14);
+            height: 100%; background: rgba(0,255,65,0.02);
+        }
+        .hn-wire-icon { color: #00ff41; font-size: 11px; text-shadow: 0 0 8px rgba(0,255,65,0.9); animation: hn-pulse 2.4s ease-in-out infinite; }
+        .hn-wire-tag { color: #00cc44; font-size: 8px; letter-spacing: 2px; font-weight: bold; }
+        .hn-wire-viewport {
+            flex: 1; overflow: hidden; height: 100%; display: flex; align-items: center; position: relative;
+        }
+        .hn-wire-viewport::before, .hn-wire-viewport::after {
+            content: ''; position: absolute; top: 0; bottom: 0; width: 28px; z-index: 1; pointer-events: none;
+        }
+        .hn-wire-viewport::before { left: 0; background: linear-gradient(to right, rgba(0,2,0,0.97), transparent); }
+        .hn-wire-viewport::after  { right: 0; background: linear-gradient(to left,  rgba(0,2,0,0.97), transparent); }
+        .hn-wire-track {
+            display: flex; align-items: center; white-space: nowrap;
+            position: absolute; left: 0; will-change: transform;
+        }
+        .hn-story {
+            display: inline-flex; align-items: center; gap: 7px;
+            cursor: pointer; padding: 0 6px; border-radius: 2px;
+            transition: background 0.15s; text-decoration: none;
+        }
+        .hn-story:hover { background: rgba(0,255,65,0.07); }
+        .hn-story-rank { color: #004d10; font-size: 8px; font-weight: bold; flex-shrink: 0; letter-spacing: 0.5px; }
+        .hn-story-title { color: #00aa38; font-size: 10px; max-width: 420px; overflow: hidden; text-overflow: ellipsis; }
+        .hn-story:hover .hn-story-title { color: #00ff41; text-shadow: 0 0 6px rgba(0,255,65,0.5); }
+        .hn-story-pts { color: #004d10; font-size: 9px; flex-shrink: 0; letter-spacing: 0.3px; }
+        .hn-story:hover .hn-story-pts { color: #007a22; }
+        .hn-story-div { color: rgba(0,255,65,0.13); font-size: 14px; padding: 0 20px; flex-shrink: 0; }
+        .hn-wire-corner {
+            flex-shrink: 0; padding: 0 11px; border-left: 1px solid rgba(0,255,65,0.14);
+            height: 100%; display: flex; align-items: center; gap: 5px;
+            color: #003b00; font-size: 8px; letter-spacing: 1.5px;
+            background: rgba(0,255,65,0.01);
+        }
+        .hn-wire-live-dot { width: 5px; height: 5px; border-radius: 50%; background: #00ff41; box-shadow: 0 0 6px #00ff41; animation: hn-pulse 1.6s ease-in-out infinite; flex-shrink: 0; }
+        @keyframes hn-pulse { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
     </style>
 </head>
 <body>
@@ -548,7 +531,7 @@
                             <span class="prompt-bracket">[</span><span class="user" id="prompt-user">user</span><span class="separator">@</span><span class="host" id="prompt-host">local</span><span class="prompt-bracket">]</span><span class="separator" style="margin-left:5px;">~$</span>
                         </div>
                         <form id="searchForm" style="display: flex; flex: 1; width: 100%;">
-                            <input type="text" id="searchInput" class="search-input" placeholder="search · !g · !y · help" autocomplete="off">
+                            <input type="text" id="searchInput" class="search-input" placeholder="search · g · y · help" autocomplete="off">
                         </form>
                         <span id="engine-badge" class="engine-badge">DDG</span>
                     </div>
@@ -591,6 +574,23 @@
                 </div>
 
                 <div class="output-area" id="output"></div>
+            </div>
+
+            <!-- HN Nexus Wire -->
+            <div id="hn-wire">
+                <div class="hn-wire-label">
+                    <span class="hn-wire-icon">◈</span>
+                    <span class="hn-wire-tag">HN·WIRE</span>
+                </div>
+                <div class="hn-wire-viewport">
+                    <div class="hn-wire-track" id="hn-wire-track">
+                        <span style="color:#003b00;font-size:10px;padding:0 20px;">[ CONNECTING TO NEXUS... ]</span>
+                    </div>
+                </div>
+                <div class="hn-wire-corner">
+                    <div class="hn-wire-live-dot" id="hn-live-dot" style="opacity:0.2"></div>
+                    <span id="hn-live-label">FEED</span>
+                </div>
             </div>
 
         </div>
@@ -1207,7 +1207,7 @@
         
         function printResult(text) {
             const div = document.createElement('div');
-            div.className = 'command-result user';
+            div.className = 'command-result';
             div.textContent = text;
             outputEl.appendChild(div);
             layerFgEl.scrollTop = layerFgEl.scrollHeight;
@@ -1274,7 +1274,7 @@
             }
 
             if (primary === 'tools') {
-                window.location.href = 'tools.html';
+                navigateWithTransition('tools.html');
                 return;
             }
 
@@ -1845,6 +1845,76 @@
                 requestAnimationFrame(draw);
             }
             draw();
+        })();
+
+        // ── HN Nexus Wire ──
+        (async function() {
+            const track = document.getElementById('hn-wire-track');
+            const liveDot = document.getElementById('hn-live-dot');
+            const liveLabel = document.getElementById('hn-live-label');
+            if (!track) return;
+
+            async function fetchStories() {
+                try {
+                    const res = await fetch('https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=22');
+                    const data = await res.json();
+                    return (data.hits || []).filter(h => h.title);
+                } catch(e) { return []; }
+            }
+
+            function buildTrack(stories) {
+                if (!stories.length) {
+                    track.innerHTML = '<span style="color:#003b00;font-size:10px;padding:0 20px;">[ NEXUS UNREACHABLE ]</span>';
+                    return;
+                }
+                const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const items = [...stories, ...stories];
+                track.innerHTML = items.map((s, i) => {
+                    const rank = String((i % stories.length) + 1).padStart(2, '0');
+                    const url = s.url || ('https://news.ycombinator.com/item?id=' + s.objectID);
+                    const title = esc(s.title || 'Untitled');
+                    const pts = s.points || 0;
+                    const cmt = s.num_comments || 0;
+                    return '<a class="hn-story" href="' + url + '" target="_blank" rel="noopener noreferrer">' +
+                        '<span class="hn-story-rank">' + rank + '</span>' +
+                        '<span class="hn-story-title">' + title + '</span>' +
+                        '<span class="hn-story-pts">▲' + pts + ' ⌘' + cmt + '</span>' +
+                        '</a><span class="hn-story-div">╌╌</span>';
+                }).join('');
+                if (liveDot) { liveDot.style.opacity = '1'; }
+                if (liveLabel) { liveLabel.textContent = 'LIVE'; liveLabel.style.color = '#005c18'; }
+            }
+
+            let animFrame, pos = 0, lastTs = null, halfW = 0;
+            const SPEED = 55;
+
+            function tick(ts) {
+                if (lastTs === null) lastTs = ts;
+                const dt = Math.min((ts - lastTs) / 1000, 0.1);
+                lastTs = ts;
+                pos -= SPEED * dt;
+                if (halfW > 0 && pos < -halfW) pos += halfW;
+                track.style.transform = 'translateX(' + pos.toFixed(2) + 'px)';
+                animFrame = requestAnimationFrame(tick);
+            }
+
+            function startAnim(stories) {
+                buildTrack(stories);
+                requestAnimationFrame(() => {
+                    halfW = track.scrollWidth / 2;
+                    pos = 0; lastTs = null;
+                    if (animFrame) cancelAnimationFrame(animFrame);
+                    animFrame = requestAnimationFrame(tick);
+                });
+            }
+
+            const stories = await fetchStories();
+            startAnim(stories);
+
+            setInterval(async () => {
+                const fresh = await fetchStories();
+                if (fresh.length) startAnim(fresh);
+            }, 5 * 60 * 1000);
         })();
 
         // ── Glitch Status & Glyph Cycle ──
