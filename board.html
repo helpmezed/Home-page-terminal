@@ -22,55 +22,84 @@
 
         body, html {
             width: 100vw; height: 100vh;
-            background: var(--bg);
-            color: var(--green);
+            background: var(--bg); color: var(--green);
             font-family: var(--font);
-            overflow: hidden;
-            cursor: crosshair;
+            overflow: hidden; cursor: crosshair;
         }
 
         #canvas-board {
             width: 100vw; height: 100vh;
-            position: relative;
-            background: var(--bg);
+            position: relative; background: var(--bg);
             transform-origin: center center;
+            padding-top: 32px;
         }
 
         /* ── Top bar ── */
         #top-bar {
             position: fixed; top: 0; left: 0; right: 0; z-index: 900;
-            height: 32px;
-            display: flex; align-items: center; gap: 10px;
+            height: 32px; display: flex; align-items: center; gap: 10px;
             padding: 0 12px;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.92);
             border-bottom: 1px solid rgba(0,255,65,0.12);
             backdrop-filter: blur(4px);
             font-size: 10px; letter-spacing: 0.5px;
         }
-
         .back-btn {
             color: #005c18; text-decoration: none;
             border: 1px solid rgba(0,255,65,0.2);
             padding: 2px 8px; border-radius: 3px;
             transition: all 0.2s; flex-shrink: 0;
         }
-        .back-btn:hover {
-            color: var(--green); border-color: rgba(0,255,65,0.6);
-            background: rgba(0,255,65,0.05);
-        }
-
+        .back-btn:hover { color: var(--green); border-color: rgba(0,255,65,0.6); background: rgba(0,255,65,0.05); }
         .top-sep { color: #002200; }
 
         #status-dot { font-size: 9px; color: #005c18; transition: color 0.5s; }
         #status-dot.live { color: var(--green); animation: blink 2s ease-in-out infinite; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
-
         #status-text { color: #005c18; transition: color 0.5s; }
         #status-text.live { color: var(--green-mid); }
 
-        #pin-count { color: var(--green-dim); }
+        #user-badge {
+            color: var(--green-mid); background: rgba(0,255,65,0.06);
+            border: 1px solid rgba(0,255,65,0.2); border-radius: 3px;
+            padding: 1px 7px; cursor: pointer; transition: all 0.2s;
+        }
+        #user-badge:hover { border-color: rgba(0,255,65,0.5); color: var(--green); }
+        #user-badge.unset { color: #005c18; border-color: rgba(0,255,65,0.1); border-style: dashed; }
 
+        #pin-count { color: var(--green-dim); }
         #help-bar { margin-left: auto; display: flex; gap: 14px; color: #003300; }
+
+        /* ── Username prompt overlay ── */
+        #user-prompt {
+            position: fixed; inset: 0; z-index: 800;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center;
+        }
+        #user-prompt.hidden { display: none; }
+        .user-prompt-box {
+            background: #050505; border: 1px solid rgba(0,255,65,0.35);
+            border-radius: 10px; padding: 28px 24px; width: 320px;
+            display: flex; flex-direction: column; gap: 14px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,255,65,0.07);
+        }
+        .up-title { color: var(--green); font-size: 13px; font-weight: 600; }
+        .up-sub   { color: #005c18; font-size: 11px; }
+        .up-input {
+            background: transparent; border: 1px solid rgba(0,255,65,0.25);
+            color: var(--green); font-family: var(--font); font-size: 13px;
+            padding: 8px 10px; outline: none; border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+        .up-input:focus { border-color: var(--green-mid); }
+        .up-input::placeholder { color: #004400; }
+        .up-btn {
+            background: rgba(0,255,65,0.06); border: 1px solid rgba(0,255,65,0.35);
+            color: var(--green); font-family: var(--font); font-size: 12px;
+            padding: 8px; cursor: pointer; border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .up-btn:hover { background: rgba(0,255,65,0.12); border-color: var(--green); }
 
         /* ── Node cards ── */
         .node-card {
@@ -78,11 +107,11 @@
             background: var(--card-bg);
             border: 1px solid var(--border);
             padding: 10px 12px;
-            min-width: 165px; max-width: 300px;
+            min-width: 170px; max-width: 300px;
             backdrop-filter: blur(4px);
             transform: translate(-50%, -50%);
             transition: border-color 0.2s, box-shadow 0.2s;
-            box-shadow: 0 0 16px 1px rgba(0,255,65,0.28), inset 0 0 8px rgba(0,255,65,0.08);
+            box-shadow: 0 0 16px 1px rgba(0,255,65,0.25), inset 0 0 8px rgba(0,255,65,0.07);
             cursor: move;
             animation: nodeIn 0.22s cubic-bezier(0.34,1.56,0.64,1);
         }
@@ -92,17 +121,13 @@
         }
         .node-card:hover {
             border-color: #fff;
-            box-shadow: 0 0 26px 3px rgba(0,255,65,0.65), inset 0 0 12px rgba(0,255,65,0.25);
+            box-shadow: 0 0 26px 3px rgba(0,255,65,0.6), inset 0 0 12px rgba(0,255,65,0.2);
             z-index: 100 !important;
         }
-
-        /* urgent pin flicker when < 10 min */
-        .node-card.urgent-pin {
-            animation: urgentFlicker 2.5s ease-in-out infinite;
-        }
+        .node-card.urgent-pin { animation: urgentFlicker 2.5s ease-in-out infinite; }
         @keyframes urgentFlicker {
             0%,100% { border-color: var(--border); }
-            50%      { border-color: #ffaa00; box-shadow: 0 0 16px 1px rgba(255,170,0,0.4), inset 0 0 8px rgba(255,170,0,0.1); }
+            50%     { border-color: #ff8800; box-shadow: 0 0 16px 1px rgba(255,136,0,0.4); }
         }
 
         .node-header {
@@ -112,86 +137,69 @@
             border-bottom: 1px dashed var(--border-dim);
             padding-bottom: 4px;
         }
-        .node-id { color: #005c18; flex-shrink: 0; }
-
-        /* Timer badge — clickable to extend duration */
+        .node-author {
+            font-weight: 600; font-size: 0.65rem; flex-shrink: 0;
+            color: var(--green-mid); letter-spacing: 0.3px;
+        }
+        .node-author.mine { color: var(--green); }
+        .node-id   { color: #004400; flex-shrink: 0; font-size: 0.62rem; }
         .node-timer {
-            flex: 1; text-align: center;
-            cursor: pointer;
-            border-radius: 2px;
-            padding: 0 3px;
-            transition: color 0.3s, background 0.2s;
-            user-select: none;
+            flex: 1; text-align: right;
+            cursor: pointer; border-radius: 2px; padding: 0 3px;
+            transition: color 0.3s, background 0.2s; user-select: none;
+            font-size: 0.65rem;
         }
         .node-timer:hover { background: rgba(0,255,65,0.08); }
-        .node-timer.t-ok      { color: var(--green-dim); }
-        .node-timer.t-warn    { color: #ccaa00; }
-        .node-timer.t-urgent  { color: #ff8800; font-weight: 600; }
-        .node-timer.t-maxed   { color: #005c18; cursor: default; }
-
-        .delete-btn { color: #004400; cursor: pointer; transition: color 0.15s; flex-shrink: 0; }
+        .node-timer.t-ok     { color: #005c18; }
+        .node-timer.t-warn   { color: #ccaa00; }
+        .node-timer.t-urgent { color: #ff8800; font-weight: 600; }
+        .node-timer.t-maxed  { color: #004400; cursor: default; }
+        .delete-btn { color: #004400; cursor: pointer; transition: color 0.15s; flex-shrink: 0; font-size: 0.85rem; }
         .delete-btn:hover { color: #ff4444; }
 
         .node-body {
             font-size: 0.85rem; word-break: break-word;
             white-space: pre-wrap; line-height: 1.45; color: var(--green);
         }
-
         .node-image {
-            width: 100%; height: auto; max-height: 200px;
-            object-fit: contain; margin-bottom: 8px;
-            border: 1px solid var(--border-dim);
+            width: 100%; height: auto; max-height: 200px; object-fit: contain;
+            margin-bottom: 8px; border: 1px solid var(--border-dim);
             filter: grayscale(100%) sepia(100%) hue-rotate(70deg) brightness(1.2) contrast(1.1);
         }
 
         /* ── Composer ── */
         #composer {
-            position: absolute;
+            position: fixed;
             background: rgba(0,0,0,0.97);
             border: 1px solid var(--green);
-            padding: 12px; width: 290px;
-            display: none; flex-direction: column; gap: 8px;
-            box-shadow: 0 0 24px rgba(0,255,65,0.2);
-            z-index: 1000;
-            transform: translate(-50%, -50%);
-            cursor: default;
+            padding: 13px; width: 295px;
+            display: none; flex-direction: column; gap: 9px;
+            box-shadow: 0 0 28px rgba(0,255,65,0.18);
+            z-index: 1000; cursor: default;
         }
-
         .composer-header { font-size: 0.75rem; color: var(--green); font-weight: 600; }
         .composer-coords { color: var(--green-dim); font-weight: normal; }
-
         .composer-input {
-            background: transparent;
-            border: 1px solid var(--border-dim);
+            background: transparent; border: 1px solid var(--border-dim);
             color: var(--green); font-family: var(--font); font-size: 0.85rem;
             padding: 6px; outline: none; resize: none; transition: border-color 0.15s;
         }
         .composer-input:focus { border-color: var(--green-dim); }
         .composer-input::placeholder { color: #004400; }
-
         .composer-meta {
             font-size: 0.68rem; color: var(--green-dim);
             display: flex; justify-content: space-between;
         }
         #attachBtn { cursor: pointer; text-decoration: underline; }
         #attachBtn:hover { color: var(--green); }
-
-        /* Duration row */
-        .composer-dur {
-            display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: #005c18;
-        }
+        .composer-dur { display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: #005c18; }
         .dur-btn {
             background: transparent; border: 1px solid var(--border-dim);
-            color: #005c18; padding: 2px 7px; cursor: pointer;
-            font-family: var(--font); font-size: 0.68rem;
-            border-radius: 3px; transition: all 0.15s;
+            color: #005c18; padding: 2px 8px; cursor: pointer;
+            font-family: var(--font); font-size: 0.68rem; border-radius: 3px; transition: all 0.15s;
         }
         .dur-btn:hover { color: var(--green-mid); border-color: var(--green-mid); }
-        .dur-btn.active {
-            color: var(--green); border-color: var(--green-dim);
-            background: rgba(0,255,65,0.06);
-        }
-
+        .dur-btn.active { color: var(--green); border-color: var(--green-dim); background: rgba(0,255,65,0.06); }
         .composer-actions { display: flex; gap: 8px; }
         .btn {
             background: transparent; border: 1px solid var(--border-dim);
@@ -205,18 +213,30 @@
 </head>
 <body>
 
+    <!-- Username prompt (shown if no username set) -->
+    <div id="user-prompt" class="hidden">
+        <div class="user-prompt-box">
+            <div class="up-title">▶ IDENTIFY USER</div>
+            <div class="up-sub">Enter your matrix username to pin on the board.</div>
+            <input type="text" class="up-input" id="up-input" placeholder="e.g. Zed" maxlength="20" autocomplete="off" spellcheck="false">
+            <button class="up-btn" id="up-confirm">AUTHENTICATE →</button>
+        </div>
+    </div>
+
     <div id="top-bar">
         <a class="back-btn" href="index.html">← back</a>
         <span class="top-sep">|</span>
         <span id="status-dot">●</span>
         <span id="status-text">CONNECTING</span>
         <span class="top-sep">|</span>
+        <span id="user-badge" class="unset" title="click to change username">—</span>
+        <span class="top-sep">|</span>
         <span id="pin-count">0 PINS</span>
         <div id="help-bar">
             <span>CLICK·PIN</span>
             <span>DRAG·MOVE</span>
             <span>SCROLL·ZOOM</span>
-            <span>TIMER·EXTEND</span>
+            <span>BADGE·EXTEND</span>
         </div>
     </div>
 
@@ -244,88 +264,150 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <!-- Firebase compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
     <script>
+    // ─────────────────────────────────────────────────────────────────────────
+    //  FIREBASE SETUP
+    //  1. Go to https://console.firebase.google.com and create a project
+    //  2. Add a Web App, copy the config object below
+    //  3. In the Firebase console → Build → Realtime Database → Create database
+    //     Choose "Start in test mode" (allows public read/write)
+    //  4. Paste your config values below and deploy
+    // ─────────────────────────────────────────────────────────────────────────
+    const FIREBASE_CONFIG = {
+        apiKey:            "PASTE_YOUR_API_KEY",
+        authDomain:        "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL:       "https://PASTE_YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        projectId:         "PASTE_YOUR_PROJECT_ID",
+        storageBucket:     "PASTE_YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "PASTE_YOUR_SENDER_ID",
+        appId:             "PASTE_YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const db       = firebase.database();
+    const pinsRef  = db.ref('bulletin/pins');
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     (function () {
-        const board      = document.getElementById('canvas-board');
-        const composer   = document.getElementById('composer');
-        const nodeInput  = document.getElementById('nodeInput');
-        const saveBtn    = document.getElementById('saveBtn');
-        const cancelBtn  = document.getElementById('cancelBtn');
-        const attachBtn  = document.getElementById('attachBtn');
-        const fileInput  = document.getElementById('fileInput');
+        const board        = document.getElementById('canvas-board');
+        const composer     = document.getElementById('composer');
+        const nodeInput    = document.getElementById('nodeInput');
+        const saveBtn      = document.getElementById('saveBtn');
+        const cancelBtn    = document.getElementById('cancelBtn');
+        const attachBtn    = document.getElementById('attachBtn');
+        const fileInput    = document.getElementById('fileInput');
         const uploadStatus = document.getElementById('uploadStatus');
-        const compX      = document.getElementById('compX');
-        const compY      = document.getElementById('compY');
-        const statusDot  = document.getElementById('status-dot');
-        const statusText = document.getElementById('status-text');
-        const pinCountEl = document.getElementById('pin-count');
+        const compX        = document.getElementById('compX');
+        const compY        = document.getElementById('compY');
+        const statusDot    = document.getElementById('status-dot');
+        const statusText   = document.getElementById('status-text');
+        const pinCountEl   = document.getElementById('pin-count');
+        const userBadge    = document.getElementById('user-badge');
+        const userPrompt   = document.getElementById('user-prompt');
+        const upInput      = document.getElementById('up-input');
+        const upConfirm    = document.getElementById('up-confirm');
 
-        // ── Gun.js ──
-        const gun = Gun({
-            peers: [
-                'https://gun-manhattan.herokuapp.com/gun',
-                'https://peer.wallie.io/gun',
-                'wss://gundb-relay-production.up.railway.app/gun'
-            ]
-        });
-        const BOARD = gun.get('matrix-bulletin-board-v2');
-
-        let isLive = false;
-        const liveTimer = setTimeout(() => setStatus(false), 4000);
-
-        function setStatus(live) {
-            isLive = live;
-            clearTimeout(liveTimer);
-            statusDot.className  = live ? 'live' : '';
-            statusText.className = live ? 'live' : '';
-            statusText.textContent = live ? 'LIVE' : 'LOCAL';
+        // ── Username ──
+        let currentUser = localStorage.getItem('startpage_username') || '';
+        function applyUser(name) {
+            currentUser = name.trim();
+            localStorage.setItem('startpage_username', currentUser);
+            userBadge.textContent = currentUser + '@matrix';
+            userBadge.classList.remove('unset');
+            userPrompt.classList.add('hidden');
         }
 
-        // ── State ──
+        if (currentUser) {
+            applyUser(currentUser);
+        } else {
+            userPrompt.classList.remove('hidden');
+            setTimeout(() => upInput.focus(), 100);
+        }
+
+        userBadge.addEventListener('click', () => {
+            upInput.value = currentUser;
+            userPrompt.classList.remove('hidden');
+            setTimeout(() => { upInput.focus(); upInput.select(); }, 60);
+        });
+        upConfirm.addEventListener('click', () => {
+            if (upInput.value.trim()) applyUser(upInput.value);
+        });
+        upInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && upInput.value.trim()) applyUser(upInput.value);
+        });
+
+        // ── Status ──
+        function setStatus(live) {
+            statusDot.className  = live ? 'live' : '';
+            statusText.className = live ? 'live' : '';
+            statusText.textContent = live ? 'LIVE' : 'ERROR';
+        }
+
+        // ── App state ──
         let posts   = {};
         let nodeEls = {};
-        let scale = 1;
-        let isDragging = false;
-        let dragTarget = null;
-        let currentSpawn = { x: 50, y: 50 };
+        let scale   = 1;
+        let isDragging    = false;
+        let dragTarget    = null;
+        let currentSpawn  = { x: 50, y: 50 };
         let pendingImageData = null;
-        let selectedDuration = 1; // hours
-        let moveSaveTimers = {};
+        let selectedDuration = 1;
+        let moveSaveTimers   = {};
 
-        // ── Gun real-time listener ──
-        BOARD.map().on((data, id) => {
-            if (!isLive) setStatus(true);
-
-            if (!data || data._deleted) {
-                delete posts[id];
-                if (nodeEls[id]) { nodeEls[id].remove(); delete nodeEls[id]; }
-                updatePinCount();
-                return;
-            }
-
-            // Skip if already expired
+        // ── Firebase listeners ──
+        pinsRef.on('child_added', snap => {
+            const data = snap.val();
+            if (!data || data._deleted) return;
             if (data.expiresAt && Date.now() > data.expiresAt) {
-                BOARD.get(id).put({ _deleted: true });
+                snap.ref.update({ _deleted: true });
                 return;
             }
-
-            posts[id] = data;
-
-            if (nodeEls[id]) {
-                if (!dragTarget || dragTarget.id !== id) {
-                    nodeEls[id].style.left = data.x + '%';
-                    nodeEls[id].style.top  = data.y + '%';
-                }
-                // Refresh timer display in case expiresAt changed
-                refreshTimer(id);
-            } else {
+            setStatus(true);
+            posts[data.id] = data;
+            if (!nodeEls[data.id]) {
                 const el = createNodeEl(data);
                 board.appendChild(el);
-                nodeEls[id] = el;
+                nodeEls[data.id] = el;
             }
             updatePinCount();
         });
+
+        pinsRef.on('child_changed', snap => {
+            const data = snap.val();
+            if (!data) return;
+            if (data._deleted) {
+                removePin(data.id);
+                return;
+            }
+            posts[data.id] = data;
+            const el = nodeEls[data.id];
+            if (el) {
+                if (!dragTarget || dragTarget.id !== data.id) {
+                    el.style.left = data.x + '%';
+                    el.style.top  = data.y + '%';
+                }
+                refreshTimer(data.id);
+            }
+        });
+
+        pinsRef.on('child_removed', snap => removePin(snap.key));
+
+        pinsRef.on('value', () => setStatus(true));
+
+        db.ref('.info/connected').on('value', snap => {
+            setStatus(!!snap.val());
+        });
+
+        function removePin(id) {
+            if (nodeEls[id]) { nodeEls[id].remove(); delete nodeEls[id]; }
+            delete posts[id];
+            updatePinCount();
+        }
 
         function updatePinCount() {
             const n = Object.keys(nodeEls).length;
@@ -336,19 +418,17 @@
         function formatRemaining(expiresAt) {
             const ms = expiresAt - Date.now();
             if (ms <= 0) return 'EXPIRED';
-            const totalSec = Math.floor(ms / 1000);
-            const h = Math.floor(totalSec / 3600);
-            const m = Math.floor((totalSec % 3600) / 60);
+            const s = Math.floor(ms / 1000);
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
             if (h > 0) return h + 'h ' + m + 'm';
-            if (m > 0) return m + 'm';
-            return '<1m';
+            return m > 0 ? m + 'm' : '<1m';
         }
 
         function timerClass(expiresAt) {
             const ms = expiresAt - Date.now();
-            if (ms <= 0)             return 't-urgent';
-            if (ms < 10 * 60000)     return 't-urgent';
-            if (ms < 30 * 60000)     return 't-warn';
+            if (ms < 10 * 60000) return 't-urgent';
+            if (ms < 30 * 60000) return 't-warn';
             return 't-ok';
         }
 
@@ -357,38 +437,30 @@
             return Math.round((post.expiresAt - post.createdAt) / 3600000);
         }
 
-        // ── Refresh timer badge on a single node ──
         function refreshTimer(id) {
             const post = posts[id];
             const el   = nodeEls[id];
             if (!post || !el) return;
-            const t = el.querySelector('.node-timer');
+            const t   = el.querySelector('.node-timer');
             if (!t) return;
             const cls = timerClass(post.expiresAt);
-            t.textContent = formatRemaining(post.expiresAt);
-            t.className = 'node-timer ' + cls;
             const maxed = getDurationHours(post) >= 3;
-            if (maxed) t.classList.add('t-maxed');
-
-            if (cls === 't-urgent') {
-                el.classList.add('urgent-pin');
-            } else {
-                el.classList.remove('urgent-pin');
-            }
+            t.textContent = formatRemaining(post.expiresAt) + (maxed ? '' : ' ▲');
+            t.className   = 'node-timer ' + cls + (maxed ? ' t-maxed' : '');
+            el.classList.toggle('urgent-pin', cls === 't-urgent');
         }
 
-        // ── Periodic expiry check + timer refresh ──
-        function tick() {
+        // Periodic expiry check
+        setInterval(() => {
             const now = Date.now();
             Object.entries(posts).forEach(([id, post]) => {
                 if (post.expiresAt && now > post.expiresAt) {
-                    BOARD.get(id).put({ _deleted: true });
+                    pinsRef.child(id).update({ _deleted: true });
                 } else {
                     refreshTimer(id);
                 }
             });
-        }
-        setInterval(tick, 20000); // every 20s
+        }, 20000);
 
         // ── Create node DOM element ──
         function createNodeEl(post) {
@@ -399,9 +471,11 @@
             div.style.zIndex = (Date.now() % 800) + 10;
             div.dataset.id   = post.id;
 
-            const remaining = post.expiresAt ? formatRemaining(post.expiresAt) : '1h 0m';
+            const remaining = post.expiresAt ? formatRemaining(post.expiresAt) : '—';
             const tCls      = post.expiresAt ? timerClass(post.expiresAt) : 't-ok';
             const maxed     = getDurationHours(post) >= 3;
+            const isMine    = post.author && post.author.toLowerCase() === currentUser.toLowerCase();
+            const author    = post.author || '?';
 
             let mediaHtml = '';
             if (post.type === 'image' && (post.imageData || post.imageUrl)) {
@@ -410,8 +484,9 @@
 
             div.innerHTML = `
                 <div class="node-header">
+                    <span class="node-author${isMine ? ' mine' : ''}">${esc(author)}</span>
                     <span class="node-id">#${post.id.slice(-4)}</span>
-                    <span class="node-timer ${tCls}${maxed ? ' t-maxed' : ''}" title="click to extend (max 3h)">${remaining}</span>
+                    <span class="node-timer ${tCls}${maxed ? ' t-maxed' : ''}" title="${maxed ? 'max 3h reached' : 'click to extend +1h'}">${remaining}${maxed ? '' : ' ▲'}</span>
                     <span class="delete-btn" title="remove">✕</span>
                 </div>
                 ${mediaHtml}
@@ -420,24 +495,21 @@
 
             if (tCls === 't-urgent') div.classList.add('urgent-pin');
 
-            // Extend duration on timer click
+            // Extend timer on badge click
             div.querySelector('.node-timer').addEventListener('click', e => {
                 e.stopPropagation();
-                const currentHours = getDurationHours(post);
-                if (currentHours >= 3) return; // already maxed
-                const nextHours = Math.min(currentHours + 1, 3);
-                const newExpiry = (post.createdAt || Date.now()) + nextHours * 3600000;
-                BOARD.get(post.id).put({ expiresAt: newExpiry });
-                // Optimistic local update
+                if (getDurationHours(post) >= 3) return;
+                const nextH    = Math.min(getDurationHours(post) + 1, 3);
+                const newExpiry = (post.createdAt || Date.now()) + nextH * 3600000;
+                pinsRef.child(post.id).update({ expiresAt: newExpiry });
                 post.expiresAt = newExpiry;
-                posts[post.id] = post;
                 refreshTimer(post.id);
             });
 
             // Delete
             div.querySelector('.delete-btn').addEventListener('click', e => {
                 e.stopPropagation();
-                BOARD.get(post.id).put({ _deleted: true });
+                pinsRef.child(post.id).update({ _deleted: true });
             });
 
             // Drag start
@@ -450,9 +522,7 @@
                 const mx = (e.clientX - rect.left) / scale;
                 const my = (e.clientY - rect.top)  / scale;
                 dragTarget = {
-                    id: post.id,
-                    element: div,
-                    post: post,
+                    id: post.id, element: div, post: post,
                     offX: mx - (post.x / 100) * bw,
                     offY: my - (post.y / 100) * bh
                 };
@@ -462,9 +532,9 @@
             return div;
         }
 
-        function esc(str) {
+        function esc(s) {
             const d = document.createElement('div');
-            d.textContent = str;
+            d.textContent = s;
             return d.innerHTML;
         }
 
@@ -478,9 +548,10 @@
             board.style.transform = `scale(${scale})`;
         }, { passive: false });
 
-        // ── Canvas click → open composer ──
+        // ── Click canvas → open composer ──
         board.addEventListener('mousedown', e => {
             if (e.target.closest('.node-card') || e.target.closest('#composer')) return;
+            if (!currentUser) { userPrompt.classList.remove('hidden'); return; }
             const rect = board.getBoundingClientRect();
             const trueX = (e.clientX - rect.left) / scale;
             const trueY = (e.clientY - rect.top)  / scale;
@@ -519,7 +590,7 @@
                 dragTarget.element.style.zIndex = '';
                 clearTimeout(moveSaveTimers[id]);
                 moveSaveTimers[id] = setTimeout(() => {
-                    BOARD.get(id).put({ x: post.x, y: post.y });
+                    pinsRef.child(id).update({ x: post.x, y: post.y });
                 }, 80);
             }
             isDragging = false;
@@ -535,7 +606,7 @@
             });
         });
 
-        // ── Composer save / close ──
+        // ── Composer ──
         function closeComposer() {
             composer.style.display = 'none';
             nodeInput.value  = '';
@@ -545,16 +616,14 @@
         function handleSave() {
             const body = nodeInput.value.trim();
             if (!body && !pendingImageData) { closeComposer(); return; }
-
             const now = Date.now();
             const id  = now.toString(36) + Math.random().toString(36).slice(2, 6);
-            BOARD.get(id).put({
-                id,
-                body,
+            pinsRef.child(id).set({
+                id, body,
                 type: pendingImageData ? 'image' : 'text',
                 imageData: pendingImageData || null,
-                x: currentSpawn.x,
-                y: currentSpawn.y,
+                x: currentSpawn.x, y: currentSpawn.y,
+                author: currentUser,
                 createdAt: now,
                 timestamp: new Date(now).toISOString(),
                 expiresAt: now + selectedDuration * 3600000,
@@ -570,12 +639,11 @@
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSave(); }
         });
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') closeComposer();
+            if (e.key === 'Escape' && composer.style.display === 'flex') closeComposer();
         });
 
         // ── Image attach ──
         attachBtn.addEventListener('click', () => fileInput.click());
-
         fileInput.addEventListener('change', async function () {
             const file = this.files[0];
             if (!file || !file.type.startsWith('image/')) return;
@@ -586,7 +654,6 @@
             } catch { uploadStatus.textContent = 'error'; }
             this.value = '';
         });
-
         nodeInput.addEventListener('paste', e => {
             const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith('image/'));
             if (item) {
@@ -605,10 +672,10 @@
                     const img = new Image();
                     img.onload = () => {
                         const c = document.createElement('canvas');
-                        const r = Math.min(400 / img.width, 400 / img.height, 1);
+                        const r = Math.min(350 / img.width, 350 / img.height, 1);
                         c.width = img.width * r; c.height = img.height * r;
                         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-                        resolve(c.toDataURL('image/jpeg', 0.65));
+                        resolve(c.toDataURL('image/jpeg', 0.6));
                     };
                     img.onerror = reject;
                     img.src = e.target.result;
