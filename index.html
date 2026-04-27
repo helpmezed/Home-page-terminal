@@ -1297,14 +1297,21 @@
         (function() {
             const canvas = document.getElementById('mini-matrix');
             const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const cssW = 190, cssH = 48;
+            canvas.width = cssW * dpr;
+            canvas.height = cssH * dpr;
+            canvas.style.width = cssW + 'px';
+            canvas.style.height = cssH + 'px';
+            ctx.scale(dpr, dpr);
             const CHARS = 'ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ01';
             const FONT_SIZE = 10;
-            const cols = Math.floor(canvas.width / FONT_SIZE);
-            const drops = Array.from({length: cols}, () => (Math.random() * -canvas.height / FONT_SIZE) | 0);
+            const cols = Math.floor(cssW / FONT_SIZE);
+            const drops = Array.from({length: cols}, () => (Math.random() * -cssH / FONT_SIZE) | 0);
 
             function draw() {
                 ctx.fillStyle = 'rgba(0,0,0,0.045)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillRect(0, 0, cssW, cssH);
                 ctx.font = `${FONT_SIZE}px monospace`;
                 drops.forEach((y, i) => {
                     const x = i * FONT_SIZE;
@@ -1314,7 +1321,7 @@
                     ctx.fillText(CHARS[Math.random() * CHARS.length | 0], x, (y - 1) * FONT_SIZE);
                     ctx.fillStyle = '#00801f';
                     ctx.fillText(CHARS[Math.random() * CHARS.length | 0], x, (y - 2) * FONT_SIZE);
-                    if (y * FONT_SIZE > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    if (y * FONT_SIZE > cssH && Math.random() > 0.975) drops[i] = 0;
                     drops[i]++;
                 });
             }
@@ -1348,10 +1355,16 @@
             const canvas = document.getElementById('countries-viz');
             if (!canvas) return;
             await new Promise(r => setTimeout(r, 700));
-            canvas.width  = canvas.offsetWidth  || 900;
-            canvas.height = canvas.offsetHeight || 200;
+            const dpr = window.devicePixelRatio || 1;
+            const cssW = canvas.offsetWidth || 900;
+            const cssH = canvas.offsetHeight || 200;
+            canvas.width  = cssW * dpr;
+            canvas.height = cssH * dpr;
+            canvas.style.width  = cssW + 'px';
+            canvas.style.height = cssH + 'px';
             const ctx = canvas.getContext('2d');
-            const W = canvas.width, H = canvas.height;
+            ctx.scale(dpr, dpr);
+            const W = cssW, H = cssH;
 
             const METRICS = [
                 { key: 'population', label: 'POPULATION',  fmt: n => n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':(n/1e3|0)+'K' },
