@@ -412,39 +412,7 @@
             box-shadow: 0 0 14px rgba(0,255,65,0.06), inset 0 0 10px rgba(0,0,0,0.6);
         }
 
-        #nav-overlay {
-            position: fixed; inset: 0; z-index: 9999;
-            background: rgba(0,3,1,0.97);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.07s ease;
-            font-family: monospace;
-            background-image: repeating-linear-gradient(
-                to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px
-            );
-        }
-        #nav-overlay.show { opacity: 1; pointer-events: all; }
-        #nav-node-label { color: #005c18; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; }
-        #nav-domain {
-            color: #00ff41; font-size: 17px; font-weight: bold; letter-spacing: 2px;
-            text-shadow: 0 0 18px rgba(0,255,65,0.75), 0 0 40px rgba(0,255,65,0.3);
-        }
-        .nav-bar-wrap {
-            width: 280px; height: 2px;
-            background: rgba(0,255,65,0.1);
-            border-radius: 2px; overflow: hidden;
-        }
-        #nav-bar {
-            height: 100%; width: 0%;
-            background: linear-gradient(90deg, #007a22, #00ff41);
-            box-shadow: 0 0 10px rgba(0,255,65,0.8);
-            transition: width 0.48s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        #nav-status {
-            color: #005c18; font-size: 9px; letter-spacing: 3px;
-            animation: navBlink 0.75s ease-in-out infinite;
-        }
-        @keyframes navBlink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+        #nav-overlay { position: fixed; inset: 0; z-index: 9999; display: none; pointer-events: none; }
 
         .left-glyph {
             width: 190px;
@@ -533,12 +501,7 @@
 
         </div>
 
-        <div id="nav-overlay">
-            <div id="nav-node-label">ACCESSING REMOTE NODE</div>
-            <div id="nav-domain"></div>
-            <div class="nav-bar-wrap"><div id="nav-bar"></div></div>
-            <div id="nav-status">ESTABLISHING CONNECTION</div>
-        </div>
+        <canvas id="nav-overlay"></canvas>
 
         <div class="modal-overlay" id="addModal">
             <div class="modal">
@@ -719,19 +682,105 @@
         const MIN_SLOTS = 12;
 
         function navigateWithTransition(url) {
-            const overlay = document.getElementById('nav-overlay');
-            const domainEl = document.getElementById('nav-domain');
-            const bar = document.getElementById('nav-bar');
-            try { domainEl.textContent = new URL(url).hostname; }
-            catch { domainEl.textContent = url; }
-            bar.style.transition = 'none';
-            bar.style.width = '0%';
-            overlay.classList.add('show');
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-                bar.style.transition = 'width 0.48s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                bar.style.width = '100%';
-            }));
-            setTimeout(() => { window.location.href = url; }, 520);
+            let host;
+            try { host = new URL(url).hostname; } catch { host = url; }
+
+            const canvas = document.getElementById('nav-overlay');
+            const dpr = window.devicePixelRatio || 1;
+            const W = window.innerWidth, H = window.innerHeight;
+            canvas.width = W * dpr; canvas.height = H * dpr;
+            canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+            canvas.style.display = 'block';
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const TOTAL = 700, start = performance.now();
+            let typed = 0, lastType = 0;
+            const typeSpeed = Math.max(16, Math.min(45, 260 / host.length));
+
+            function frame(ts) {
+                const p = Math.min((ts - start) / TOTAL, 1);
+                ctx.clearRect(0, 0, W, H);
+
+                // Background — goes near-opaque in first ~80ms
+                ctx.fillStyle = `rgba(0,3,1,${Math.min(p * 9, 0.97)})`;
+                ctx.fillRect(0, 0, W, H);
+
+                // Scanlines
+                for (let y = 0; y < H; y += 4) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.07)';
+                    ctx.fillRect(0, y, W, 1);
+                }
+
+                // Expanding concentric rings from center
+                for (let i = 0; i < 5; i++) {
+                    const rp = ((p * 1.7) + i * 0.24) % 1.7;
+                    if (rp > 1) continue;
+                    const r = rp * Math.hypot(W, H) * 0.6;
+                    ctx.strokeStyle = `rgba(0,255,65,${(1 - rp) * 0.28})`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.arc(W / 2, H / 2, r, 0, Math.PI * 2); ctx.stroke();
+                }
+
+                // Scan sweep line
+                const sy = (p / 0.9) * (H + 14);
+                if (sy < H + 14) {
+                    const sg = ctx.createLinearGradient(0, sy - 10, 0, sy + 10);
+                    sg.addColorStop(0, 'rgba(0,255,65,0)');
+                    sg.addColorStop(0.5, 'rgba(0,255,65,0.5)');
+                    sg.addColorStop(1, 'rgba(0,255,65,0)');
+                    ctx.fillStyle = sg; ctx.fillRect(0, sy - 10, W, 20);
+                }
+
+                // Centre content — fades in after first 12%
+                const ca = Math.max(0, Math.min((p - 0.12) / 0.22, 1));
+                if (ca > 0) {
+                    // Typewriter
+                    if (ts - lastType > typeSpeed && typed < host.length) { typed++; lastType = ts; }
+                    const shown = host.slice(0, typed);
+
+                    ctx.textAlign = 'center';
+
+                    // Label
+                    ctx.fillStyle = `rgba(0,92,24,${ca})`;
+                    ctx.font = '10px monospace';
+                    ctx.fillText('ACCESSING REMOTE NODE', W / 2, H / 2 - 38);
+
+                    // Domain with glow
+                    ctx.font = 'bold 24px monospace';
+                    ctx.shadowColor = '#00ff41'; ctx.shadowBlur = 24 * ca;
+                    ctx.fillStyle = `rgba(0,255,65,${ca})`;
+                    ctx.fillText(shown, W / 2, H / 2 + 2);
+                    ctx.shadowBlur = 0;
+
+                    // Blinking cursor
+                    if (typed < host.length || Math.floor(ts / 380) % 2 === 0) {
+                        const tw = ctx.measureText(shown).width;
+                        ctx.fillStyle = `rgba(0,255,65,${ca})`;
+                        ctx.fillRect(W / 2 + tw / 2 + 4, H / 2 - 18, 2, 22);
+                    }
+
+                    // Progress bar
+                    const bw = 280, bx = W / 2 - bw / 2, by = H / 2 + 22;
+                    ctx.fillStyle = `rgba(0,255,65,${ca * 0.1})`; ctx.fillRect(bx, by, bw, 2);
+                    const pg = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+                    pg.addColorStop(0, `rgba(0,100,28,${ca})`);
+                    pg.addColorStop(1, `rgba(0,255,65,${ca})`);
+                    ctx.fillStyle = pg;
+                    ctx.shadowColor = '#00ff41'; ctx.shadowBlur = 10 * ca;
+                    ctx.fillRect(bx, by, bw * Math.min(p * 1.35, 1), 2);
+                    ctx.shadowBlur = 0;
+
+                    // Status
+                    ctx.fillStyle = `rgba(0,70,20,${ca})`;
+                    ctx.font = '9px monospace';
+                    ctx.fillText('ESTABLISHING SECURE CONNECTION', W / 2, H / 2 + 44);
+                }
+
+                if (p < 1) requestAnimationFrame(frame);
+                else window.location.href = url;
+            }
+            requestAnimationFrame(frame);
         }
 
         function renderShortcuts(animate = false) {
