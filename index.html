@@ -170,6 +170,7 @@
         .suggestion-item.suggestion-cmd .suggestion-text { color: #00ff41; font-weight: bold; }
         .suggestion-item.suggestion-bang .suggestion-text { color: #00cc44; }
         .suggestion-item.suggestion-hist .suggestion-text { color: #005c18; }
+        .suggestion-item.suggestion-web .suggestion-text { color: #00cc44; }
         .suggestion-hint { color: #003b00; font-size: 10px; flex-shrink: 0; margin-left: 12px; }
         .suggestion-item:hover .suggestion-hint, .suggestion-item.active .suggestion-hint { color: #005c18; }
 
@@ -185,10 +186,10 @@
             display: flex; align-items: stretch; opacity: 0; transform: translateY(-8px);
             transition: all 0.5s ease;
             font-size: 14px;
-            background: rgba(0,255,65,0.02);
-            border: 1px solid rgba(0,255,65,0.28);
+            background: rgba(0,22,8,0.92);
+            border: 1px solid rgba(0,255,65,0.55);
             border-radius: 6px;
-            box-shadow: 0 0 20px rgba(0,255,65,0.08), inset 0 0 14px rgba(0,255,65,0.02);
+            box-shadow: 0 0 28px rgba(0,255,65,0.14), 0 2px 10px rgba(0,0,0,0.7), inset 0 0 18px rgba(0,255,65,0.04);
             overflow: hidden;
             -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
         }
@@ -1068,6 +1069,25 @@
             suggestIdx = -1;
         }
 
+        function renderSuggestions() {
+            if (!currentSuggestions.length) { closeSuggestions(); return; }
+            suggestionsEl.innerHTML = currentSuggestions.map((s, i) =>
+                `<div class="suggestion-item suggestion-${s.type}" data-idx="${i}">` +
+                `<span class="suggestion-text">${s.text}</span>` +
+                `<span class="suggestion-hint">${s.hint}</span></div>`
+            ).join('');
+            suggestionsEl.querySelectorAll('.suggestion-item').forEach(el => {
+                el.addEventListener('mousedown', ev => {
+                    ev.preventDefault();
+                    searchInput.value = currentSuggestions[+el.dataset.idx].text;
+                    setEngineBadge(searchInput.value);
+                    closeSuggestions();
+                    searchInput.focus();
+                });
+            });
+            suggestionsEl.style.display = 'block';
+        }
+
         function buildSuggestions(val) {
             suggestIdx = -1;
             if (!val) {
@@ -1086,27 +1106,21 @@
                     .filter(h => h.toLowerCase().includes(low) && h !== val)
                     .slice(0, 3)
                     .map(h => ({ text: h, type: 'hist', hint: 'history' }));
-                currentSuggestions = [...cmds, ...bangs, ...hist].slice(0, 7);
+                currentSuggestions = [...cmds, ...bangs, ...hist].slice(0, 5);
             }
+            renderSuggestions();
+        }
 
-            if (!currentSuggestions.length) { closeSuggestions(); return; }
-
-            suggestionsEl.innerHTML = currentSuggestions.map((s, i) =>
-                `<div class="suggestion-item suggestion-${s.type}" data-idx="${i}">` +
-                `<span class="suggestion-text">${s.text}</span>` +
-                `<span class="suggestion-hint">${s.hint}</span></div>`
-            ).join('');
-
-            suggestionsEl.querySelectorAll('.suggestion-item').forEach(el => {
-                el.addEventListener('mousedown', ev => {
-                    ev.preventDefault();
-                    searchInput.value = currentSuggestions[+el.dataset.idx].text;
-                    setEngineBadge(searchInput.value);
-                    closeSuggestions();
-                    searchInput.focus();
-                });
-            });
-            suggestionsEl.style.display = 'block';
+        let webDebounce = null;
+        async function fetchWebSuggestions(query) {
+            try {
+                const res = await fetch(`https://ac.duckduckgo.com/ac/?q=${encodeURIComponent(query)}&type=list`);
+                const data = await res.json();
+                if (Array.isArray(data) && Array.isArray(data[1])) {
+                    return data[1].slice(0, 5).map(s => ({ text: s, type: 'web', hint: 'web' }));
+                }
+            } catch(e) {}
+            return [];
         }
 
         function navigateSuggestions(dir) {
@@ -1123,8 +1137,20 @@
         }
 
         searchInput.addEventListener('input', () => {
-            buildSuggestions(searchInput.value);
-            setEngineBadge(searchInput.value);
+            const val = searchInput.value;
+            buildSuggestions(val);
+            setEngineBadge(val);
+            clearTimeout(webDebounce);
+            if (val && val.length >= 2) {
+                webDebounce = setTimeout(async () => {
+                    const webSuggs = await fetchWebSuggestions(val);
+                    if (searchInput.value === val && webSuggs.length > 0) {
+                        const existing = currentSuggestions.filter(s => s.type !== 'web');
+                        currentSuggestions = [...existing, ...webSuggs].slice(0, 8);
+                        renderSuggestions();
+                    }
+                }, 280);
+            }
         });
         searchInput.addEventListener('focus', () => { if (!searchInput.value) buildSuggestions(''); });
         searchInput.addEventListener('blur',  () => { setTimeout(closeSuggestions, 160); });
