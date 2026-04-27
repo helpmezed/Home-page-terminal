@@ -356,6 +356,79 @@
             text-shadow: 0 0 8px rgba(0,255,65,0.9);
         }
 
+        /* ── Terminal Pages Hub ── */
+        #tp-overlay {
+            position: fixed; inset: 0; z-index: 500;
+            background: rgba(0,0,0,0.72);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.28s ease, visibility 0.28s ease;
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+        }
+        #tp-overlay.tp-show { opacity: 1; visibility: visible; }
+
+        #tp-modal {
+            background: #050505;
+            border: 1px solid rgba(0,255,65,0.35);
+            border-radius: 12px;
+            padding: 0;
+            width: 340px;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.95), 0 0 40px rgba(0,255,65,0.08);
+            transform: scale(0.82) translateY(28px);
+            opacity: 0;
+            transition: transform 0.38s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s ease;
+            overflow: hidden;
+        }
+        #tp-overlay.tp-show #tp-modal { transform: scale(1) translateY(0); opacity: 1; }
+
+        .tp-titlebar {
+            display: flex; align-items: center; gap: 7px;
+            padding: 10px 14px;
+            background: rgba(0,255,65,0.03);
+            border-bottom: 1px solid rgba(0,255,65,0.12);
+        }
+        .tp-dot { width: 11px; height: 11px; border-radius: 50%; }
+        .tp-dot-r { background: #2a2a2a; }
+        .tp-dot-y { background: #2a2a2a; }
+        .tp-dot-g { background: #1a4a20; }
+        .tp-title-text {
+            margin-left: 6px; font-size: 11px; color: #005c18; letter-spacing: 0.5px;
+        }
+        .tp-close-x {
+            margin-left: auto; cursor: pointer; color: #003b00; font-size: 14px;
+            line-height: 1; padding: 2px 4px; border-radius: 3px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .tp-close-x:hover { color: #00ff41; background: rgba(0,255,65,0.08); }
+
+        .tp-body { padding: 20px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+        .tp-label {
+            font-size: 10px; color: #003b00; letter-spacing: 1.5px;
+            text-transform: uppercase; margin-bottom: 4px;
+        }
+
+        .tp-page-btn {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px; border-radius: 8px;
+            border: 1px solid rgba(0,255,65,0.2);
+            background: rgba(0,255,65,0.025);
+            color: #00cc44; text-decoration: none; font-size: 13px;
+            transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
+            cursor: pointer;
+        }
+        .tp-page-btn:hover {
+            border-color: rgba(0,255,65,0.7);
+            background: rgba(0,255,65,0.07);
+            color: #00ff41;
+            transform: translateX(4px);
+            box-shadow: 0 0 14px rgba(0,255,65,0.15), inset 0 0 8px rgba(0,255,65,0.04);
+        }
+        .tp-page-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+        .tp-page-info { display: flex; flex-direction: column; gap: 2px; }
+        .tp-page-name { font-weight: bold; font-size: 13px; }
+        .tp-page-desc { font-size: 10px; color: #005c18; letter-spacing: 0.3px; }
+
         .mini-matrix-canvas {
             border: 1px solid rgba(0, 255, 65, 0.12);
             border-radius: 4px;
@@ -474,8 +547,7 @@
                         <div class="ascii-wrapper">
                             <div class="ascii-art" id="ascii"></div>
                         </div>
-                        <a class="left-nav-btn disc-btn" href="discipline.html">⌖ Discipline</a>
-                        <a class="left-nav-btn tools-btn-left" href="tools.html">{...} Tools DB</a>
+                        <button class="left-nav-btn tools-btn-left" id="tp-open-btn" onclick="openTerminalPages()" style="cursor:pointer; font-family:inherit;">⊞ Terminal Pages</button>
                         <canvas id="mini-matrix" class="mini-matrix-canvas" width="190" height="48"></canvas>
                         <div class="signal-monitor">
                             <div class="signal-header">
@@ -499,6 +571,43 @@
                 <div class="output-area" id="output"></div>
             </div>
 
+        </div>
+
+        <!-- Terminal Pages Hub -->
+        <div id="tp-overlay" onclick="handleTpOverlayClick(event)">
+            <div id="tp-modal">
+                <div class="tp-titlebar">
+                    <div class="tp-dot tp-dot-r"></div>
+                    <div class="tp-dot tp-dot-y"></div>
+                    <div class="tp-dot tp-dot-g"></div>
+                    <span class="tp-title-text">neo@matrix: ~/pages</span>
+                    <span class="tp-close-x" onclick="closeTerminalPages()">✕</span>
+                </div>
+                <div class="tp-body">
+                    <div class="tp-label">// select a terminal page</div>
+                    <a class="tp-page-btn" href="discipline.html">
+                        <span class="tp-page-icon">⌖</span>
+                        <div class="tp-page-info">
+                            <span class="tp-page-name">Discipline</span>
+                            <span class="tp-page-desc">motivational terminal · process flow</span>
+                        </div>
+                    </a>
+                    <a class="tp-page-btn" href="tools.html">
+                        <span class="tp-page-icon">{}</span>
+                        <div class="tp-page-info">
+                            <span class="tp-page-name">Tools DB</span>
+                            <span class="tp-page-desc">curated tool index · matrix theme</span>
+                        </div>
+                    </a>
+                    <a class="tp-page-btn" href="gemini-code-1777277244227.html">
+                        <span class="tp-page-icon">◈</span>
+                        <div class="tp-page-info">
+                            <span class="tp-page-name">Spatial Board</span>
+                            <span class="tp-page-desc">canvas notepad · drag &amp; drop nodes</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
         </div>
 
         <canvas id="nav-overlay"></canvas>
@@ -680,6 +789,29 @@
         const searchInput = document.getElementById('searchInput');
 
         const MIN_SLOTS = 12;
+
+        function openTerminalPages() {
+            document.getElementById('tp-overlay').classList.add('tp-show');
+        }
+        function closeTerminalPages() {
+            document.getElementById('tp-overlay').classList.remove('tp-show');
+        }
+        function handleTpOverlayClick(e) {
+            if (e.target === document.getElementById('tp-overlay')) closeTerminalPages();
+        }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && document.getElementById('tp-overlay').classList.contains('tp-show')) {
+                closeTerminalPages();
+            }
+        });
+        document.querySelectorAll('.tp-page-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+                e.preventDefault();
+                closeTerminalPages();
+                setTimeout(() => navigateWithTransition(btn.getAttribute('href')), 60);
+            });
+        });
 
         function navigateWithTransition(url) {
             let host;
