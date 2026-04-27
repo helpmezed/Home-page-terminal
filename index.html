@@ -405,6 +405,12 @@
             box-shadow: 0 0 14px rgba(0,255,65,0.06), inset 0 0 10px rgba(0,0,0,0.6);
         }
 
+        .spacex-viz {
+            width: 100%; height: 155px; display: block;
+            border: 1px solid rgba(0,255,65,0.25); border-radius: 4px;
+            box-shadow: 0 0 14px rgba(0,255,65,0.06), inset 0 0 10px rgba(0,0,0,0.6);
+        }
+
         .left-glyph {
             width: 190px;
             font-size: 11px;
@@ -597,6 +603,8 @@
                         <!-- Tasks Container added here -->
                         <div class="ascii-divider" style="margin-top: 4px;">◤░▒▓ ✟━━━━━━━━━━━━━━━━━━━ TASKS ━━━━━━━━━━━━━━━━━━━✟ ▓▒░◥</div>
                         <div class="tasks-list" id="tasks-list"></div>
+                        <div class="ascii-divider" style="margin-top:4px;">◤░▒▓ ✟━━━━━━━━━━━━━━━━━━━ SPACEX ━━━━━━━━━━━━━━━━━━━✟ ▓▒░◥</div>
+                        <canvas id="spacex-viz" class="spacex-viz"></canvas>
                     </div>
                 </div>
 
@@ -1461,6 +1469,168 @@
                 t+=0.016; tick++;
                 if(tick%200===0) nodeIdx=(nodeIdx+1)%top.length;
                 if(tick%840===0){mIdx=(mIdx+1)%METRICS.length;top=getTop();nodeIdx=0;}
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        // ── SpaceX Launch Tracker ──
+        (async function() {
+            const canvas = document.getElementById('spacex-viz');
+            if (!canvas) return;
+            await new Promise(r => setTimeout(r, 500));
+            const dpr = window.devicePixelRatio || 1;
+            const cssW = canvas.offsetWidth || 700;
+            const cssH = canvas.offsetHeight || 155;
+            canvas.width = cssW * dpr;
+            canvas.height = cssH * dpr;
+            canvas.style.width = cssW + 'px';
+            canvas.style.height = cssH + 'px';
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            const W = cssW, H = cssH;
+
+            let launch = null;
+            try {
+                const res = await fetch('https://api.spacexdata.com/v4/launches/latest');
+                launch = await res.json();
+            } catch(e) {
+                ctx.fillStyle = '#003b00'; ctx.font = '11px monospace';
+                ctx.fillText('[ SPACEX TELEMETRY OFFLINE ]', 20, H / 2); return;
+            }
+
+            const missionName = launch.name || 'UNKNOWN';
+            const flightNum   = launch.flight_number ?? '?';
+            const success     = launch.success;
+            const launchDate  = launch.date_utc
+                ? new Date(launch.date_utc).toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'})
+                : 'UNKNOWN';
+            const details = (launch.details || 'No mission details on record.').trim();
+
+            const SPLIT = W * 0.54;
+
+            const stars = Array.from({length: 60}, () => ({
+                x: SPLIT + 8 + Math.random() * (W - SPLIT - 12),
+                y: 4 + Math.random() * (H - 8),
+                r: 0.4 + Math.random() * 1.3,
+                phase: Math.random() * Math.PI * 2,
+                spd: 0.5 + Math.random() * 1.2
+            }));
+
+            const particles = [];
+            function spawnParticle(cx, cy) {
+                particles.push({
+                    x: cx + (Math.random()-0.5)*10, y: cy,
+                    vx: (Math.random()-0.5)*0.7,
+                    vy: 1.4 + Math.random()*2.2,
+                    life: 1, decay: 0.034 + Math.random()*0.04,
+                    r: 1.5 + Math.random()*3
+                });
+            }
+
+            function drawRocket(rx, ry) {
+                // Fins
+                ctx.fillStyle = '#005c18';
+                ctx.beginPath(); ctx.moveTo(rx-7,ry+4); ctx.lineTo(rx-15,ry+20); ctx.lineTo(rx-7,ry+14); ctx.closePath(); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(rx+7,ry+4); ctx.lineTo(rx+15,ry+20); ctx.lineTo(rx+7,ry+14); ctx.closePath(); ctx.fill();
+                // Body
+                ctx.fillStyle = '#00cc44';
+                ctx.fillRect(rx-7, ry-22, 14, 30);
+                // Nose
+                ctx.fillStyle = '#00ff41';
+                ctx.beginPath(); ctx.moveTo(rx,ry-38); ctx.lineTo(rx-7,ry-22); ctx.lineTo(rx+7,ry-22); ctx.closePath(); ctx.fill();
+                // Window
+                ctx.beginPath(); ctx.arc(rx, ry-9, 4.5, 0, Math.PI*2);
+                ctx.fillStyle = 'rgba(0,255,65,0.18)'; ctx.fill();
+                ctx.strokeStyle = '#00ff41'; ctx.lineWidth = 1; ctx.stroke();
+                // Exhaust flame
+                const eg = ctx.createLinearGradient(rx, ry+8, rx, ry+32);
+                eg.addColorStop(0, 'rgba(255,160,0,0.9)');
+                eg.addColorStop(0.5,'rgba(255,80,0,0.5)');
+                eg.addColorStop(1, 'rgba(255,30,0,0)');
+                ctx.fillStyle = eg;
+                ctx.beginPath(); ctx.moveTo(rx-5,ry+8); ctx.lineTo(rx+5,ry+8); ctx.lineTo(rx+2,ry+32); ctx.lineTo(rx-2,ry+32); ctx.closePath(); ctx.fill();
+            }
+
+            let t = 0, tick = 0;
+
+            function draw() {
+                ctx.clearRect(0,0,W,H);
+                ctx.fillStyle='#000200'; ctx.fillRect(0,0,W,H);
+
+                for(let y=0;y<H;y+=3){ctx.fillStyle='rgba(0,0,0,0.07)';ctx.fillRect(0,y,W,1);}
+
+                // Info panel bg + border
+                ctx.fillStyle='rgba(0,255,65,0.02)'; ctx.fillRect(0,0,SPLIT,H);
+                ctx.fillStyle='rgba(0,255,65,0.07)'; ctx.fillRect(0,0,SPLIT,15);
+                ctx.strokeStyle='rgba(0,255,65,0.25)'; ctx.lineWidth=1;
+                ctx.strokeRect(0.5,0.5,W-1,H-1);
+                ctx.beginPath(); ctx.moveTo(SPLIT,0); ctx.lineTo(SPLIT,H); ctx.stroke();
+
+                // Header
+                ctx.fillStyle='#00cc44'; ctx.font='bold 8px monospace'; ctx.textAlign='center';
+                ctx.fillText('LAUNCH TELEMETRY', SPLIT/2, 11);
+
+                // Stars
+                stars.forEach(s => {
+                    const a = 0.2 + 0.55*Math.sin(t*s.spd+s.phase);
+                    ctx.fillStyle=`rgba(180,255,200,${a.toFixed(2)})`;
+                    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+                });
+
+                // Rocket + particles
+                const rx = SPLIT + (W-SPLIT)*0.55;
+                const ry = H*0.48 + Math.sin(t*0.9)*4;
+
+                if(tick%2===0) spawnParticle(rx, ry+10);
+                for(let i=particles.length-1;i>=0;i--){
+                    const p=particles[i];
+                    p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;
+                    if(p.life<=0){particles.splice(i,1);continue;}
+                    ctx.fillStyle=p.life>0.5
+                        ?`rgba(255,160,40,${(p.life*0.85).toFixed(2)})`
+                        :`rgba(255,60,0,${(p.life*0.6).toFixed(2)})`;
+                    ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); ctx.fill();
+                }
+                drawRocket(rx, ry);
+
+                // Mission data
+                const IX=10, IW=SPLIT-16;
+                ctx.textAlign='left';
+
+                ctx.fillStyle='#005c18'; ctx.font='7px monospace'; ctx.fillText('MISSION',IX,28);
+                ctx.fillStyle='#00ff41'; ctx.font='bold 11px monospace';
+                ctx.fillText(missionName.length>26?missionName.slice(0,25)+'…':missionName, IX, 41);
+
+                ctx.fillStyle='#005c18'; ctx.font='7px monospace'; ctx.fillText('FLIGHT',IX,57);
+                ctx.fillStyle='#00cc44'; ctx.font='bold 10px monospace'; ctx.fillText(`#${flightNum}`,IX,68);
+
+                ctx.fillStyle='#005c18'; ctx.font='7px monospace'; ctx.fillText('DATE',IX+65,57);
+                ctx.fillStyle='#00cc44'; ctx.font='bold 10px monospace'; ctx.fillText(launchDate,IX+65,68);
+
+                ctx.fillStyle='#005c18'; ctx.font='7px monospace'; ctx.fillText('STATUS',IX,83);
+                if(success===true){
+                    ctx.fillStyle='#00ff41'; ctx.font='bold 12px monospace'; ctx.fillText('✓ SUCCESS',IX,96);
+                } else if(success===false){
+                    ctx.fillStyle='#ff3300'; ctx.font='bold 12px monospace'; ctx.fillText('✗ FAILURE',IX,96);
+                } else {
+                    ctx.fillStyle='#007a22'; ctx.font='bold 12px monospace'; ctx.fillText('⧖ PENDING',IX,96);
+                }
+
+                // Details word-wrap
+                ctx.fillStyle='#003b00'; ctx.font='8px monospace';
+                const words=details.split(' ');
+                let line='', lineY=112;
+                for(let i=0;i<words.length;i++){
+                    const test=line+words[i]+' ';
+                    if(ctx.measureText(test).width>IW && line!==''){
+                        if(lineY>H-10){ctx.fillText(line.trimEnd()+'…',IX,lineY);break;}
+                        ctx.fillText(line,IX,lineY); line=words[i]+' '; lineY+=11;
+                    } else { line=test; }
+                }
+                if(lineY<=H-10) ctx.fillText(line,IX,lineY);
+
+                t+=0.016; tick++;
                 requestAnimationFrame(draw);
             }
             draw();
