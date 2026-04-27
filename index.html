@@ -332,26 +332,42 @@
         }
         .disc-btn {
             color: #00cc44; border: 1px solid rgba(0,255,65,0.22);
-            animation: discPulse 3.8s ease-in-out infinite;
-        }
-        @keyframes discPulse {
-            0%, 100% { border-color: rgba(0,255,65,0.18); box-shadow: none; }
-            50%       { border-color: rgba(0,255,65,0.42); box-shadow: 0 0 8px rgba(0,255,65,0.15); }
         }
         .disc-btn:hover {
-            animation: none; color: #00ff41;
+            color: #00ff41;
             border-color: rgba(0,255,65,0.7);
             background: rgba(0,255,65,0.055);
             box-shadow: 0 0 12px rgba(0,255,65,0.28);
         }
-        .tools-btn-left {
-            color: #00cc44; border: 1px solid rgba(0,255,65,0.28);
+        .tp-launch-widget {
+            width: 190px;
+            border: 1px solid rgba(0,255,65,0.14);
+            border-radius: 4px;
+            background: rgba(0,255,65,0.01);
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
         }
-        .tools-btn-left:hover {
-            color: #00ff41;
-            border-color: rgba(0,255,65,0.6);
-            background: rgba(0,255,65,0.055);
+        .tp-launch-widget:hover {
+            border-color: rgba(0,255,65,0.45);
+            background: rgba(0,255,65,0.03);
         }
+        .tp-launch-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 3px 7px;
+            border-bottom: 1px solid rgba(0,255,65,0.08);
+            font-size: 9px; letter-spacing: 0.8px; color: #003b00;
+        }
+        .tp-launch-header .tp-lh-right { color: #005c18; }
+        .tp-launch-body {
+            padding: 5px 7px;
+            font-size: 10px; color: #005c18; letter-spacing: 0.3px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .tp-launch-widget:hover .tp-launch-body { color: #00cc44; }
+        .tp-launch-prompt { color: #007a22; }
+        .tp-launch-cmd { color: #00cc44; }
+        .tp-launch-widget:hover .tp-launch-cmd { color: #00ff41; }
 
         /* ── Terminal Pages Hub ── */
         #tp-overlay {
@@ -544,7 +560,16 @@
                         <div class="ascii-wrapper">
                             <div class="ascii-art" id="ascii"></div>
                         </div>
-                        <button class="left-nav-btn tools-btn-left" id="tp-open-btn" onclick="openTerminalPages()" style="cursor:pointer; font-family:inherit;">⊞ Terminal Pages</button>
+                        <div class="tp-launch-widget" id="tp-open-btn" onclick="openTerminalPages()">
+                            <div class="tp-launch-header">
+                                <span>PAGES</span>
+                                <span class="tp-lh-right">3 routes</span>
+                            </div>
+                            <div class="tp-launch-body">
+                                <span class="tp-launch-prompt">$</span>
+                                <span class="tp-launch-cmd">./pages --list</span>
+                            </div>
+                        </div>
                         <canvas id="mini-matrix" class="mini-matrix-canvas" width="190" height="48"></canvas>
                         <div class="signal-monitor">
                             <div class="signal-header">
@@ -596,11 +621,11 @@
                             <span class="tp-page-desc">curated tool index · matrix theme</span>
                         </div>
                     </a>
-                    <a class="tp-page-btn" href="gemini-code-1777277244227.html">
+                    <a class="tp-page-btn" href="board.html">
                         <span class="tp-page-icon">◈</span>
                         <div class="tp-page-info">
-                            <span class="tp-page-name">Spatial Board</span>
-                            <span class="tp-page-desc">canvas notepad · drag &amp; drop nodes</span>
+                            <span class="tp-page-name">Bulletin Board</span>
+                            <span class="tp-page-desc">live shared board · real-time pins</span>
                         </div>
                     </a>
                 </div>

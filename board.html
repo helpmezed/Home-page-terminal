@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>matrix://bulletin.board</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --card-bg: rgba(0,5,0,0.92);
+            --green: #00ff41;
+            --green-mid: #00cc44;
+            --green-dim: #008800;
+            --green-dark: #003300;
+            --border: #00ff41;
+            --border-dim: #003300;
+            --font: 'IBM Plex Mono', 'Courier New', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            width: 100vw; height: 100vh;
+            background: var(--bg);
+            color: var(--green);
+            font-family: var(--font);
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        #canvas-board {
+            width: 100vw; height: 100vh;
+            position: relative;
+            background: var(--bg);
+            transform-origin: center center;
+        }
+
+        /* ── Top bar ── */
+        #top-bar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+            height: 32px;
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 12px;
+            background: rgba(0,0,0,0.88);
+            border-bottom: 1px solid rgba(0,255,65,0.12);
+            backdrop-filter: blur(4px);
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .back-btn {
+            color: #005c18; text-decoration: none;
+            border: 1px solid rgba(0,255,65,0.2);
+            padding: 2px 8px; border-radius: 3px;
+            transition: all 0.2s; flex-shrink: 0;
+        }
+        .back-btn:hover {
+            color: var(--green); border-color: rgba(0,255,65,0.6);
+            background: rgba(0,255,65,0.05);
+        }
+
+        .top-divider { color: #002200; }
+
+        #status-dot {
+            font-size: 9px;
+            color: #005c18;
+            transition: color 0.5s;
+        }
+        #status-dot.live { color: var(--green); animation: statusPulse 2s ease-in-out infinite; }
+        @keyframes statusPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        #status-text { color: #005c18; transition: color 0.5s; }
+        #status-text.live { color: var(--green-mid); }
+
+        #pin-count { color: var(--green-dim); margin-left: auto; }
+
+        #help-text {
+            color: #003300; text-align: right;
+            display: flex; gap: 14px;
+        }
+
+        /* ── Node cards ── */
+        .node-card {
+            position: absolute;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            min-width: 160px; max-width: 300px;
+            backdrop-filter: blur(4px);
+            transform: translate(-50%, -50%);
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 0 16px 1px rgba(0,255,65,0.3), inset 0 0 8px rgba(0,255,65,0.1);
+            cursor: move;
+            animation: nodeAppear 0.25s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes nodeAppear {
+            from { transform: translate(-50%,-50%) scale(0.7); opacity: 0; }
+            to   { transform: translate(-50%,-50%) scale(1);   opacity: 1; }
+        }
+        .node-card:hover {
+            border-color: #fff;
+            box-shadow: 0 0 28px 4px rgba(0,255,65,0.7), inset 0 0 12px rgba(0,255,65,0.3);
+            z-index: 100 !important;
+        }
+
+        .node-header {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.7rem; color: var(--green-dim);
+            margin-bottom: 6px;
+            border-bottom: 1px dashed var(--border-dim);
+            padding-bottom: 4px; gap: 6px;
+        }
+        .node-id { font-size: 0.65rem; color: #005c18; }
+        .node-time { flex: 1; text-align: center; }
+        .delete-btn { color: #004400; cursor: pointer; transition: color 0.15s; font-size: 0.8rem; }
+        .delete-btn:hover { color: #ff4444; }
+
+        .node-body {
+            font-size: 0.85rem; word-break: break-word;
+            white-space: pre-wrap; line-height: 1.45;
+            color: var(--green);
+        }
+
+        .node-image {
+            width: 100%; height: auto; max-height: 200px;
+            object-fit: contain; margin-bottom: 8px;
+            border: 1px solid var(--border-dim);
+            filter: grayscale(100%) sepia(100%) hue-rotate(70deg) brightness(1.2) contrast(1.1);
+        }
+
+        /* ── Composer ── */
+        #composer {
+            position: absolute;
+            background: rgba(0,0,0,0.97);
+            border: 1px solid var(--green);
+            padding: 12px; width: 280px;
+            display: none; flex-direction: column; gap: 8px;
+            box-shadow: 0 0 24px rgba(0,255,65,0.25);
+            z-index: 1000;
+            transform: translate(-50%, -50%);
+            cursor: default;
+            animation: composerIn 0.18s ease;
+        }
+        @keyframes composerIn {
+            from { transform: translate(-50%,-50%) scale(0.92); opacity:0; }
+            to   { transform: translate(-50%,-50%) scale(1);    opacity:1; }
+        }
+
+        .composer-header { font-size: 0.75rem; color: var(--green); font-weight: 600; }
+        .composer-coords { color: var(--green-dim); font-weight: normal; }
+
+        .composer-input {
+            background: transparent;
+            border: 1px solid var(--border-dim);
+            color: var(--green);
+            font-family: var(--font); font-size: 0.85rem;
+            padding: 6px; outline: none; resize: none;
+            transition: border-color 0.15s;
+        }
+        .composer-input:focus { border-color: var(--green-dim); }
+        .composer-input::placeholder { color: #004400; }
+
+        .composer-meta {
+            font-size: 0.68rem; color: var(--green-dim);
+            display: flex; justify-content: space-between;
+        }
+        #attachBtn { cursor: pointer; text-decoration: underline; }
+        #attachBtn:hover { color: var(--green); }
+
+        .composer-actions { display: flex; gap: 8px; }
+
+        .btn {
+            background: transparent; border: 1px solid var(--border-dim);
+            color: var(--green-dim); padding: 4px 10px; cursor: pointer;
+            font-family: var(--font); font-size: 0.78rem; flex: 1;
+            transition: all 0.15s;
+        }
+        .btn:hover { color: var(--green); border-color: var(--green); }
+        .btn-primary { color: var(--green); border-color: var(--green-dim); }
+        .btn-primary:hover { background: rgba(0,255,65,0.08); }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <a class="back-btn" href="index.html">← back</a>
+        <span class="top-divider">|</span>
+        <span id="status-dot">●</span>
+        <span id="status-text">CONNECTING</span>
+        <span class="top-divider">|</span>
+        <span id="pin-count">0 PINS</span>
+        <div id="help-text">
+            <span>CLICK·SPAWN</span>
+            <span>DRAG·MOVE</span>
+            <span>SCROLL·ZOOM</span>
+        </div>
+    </div>
+
+    <div id="canvas-board"></div>
+
+    <div id="composer">
+        <div class="composer-header">
+            ▶ NEW PIN &nbsp;<span class="composer-coords">[<span id="compX">0</span>, <span id="compY">0</span>]</span>
+        </div>
+        <textarea id="nodeInput" class="composer-input" rows="3" placeholder="type your message..."></textarea>
+        <div class="composer-meta">
+            <span id="uploadStatus">no media</span>
+            <span id="attachBtn">[attach image]</span>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;">
+        <div class="composer-actions">
+            <button class="btn btn-primary" id="saveBtn">PIN IT</button>
+            <button class="btn" id="cancelBtn">cancel</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script>
+    (function() {
+        const board    = document.getElementById('canvas-board');
+        const composer = document.getElementById('composer');
+        const nodeInput  = document.getElementById('nodeInput');
+        const saveBtn    = document.getElementById('saveBtn');
+        const cancelBtn  = document.getElementById('cancelBtn');
+        const attachBtn  = document.getElementById('attachBtn');
+        const fileInput  = document.getElementById('fileInput');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const compX = document.getElementById('compX');
+        const compY = document.getElementById('compY');
+        const statusDot  = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const pinCountEl = document.getElementById('pin-count');
+
+        // ── Gun.js init ──
+        const gun = Gun({
+            peers: [
+                'https://gun-manhattan.herokuapp.com/gun',
+                'https://peer.wallie.io/gun'
+            ]
+        });
+        const BOARD = gun.get('matrix-bulletin-board-v1');
+
+        // Connection health check — if we get a Gun response within 3s, mark live
+        let isLive = false;
+        const liveTimer = setTimeout(() => setStatus(false), 3000);
+
+        function setStatus(live) {
+            isLive = live;
+            if (live) {
+                clearTimeout(liveTimer);
+                statusDot.className = 'live';
+                statusText.className = 'live';
+                statusText.textContent = 'LIVE';
+            } else {
+                statusDot.className = '';
+                statusText.className = '';
+                statusText.textContent = 'LOCAL';
+            }
+        }
+
+        // ── State ──
+        let posts   = {};   // id → data
+        let nodeEls = {};   // id → DOM element
+        let scale = 1;
+        let isDragging = false;
+        let dragTarget = null;
+        let currentSpawn = { x: 50, y: 50 };
+        let pendingImageData = null;
+        let moveSaveTimers = {};
+
+        // ── Real-time Gun listener ──
+        BOARD.map().on((data, id) => {
+            if (!isLive) setStatus(true);
+
+            if (!data || data._deleted) {
+                delete posts[id];
+                if (nodeEls[id]) { nodeEls[id].remove(); delete nodeEls[id]; }
+                updatePinCount();
+                return;
+            }
+
+            posts[id] = data;
+
+            if (nodeEls[id]) {
+                // Sync remote position if we're not dragging this node
+                if (!dragTarget || dragTarget.id !== id) {
+                    nodeEls[id].style.left = data.x + '%';
+                    nodeEls[id].style.top  = data.y + '%';
+                }
+            } else {
+                const el = createNodeEl(data);
+                board.appendChild(el);
+                nodeEls[id] = el;
+            }
+            updatePinCount();
+        });
+
+        function updatePinCount() {
+            const n = Object.keys(nodeEls).length;
+            pinCountEl.textContent = n + ' PIN' + (n !== 1 ? 'S' : '');
+        }
+
+        // ── Create node DOM element ──
+        function createNodeEl(post) {
+            const div = document.createElement('div');
+            div.className = 'node-card';
+            div.style.left   = post.x + '%';
+            div.style.top    = post.y + '%';
+            div.style.zIndex = Date.now() % 900;
+            div.dataset.id   = post.id;
+
+            const time = post.timestamp
+                ? new Date(post.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : '--:--';
+
+            let mediaHtml = '';
+            if (post.type === 'image' && (post.imageData || post.imageUrl)) {
+                mediaHtml = `<img src="${esc(post.imageData || post.imageUrl)}" class="node-image" draggable="false">`;
+            }
+
+            div.innerHTML = `
+                <div class="node-header">
+                    <span class="node-id">#${post.id.slice(-4)}</span>
+                    <span class="node-time">${time}</span>
+                    <span class="delete-btn" title="remove">✕</span>
+                </div>
+                ${mediaHtml}
+                <div class="node-body">${esc(post.body || '')}</div>
+            `;
+
+            div.querySelector('.delete-btn').addEventListener('click', e => {
+                e.stopPropagation();
+                BOARD.get(post.id).put({ _deleted: true });
+            });
+
+            div.addEventListener('mousedown', e => {
+                if (e.target.classList.contains('delete-btn')) return;
+                isDragging = true;
+
+                const rect = board.getBoundingClientRect();
+                const bw = board.offsetWidth, bh = board.offsetHeight;
+                const mx = (e.clientX - rect.left) / scale;
+                const my = (e.clientY - rect.top)  / scale;
+                const nx = (post.x / 100) * bw;
+                const ny = (post.y / 100) * bh;
+
+                dragTarget = {
+                    id: post.id,
+                    element: div,
+                    post: post,
+                    offX: mx - nx,
+                    offY: my - ny
+                };
+                div.style.zIndex = 990;
+            });
+
+            return div;
+        }
+
+        function esc(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        // ── Zoom ──
+        window.addEventListener('wheel', e => {
+            if (e.target.tagName === 'TEXTAREA') return;
+            e.preventDefault();
+            if (composer.style.display === 'flex') closeComposer();
+            scale += e.deltaY * -0.001;
+            scale = Math.min(Math.max(0.2, scale), 4);
+            board.style.transform = `scale(${scale})`;
+        }, { passive: false });
+
+        // ── Click canvas to spawn composer ──
+        board.addEventListener('mousedown', e => {
+            if (e.target.closest('.node-card') || e.target.closest('#composer')) return;
+
+            const rect = board.getBoundingClientRect();
+            const trueX = (e.clientX - rect.left) / scale;
+            const trueY = (e.clientY - rect.top)  / scale;
+            currentSpawn.x = Math.max(5, Math.min(95, (trueX / board.offsetWidth)  * 100));
+            currentSpawn.y = Math.max(5, Math.min(95, (trueY / board.offsetHeight) * 100));
+
+            composer.style.left    = e.clientX + 'px';
+            composer.style.top     = e.clientY + 'px';
+            composer.style.display = 'flex';
+            compX.textContent = Math.round(currentSpawn.x);
+            compY.textContent = Math.round(currentSpawn.y);
+            nodeInput.value   = '';
+            pendingImageData  = null;
+            uploadStatus.textContent = 'no media';
+            setTimeout(() => nodeInput.focus(), 40);
+        });
+
+        // ── Drag ──
+        window.addEventListener('mousemove', e => {
+            if (!isDragging || !dragTarget) return;
+            const rect = board.getBoundingClientRect();
+            const bw = board.offsetWidth, bh = board.offsetHeight;
+            const mx = (e.clientX - rect.left) / scale;
+            const my = (e.clientY - rect.top)  / scale;
+            const px = ((mx - dragTarget.offX) / bw) * 100;
+            const py = ((my - dragTarget.offY) / bh) * 100;
+            dragTarget.element.style.left = px + '%';
+            dragTarget.element.style.top  = py + '%';
+            dragTarget.post.x = px;
+            dragTarget.post.y = py;
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isDragging && dragTarget) {
+                const id = dragTarget.id;
+                const x  = dragTarget.post.x;
+                const y  = dragTarget.post.y;
+                dragTarget.element.style.zIndex = '';
+                clearTimeout(moveSaveTimers[id]);
+                moveSaveTimers[id] = setTimeout(() => {
+                    BOARD.get(id).put({ x, y });
+                }, 80);
+            }
+            isDragging = false;
+            dragTarget = null;
+        });
+
+        // ── Composer ──
+        function closeComposer() {
+            composer.style.display = 'none';
+            nodeInput.value  = '';
+            pendingImageData = null;
+        }
+
+        function handleSave() {
+            const body = nodeInput.value.trim();
+            if (!body && !pendingImageData) { closeComposer(); return; }
+
+            const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            BOARD.get(id).put({
+                id,
+                body: body,
+                type: pendingImageData ? 'image' : 'text',
+                imageData: pendingImageData || null,
+                x: currentSpawn.x,
+                y: currentSpawn.y,
+                timestamp: new Date().toISOString(),
+                _deleted: false
+            });
+            closeComposer();
+        }
+
+        saveBtn.addEventListener('click', handleSave);
+        cancelBtn.addEventListener('click', closeComposer);
+
+        nodeInput.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeComposer();
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSave(); }
+        });
+
+        // ── Image attachment ──
+        attachBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', async function() {
+            const file = this.files[0];
+            if (!file || !file.type.startsWith('image/')) return;
+            try {
+                uploadStatus.textContent = 'processing...';
+                pendingImageData = await resizeImage(file);
+                uploadStatus.textContent = '[image ready]';
+            } catch { uploadStatus.textContent = 'error'; }
+            this.value = '';
+        });
+
+        nodeInput.addEventListener('paste', e => {
+            const item = Array.from(e.clipboardData.items).find(i => i.type.startsWith('image/'));
+            if (item) {
+                e.preventDefault();
+                resizeImage(item.getAsFile()).then(url => {
+                    pendingImageData = url;
+                    uploadStatus.textContent = '[image pasted]';
+                });
+            }
+        });
+
+        function resizeImage(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ratio = Math.min(400 / img.width, 400 / img.height, 1);
+                        canvas.width  = img.width  * ratio;
+                        canvas.height = img.height * ratio;
+                        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.65));
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeComposer();
+        });
+
+    })();
+    </script>
+</body>
+</html>
