@@ -682,10 +682,7 @@
         }
         
         // Task state initialization
-        let customTasks = JSON.parse(localStorage.getItem('startpage_tasks')) || [
-            { text: "Sync Project Ether Nexus DB", done: false },
-            { text: "Review Tailwind configurations", done: false }
-        ];
+        let customTasks = JSON.parse(localStorage.getItem('startpage_tasks')) || [];
 
         function updateTopClock() {
             const now = new Date();
