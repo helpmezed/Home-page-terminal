@@ -400,8 +400,9 @@
         .signal-wave-row { display: block; }
 
         .countries-viz {
-            width: 100%; height: 150px; display: block;
-            border: 1px solid rgba(0,255,65,0.12); border-radius: 4px;
+            width: 100%; height: 200px; display: block;
+            border: 1px solid rgba(0,255,65,0.25); border-radius: 4px;
+            box-shadow: 0 0 14px rgba(0,255,65,0.06), inset 0 0 10px rgba(0,0,0,0.6);
         }
 
         .left-glyph {
@@ -1342,93 +1343,179 @@
             setInterval(update, 60);
         })();
 
-        // ── Countries Visualizer ──
+        // ── Countries Visualizer (Orbital Descent Style) ──
         (async function() {
             const canvas = document.getElementById('countries-viz');
             if (!canvas) return;
-            await new Promise(r => setTimeout(r, 600));
-            canvas.width  = canvas.offsetWidth  || 800;
-            canvas.height = canvas.offsetHeight || 150;
+            await new Promise(r => setTimeout(r, 700));
+            canvas.width  = canvas.offsetWidth  || 900;
+            canvas.height = canvas.offsetHeight || 200;
             const ctx = canvas.getContext('2d');
             const W = canvas.width, H = canvas.height;
 
+            const METRICS = [
+                { key: 'population', label: 'POPULATION',  fmt: n => n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':(n/1e3|0)+'K' },
+                { key: 'area',       label: 'LAND AREA',   fmt: n => n>=1e6?(n/1e6).toFixed(2)+'M km²':(n/1e3|0)+'K km²' }
+            ];
+
             let all = [];
             try {
-                const res = await fetch('https://restcountries.com/v3.1/all?fields=name,population,area');
+                const res = await fetch('https://restcountries.com/v3.1/all?fields=name,population,area,region');
                 all = await res.json();
             } catch(e) {
-                ctx.fillStyle = '#003b00';
-                ctx.font = '11px monospace';
-                ctx.fillText('[ NEXUS UNREACHABLE ]', 20, H / 2);
-                return;
+                ctx.fillStyle = '#003b00'; ctx.font = '11px monospace';
+                ctx.fillText('[ NEXUS UNREACHABLE ]', 20, H / 2); return;
             }
 
-            const METRICS = [
-                { key: 'population', label: 'POPULATION',   fmt: n => n>=1e9?(n/1e9).toFixed(1)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':(n/1e3|0)+'K' },
-                { key: 'area',       label: 'LAND AREA km²',fmt: n => n>=1e6?(n/1e6).toFixed(1)+'M':(n/1e3|0)+'K' }
-            ];
-            const N = 8;
-            let mIdx = 0, progress = 0, pulse = 0, tick = 0;
-
-            const getTop = () => [...all]
-                .filter(c => (c[METRICS[mIdx].key] || 0) > 0)
-                .sort((a, b) => b[METRICS[mIdx].key] - a[METRICS[mIdx].key])
-                .slice(0, N);
-
+            let mIdx = 0, nodeIdx = 0, t = 0, tick = 0;
+            const getTop = () => [...all].filter(c => (c[METRICS[mIdx].key]||0)>0)
+                .sort((a,b) => b[METRICS[mIdx].key]-a[METRICS[mIdx].key]).slice(0, 12);
             let top = getTop();
 
-            function draw() {
-                ctx.clearRect(0, 0, W, H);
-                ctx.fillStyle = 'rgba(0,3,0,0.45)';
-                ctx.fillRect(0, 0, W, H);
-                for (let y = 0; y < H; y += 3) { ctx.fillStyle = 'rgba(0,0,0,0.07)'; ctx.fillRect(0, y, W, 1); }
+            const PW = Math.min(148, Math.floor(W * 0.18));
+            const MX = PW + 1;
+            const MW = W - MX;
+
+            const box = (x,y,w,h,a=0.4) => { ctx.strokeStyle=`rgba(0,255,65,${a})`; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,w,h); };
+            const cross = (x,y,s,a=0.6) => {
+                ctx.strokeStyle=`rgba(0,255,65,${a})`; ctx.lineWidth=1.2; ctx.beginPath();
+                ctx.moveTo(x,y-s); ctx.lineTo(x,y-s*0.3); ctx.moveTo(x,y+s*0.3); ctx.lineTo(x,y+s);
+                ctx.moveTo(x-s,y); ctx.lineTo(x-s*0.3,y); ctx.moveTo(x+s*0.3,y); ctx.lineTo(x+s,y);
+                ctx.stroke();
+            };
+            const label = (txt,x,y,col='#007a22',fnt='bold 7px monospace') => { ctx.fillStyle=col; ctx.font=fnt; ctx.fillText(txt,x,y); };
+            const fieldBox = (lbl,val,x,y,w,alert=false) => {
+                label(lbl, x, y, alert?'#992200':'#005c18');
+                box(x, y+1, w, 14, alert?0.7:0.32);
+                ctx.fillStyle = alert?'#ff3300':'#00ff41';
+                ctx.font = 'bold 9px monospace';
+                const maxC = Math.floor((w-4)/5.6)|0;
+                ctx.fillText(val.length>maxC?val.slice(0,maxC-1)+'…':val, x+3, y+12);
+            };
+
+            function drawLeftPanel() {
+                const node = top[nodeIdx] || top[0];
+                ctx.fillStyle='rgba(0,4,0,0.6)'; ctx.fillRect(0,0,PW,H);
+                box(0,0,PW-1,H,0.22);
+                ctx.strokeStyle='rgba(0,255,65,0.35)'; ctx.lineWidth=1;
+                ctx.beginPath(); ctx.moveTo(PW,0); ctx.lineTo(PW,H); ctx.stroke();
+
+                const bw = PW - 8;
+                label('PRESENT', 4, 9, '#005c18');
+                label('P.O.R. NEXUS', 4, 17, '#003b00', '7px monospace');
+                box(4, 18, bw, 15, 0.4);
+                ctx.fillStyle='#00ff41'; ctx.font='bold 9px monospace';
+                const nm=node.name.common; ctx.fillText(nm.length>13?nm.slice(0,12)+'…':nm, 6, 30);
 
                 const m = METRICS[mIdx];
-                const LW = 136, VW = 78, BW = W - LW - VW - 12, HH = 18, RH = (H - HH) / N;
-                const maxV = top[0]?.[m.key] || 1;
+                fieldBox(m.label, m.fmt(node[m.key]||0), 4, 37, bw);
+                fieldBox('REGION', (node.region||'—').toUpperCase(), 4, 60, bw);
+                fieldBox('RANK #', `  ${nodeIdx+1}  OF  ${top.length}`, 4, 83, bw);
+                fieldBox('METRIC', m.label, 4, 106, bw);
 
-                ctx.fillStyle = '#005c18'; ctx.font = 'bold 9px monospace';
-                ctx.fillText(`◈ ${m.label}`, 8, HH - 4);
-                METRICS.forEach((_, i) => { ctx.fillStyle = i===mIdx?'#00ff41':'#003b00'; ctx.fillText('●', W-26+i*12, HH-4); });
+                label('AUTOSEQUENCE', 4, 128, '#003b00');
+                box(4, 129, bw, 14, 0.28);
+                ctx.fillStyle='#00cc44'; ctx.font='bold 9px monospace';
+                ctx.fillText((tick*0.08).toFixed(1).padStart(8,'0')+'#', 6, 140);
 
-                top.forEach((c, i) => {
-                    const y = HH + i * RH;
-                    const val = c[m.key] || 0;
-                    const bw = (val / maxV) * BW * Math.min(progress, 1);
-                    const cy = y + RH * 0.65;
-                    const bright = i === 0;
+                label('SYSTEM # 4', 4, 157, '#003b00', '7px monospace');
+                box(4, 158, bw, 14, 0.22);
+                ctx.fillStyle='#005c18'; ctx.font='7px monospace';
+                ctx.fillText(`SYS:GL:${(50+Math.sin(t)*50).toFixed(2)}`, 6, 169);
 
-                    const name = c.name.common;
-                    ctx.fillStyle = bright ? '#00ff41' : i < 3 ? '#00dd55' : '#00cc44';
-                    ctx.font = `${bright?'bold ':''}10px system-ui,sans-serif`;
-                    ctx.fillText(name.length > 17 ? name.slice(0,16)+'…' : name, 8, cy);
+                label('NODE STATUS', 4, 178, '#992200', 'bold 7px monospace');
+                box(4, 179, bw, 14, 0.5);
+                ctx.fillStyle='#ff3300'; ctx.font='bold 7px monospace'; ctx.fillText('NOT', 6, 190);
+                ctx.fillStyle='#00cc44'; ctx.font='7px monospace'; ctx.fillText(' DEEPNAV PRECISE', 22, 190);
+            }
 
-                    ctx.fillStyle = '#003b00'; ctx.font = '8px monospace';
-                    ctx.fillText(i + 1, LW - 13, cy);
+            function drawMainArea() {
+                // Dark bg for main
+                ctx.fillStyle='rgba(0,2,0,0.55)'; ctx.fillRect(MX,0,MW,H);
 
-                    ctx.fillStyle = 'rgba(0,255,65,0.04)';
-                    ctx.fillRect(LW, y + 3, BW, RH - 6);
+                // Faint grid
+                ctx.strokeStyle='rgba(0,255,65,0.04)'; ctx.lineWidth=1;
+                for(let x=MX;x<W;x+=38){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+                for(let y=0;y<H;y+=28){ctx.beginPath();ctx.moveTo(MX,y);ctx.lineTo(W,y);ctx.stroke();}
 
-                    if (bw > 1) {
-                        const g = ctx.createLinearGradient(LW, 0, LW + bw, 0);
-                        const a = bright ? 0.75 + Math.sin(pulse) * 0.12 : 0.55;
-                        g.addColorStop(0, `rgba(0,255,65,${a})`);
-                        g.addColorStop(0.55, `rgba(0,${180-i*12},${55-i*4},${a*0.65})`);
-                        g.addColorStop(1, 'rgba(0,60,15,0.08)');
-                        ctx.fillStyle = g;
-                        ctx.fillRect(LW, y + 3, bw, RH - 6);
-                        ctx.fillStyle = `rgba(0,255,65,${0.55+Math.sin(pulse+i)*0.2})`;
-                        ctx.fillRect(LW + bw - 2, y + 3, 2, RH - 6);
+                // Topographic contour lines
+                const nLines = 22;
+                for(let i=0;i<nLines;i++){
+                    const norm=i/nLines;
+                    const baseY=H*(0.04+norm*0.92);
+                    const amp=14+norm*32;
+                    const spd=0.22+norm*0.12;
+                    ctx.beginPath();
+                    const steps=Math.floor(MW/3);
+                    for(let s=0;s<=steps;s++){
+                        const px=MX+(s/steps)*MW;
+                        const py=baseY
+                            +Math.sin(s/steps*Math.PI*4+t*spd+i*0.55)*amp*0.5
+                            +Math.cos(s/steps*Math.PI*2.4+t*spd*0.65+i*0.38)*amp*0.32
+                            +Math.sin(s/steps*Math.PI*6+t*0.08+i*1.1)*amp*0.12;
+                        s===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
                     }
+                    let lc;
+                    if(i<6){ const r=180+i*10,g=Math.max(0,35-i*8); lc=`rgba(${r},${g},0,${0.3+i*0.04})`; }
+                    else { const g=80+((i-6)/(nLines-6))*175; lc=`rgba(0,${g|0},15,${0.18+norm*0.6})`; }
+                    ctx.strokeStyle=lc; ctx.lineWidth=0.85; ctx.stroke();
+                }
 
-                    ctx.fillStyle = '#007a22'; ctx.font = '9px monospace';
-                    ctx.fillText(m.fmt(val), LW + BW + 5, cy);
-                });
+                // Header bar
+                ctx.fillStyle='rgba(0,255,65,0.07)'; ctx.fillRect(MX,0,MW,17);
+                box(MX,0,MW-1,17,0.3);
+                ctx.fillStyle='#00cc44'; ctx.font='bold 9px monospace'; ctx.textAlign='center';
+                ctx.fillText('GLOBAL NEXUS  —  ORBITAL DESCENT SCAN', MX+MW/2, 12);
+                ctx.textAlign='left';
 
-                pulse    += 0.035;
-                progress += (1 - progress) * 0.04;
-                tick++;
-                if (tick % 600 === 0) { mIdx = (mIdx + 1) % METRICS.length; top = getTop(); progress = 0; }
+                // Top-right status boxes
+                const bx=W-138, by=0;
+                box(bx,by,136,14,0.55);
+                ctx.fillStyle='#00ff41'; ctx.font='bold 8px monospace'; ctx.fillText('COMMENCE FINAL', bx+3,by+10);
+                box(bx,by+14,136,14,0.35);
+                ctx.fillStyle='#007a22'; ctx.font='8px monospace';
+                ctx.fillText(`SYSTEM :BL: ${(Math.sin(t*0.7)*50+50).toFixed(2)} :OB:`, bx+3,by+24);
+
+                // Crosshairs
+                cross(MX+MW*0.22, H*0.28, 16, 0.45);
+                cross(MX+MW*0.75, H*0.65, 13, 0.38);
+                cross(MX+MW*0.52, H*0.15, 10, 0.3);
+                cross(MX+MW*0.88, H*0.38, 9, 0.28);
+
+                // Central targeting rectangle
+                const node=top[nodeIdx]||top[0];
+                const tbw=170, tbh=42, tbx=MX+MW*0.3-tbw/2, tby=H*0.42;
+                ctx.fillStyle='rgba(0,10,0,0.55)'; ctx.fillRect(tbx,tby,tbw,tbh);
+                box(tbx,tby,tbw,tbh,0.65);
+                ctx.fillStyle='#005c18'; ctx.font='7px monospace';
+                ctx.fillText('EST. EARTH RELATIVE', tbx+4, tby-2);
+                ctx.fillStyle='#00ff41'; ctx.font='bold 11px monospace';
+                const cn=node?.name?.common||'—';
+                ctx.fillText(cn.length>18?cn.slice(0,17)+'…':cn, tbx+5, tby+16);
+                ctx.fillStyle='#00cc44'; ctx.font='8px monospace';
+                ctx.fillText(METRICS[mIdx].fmt(node?.[METRICS[mIdx].key]||0), tbx+5, tby+30);
+
+                // Warning tag below targeting box
+                box(tbx,tby+tbh+2,tbw,13,0.55);
+                ctx.fillStyle='#cc2200'; ctx.font='bold 7px monospace'; ctx.fillText('NOT', tbx+3,tby+tbh+11);
+                ctx.fillStyle='#00cc44'; ctx.font='7px monospace'; ctx.fillText(' DEEPNAV PRECISE', tbx+22,tby+tbh+11);
+
+                // Scan sweep line
+                const sy=H*0.18+((t*22)%(H*0.75));
+                const sg=ctx.createLinearGradient(MX,sy-4,MX,sy+4);
+                sg.addColorStop(0,'rgba(0,255,65,0)'); sg.addColorStop(0.5,'rgba(0,255,65,0.11)'); sg.addColorStop(1,'rgba(0,255,65,0)');
+                ctx.fillStyle=sg; ctx.fillRect(MX,sy-4,MW,8);
+            }
+
+            function draw() {
+                ctx.clearRect(0,0,W,H);
+                ctx.fillStyle='#000200'; ctx.fillRect(0,0,W,H);
+                for(let y=0;y<H;y+=3){ctx.fillStyle='rgba(0,0,0,0.09)';ctx.fillRect(0,y,W,1);}
+                drawMainArea();
+                drawLeftPanel();
+                t+=0.016; tick++;
+                if(tick%200===0) nodeIdx=(nodeIdx+1)%top.length;
+                if(tick%840===0){mIdx=(mIdx+1)%METRICS.length;top=getTop();nodeIdx=0;}
                 requestAnimationFrame(draw);
             }
             draw();
