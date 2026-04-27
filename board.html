@@ -264,35 +264,10 @@
         </div>
     </div>
 
-    <!-- Firebase compat SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <!-- MQTT.js — real-time sync via HiveMQ public broker, no setup required -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
     <script>
-    // ─────────────────────────────────────────────────────────────────────────
-    //  FIREBASE SETUP
-    //  1. Go to https://console.firebase.google.com and create a project
-    //  2. Add a Web App, copy the config object below
-    //  3. In the Firebase console → Build → Realtime Database → Create database
-    //     Choose "Start in test mode" (allows public read/write)
-    //  4. Paste your config values below and deploy
-    // ─────────────────────────────────────────────────────────────────────────
-    const FIREBASE_CONFIG = {
-        apiKey:            "PASTE_YOUR_API_KEY",
-        authDomain:        "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
-        databaseURL:       "https://PASTE_YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-        projectId:         "PASTE_YOUR_PROJECT_ID",
-        storageBucket:     "PASTE_YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "PASTE_YOUR_SENDER_ID",
-        appId:             "PASTE_YOUR_APP_ID"
-    };
-
-    firebase.initializeApp(FIREBASE_CONFIG);
-    const db       = firebase.database();
-    const pinsRef  = db.ref('bulletin/pins');
-
-    // ─────────────────────────────────────────────────────────────────────────
-
     (function () {
         const board        = document.getElementById('canvas-board');
         const composer     = document.getElementById('composer');
@@ -359,49 +334,6 @@
         let selectedDuration = 1;
         let moveSaveTimers   = {};
 
-        // ── Firebase listeners ──
-        pinsRef.on('child_added', snap => {
-            const data = snap.val();
-            if (!data || data._deleted) return;
-            if (data.expiresAt && Date.now() > data.expiresAt) {
-                snap.ref.update({ _deleted: true });
-                return;
-            }
-            setStatus(true);
-            posts[data.id] = data;
-            if (!nodeEls[data.id]) {
-                const el = createNodeEl(data);
-                board.appendChild(el);
-                nodeEls[data.id] = el;
-            }
-            updatePinCount();
-        });
-
-        pinsRef.on('child_changed', snap => {
-            const data = snap.val();
-            if (!data) return;
-            if (data._deleted) {
-                removePin(data.id);
-                return;
-            }
-            posts[data.id] = data;
-            const el = nodeEls[data.id];
-            if (el) {
-                if (!dragTarget || dragTarget.id !== data.id) {
-                    el.style.left = data.x + '%';
-                    el.style.top  = data.y + '%';
-                }
-                refreshTimer(data.id);
-            }
-        });
-
-        pinsRef.on('child_removed', snap => removePin(snap.key));
-
-        pinsRef.on('value', () => setStatus(true));
-
-        db.ref('.info/connected').on('value', snap => {
-            setStatus(!!snap.val());
-        });
 
         function removePin(id) {
             if (nodeEls[id]) { nodeEls[id].remove(); delete nodeEls[id]; }
@@ -455,7 +387,7 @@
             const now = Date.now();
             Object.entries(posts).forEach(([id, post]) => {
                 if (post.expiresAt && now > post.expiresAt) {
-                    pinsRef.child(id).update({ _deleted: true });
+                    deletePin(id);
                 } else {
                     refreshTimer(id);
                 }
@@ -501,15 +433,14 @@
                 if (getDurationHours(post) >= 3) return;
                 const nextH    = Math.min(getDurationHours(post) + 1, 3);
                 const newExpiry = (post.createdAt || Date.now()) + nextH * 3600000;
-                pinsRef.child(post.id).update({ expiresAt: newExpiry });
-                post.expiresAt = newExpiry;
+                updatePin(post.id, { expiresAt: newExpiry });
                 refreshTimer(post.id);
             });
 
             // Delete
             div.querySelector('.delete-btn').addEventListener('click', e => {
                 e.stopPropagation();
-                pinsRef.child(post.id).update({ _deleted: true });
+                deletePin(post.id);
             });
 
             // Drag start
@@ -590,7 +521,7 @@
                 dragTarget.element.style.zIndex = '';
                 clearTimeout(moveSaveTimers[id]);
                 moveSaveTimers[id] = setTimeout(() => {
-                    pinsRef.child(id).update({ x: post.x, y: post.y });
+                    updatePin(id, { x: post.x, y: post.y });
                 }, 80);
             }
             isDragging = false;
@@ -618,7 +549,7 @@
             if (!body && !pendingImageData) { closeComposer(); return; }
             const now = Date.now();
             const id  = now.toString(36) + Math.random().toString(36).slice(2, 6);
-            pinsRef.child(id).set({
+            publishPin({
                 id, body,
                 type: pendingImageData ? 'image' : 'text',
                 imageData: pendingImageData || null,
@@ -684,6 +615,68 @@
                 reader.readAsDataURL(file);
             });
         }
+
+        // ── MQTT real-time sync ───────────────────────────────────────────────
+        const TOPIC_PREFIX = 'matrix-nexus-b3f7a2c9d1e8/pin/';
+        const mqttClient = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {
+            clientId:        'board-' + Math.random().toString(36).slice(2, 10),
+            clean:           true,
+            reconnectPeriod: 3000,
+            connectTimeout:  10000,
+            keepalive:       60
+        });
+
+        function publishPin(pinData) {
+            mqttClient.publish(TOPIC_PREFIX + pinData.id, JSON.stringify(pinData), { retain: true, qos: 1 });
+        }
+        function deletePin(id) {
+            mqttClient.publish(TOPIC_PREFIX + id, '', { retain: true, qos: 1 });
+            removePin(id);
+        }
+        function updatePin(id, changes) {
+            if (!posts[id]) return;
+            Object.assign(posts[id], changes);
+            publishPin(posts[id]);
+        }
+
+        mqttClient.on('connect', () => {
+            setStatus(true);
+            mqttClient.subscribe(TOPIC_PREFIX + '#', { qos: 1 });
+        });
+        mqttClient.on('error',     () => setStatus(false));
+        mqttClient.on('offline',   () => setStatus(false));
+        mqttClient.on('reconnect', () => {
+            statusDot.className = ''; statusText.className = '';
+            statusText.textContent = 'RECONNECTING';
+        });
+
+        mqttClient.on('message', (topic, payload) => {
+            const id = topic.slice(TOPIC_PREFIX.length);
+            if (!payload || payload.length === 0) { removePin(id); return; }
+            let data;
+            try { data = JSON.parse(payload.toString()); } catch { return; }
+            if (!data || data._deleted) { removePin(id); return; }
+            if (data.expiresAt && Date.now() > data.expiresAt) {
+                mqttClient.publish(TOPIC_PREFIX + id, '', { retain: true, qos: 1 });
+                removePin(id);
+                return;
+            }
+            posts[data.id] = data;
+            if (!nodeEls[data.id]) {
+                const el = createNodeEl(data);
+                board.appendChild(el);
+                nodeEls[data.id] = el;
+                updatePinCount();
+            } else {
+                const el = nodeEls[data.id];
+                if (!dragTarget || dragTarget.id !== data.id) {
+                    el.style.left = data.x + '%';
+                    el.style.top  = data.y + '%';
+                }
+                refreshTimer(data.id);
+            }
+        });
+        // ─────────────────────────────────────────────────────────────────────
 
     })();
     </script>
