@@ -412,6 +412,40 @@
             box-shadow: 0 0 14px rgba(0,255,65,0.06), inset 0 0 10px rgba(0,0,0,0.6);
         }
 
+        #nav-overlay {
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,3,1,0.97);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.07s ease;
+            font-family: monospace;
+            background-image: repeating-linear-gradient(
+                to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.12) 3px, rgba(0,0,0,0.12) 4px
+            );
+        }
+        #nav-overlay.show { opacity: 1; pointer-events: all; }
+        #nav-node-label { color: #005c18; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; }
+        #nav-domain {
+            color: #00ff41; font-size: 17px; font-weight: bold; letter-spacing: 2px;
+            text-shadow: 0 0 18px rgba(0,255,65,0.75), 0 0 40px rgba(0,255,65,0.3);
+        }
+        .nav-bar-wrap {
+            width: 280px; height: 2px;
+            background: rgba(0,255,65,0.1);
+            border-radius: 2px; overflow: hidden;
+        }
+        #nav-bar {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #007a22, #00ff41);
+            box-shadow: 0 0 10px rgba(0,255,65,0.8);
+            transition: width 0.48s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        #nav-status {
+            color: #005c18; font-size: 9px; letter-spacing: 3px;
+            animation: navBlink 0.75s ease-in-out infinite;
+        }
+        @keyframes navBlink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
         .left-glyph {
             width: 190px;
             font-size: 11px;
@@ -497,6 +531,13 @@
                 <div class="output-area" id="output"></div>
             </div>
 
+        </div>
+
+        <div id="nav-overlay">
+            <div id="nav-node-label">ACCESSING REMOTE NODE</div>
+            <div id="nav-domain"></div>
+            <div class="nav-bar-wrap"><div id="nav-bar"></div></div>
+            <div id="nav-status">ESTABLISHING CONNECTION</div>
         </div>
 
         <div class="modal-overlay" id="addModal">
@@ -677,6 +718,22 @@
 
         const MIN_SLOTS = 12;
 
+        function navigateWithTransition(url) {
+            const overlay = document.getElementById('nav-overlay');
+            const domainEl = document.getElementById('nav-domain');
+            const bar = document.getElementById('nav-bar');
+            try { domainEl.textContent = new URL(url).hostname; }
+            catch { domainEl.textContent = url; }
+            bar.style.transition = 'none';
+            bar.style.width = '0%';
+            overlay.classList.add('show');
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                bar.style.transition = 'width 0.48s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                bar.style.width = '100%';
+            }));
+            setTimeout(() => { window.location.href = url; }, 520);
+        }
+
         function renderShortcuts(animate = false) {
             shortcutsEl.innerHTML = '';
             const bookmarks = getBookmarks();
@@ -704,6 +761,11 @@
 
                 a.innerHTML = `<span class="shortcut-icon">${displayIcon}</span><span class="shortcut-name">${bm.name}</span>`;
 
+                a.addEventListener('click', (e) => {
+                    if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+                    e.preventDefault();
+                    navigateWithTransition(bm.url);
+                });
                 a.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     openModal(i);
