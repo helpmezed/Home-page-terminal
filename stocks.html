@@ -94,11 +94,10 @@
         #wl-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.12); border-radius: 2px; }
 
         .wl-item {
-            padding: 8px 10px 8px 12px; cursor: pointer;
+            padding: 7px 10px 5px 12px; cursor: pointer;
             border-bottom: 1px solid rgba(0,255,65,0.03);
-            transition: background 0.15s; display: grid;
-            grid-template-columns: 1fr auto; grid-template-rows: auto auto;
-            column-gap: 6px; row-gap: 2px;
+            transition: background 0.15s;
+            display: flex; flex-direction: column; gap: 3px;
             border-left: 2px solid transparent;
         }
         .wl-item:hover { background: rgba(0,255,65,0.035); }
@@ -108,16 +107,16 @@
         .wl-item[data-trend="dn"]    { border-left-color: rgba(255,68,68,0.3); }
         .wl-item[data-trend="dn-hi"] { border-left-color: rgba(255,68,68,0.75); }
 
-        .wl-sym   { font-size: 11px; font-weight: 600; color: var(--green); align-self: center; }
-        .wl-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+        .wl-row1 { display: flex; align-items: center; gap: 5px; }
+        .wl-row2 { display: flex; align-items: center; }
+        .wl-sym   { flex: 1; font-size: 11px; font-weight: 600; color: var(--green); }
         .wl-pct   { font-size: 9px; font-weight: 600; }
         .wl-pct.up { color: var(--green); } .wl-pct.dn { color: var(--red); } .wl-pct.nt { color: #004d14; }
-        .wl-price { font-size: 9px; color: #006620; }
-        .wl-remove { color: #002800; cursor: pointer; font-size: 9px; transition: color 0.15s; padding: 0 1px; align-self: center; }
+        .wl-price { font-size: 10px; color: #007a22; }
+        .wl-remove { color: #002800; cursor: pointer; font-size: 9px; transition: color 0.15s; padding: 0 1px; line-height: 1; }
         .wl-remove:hover { color: var(--red); }
-        .wl-spark-wrap { grid-column: 1 / -1; }
         .wl-spark { display: block; width: 100%; height: 22px; opacity: 0.85; }
-        .wl-loading { font-size: 9px; color: #004400; grid-column: 1/-1; animation: loadFlicker 1.2s ease-in-out infinite; }
+        .wl-loading { font-size: 9px; color: #004400; animation: loadFlicker 1.2s ease-in-out infinite; }
         @keyframes loadFlicker { 0%,100%{opacity:1} 50%{opacity:0.25} }
 
         /* ── Detail ── */
@@ -285,10 +284,28 @@
 
     <script>
     (function () {
-        const PROXY   = 'https://corsproxy.io/?';
         const YF_BASE = 'https://query1.finance.yahoo.com/v8/finance/chart/';
         const DEFAULT_WL = ['AAPL','MSFT','GOOGL','AMZN','META','TSLA','NVDA','BTC-USD','ETH-USD'];
         const REFRESH_MS = 90000;
+
+        // Multiple CORS proxies tried in order — first success wins
+        const PROXIES = [
+            u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+            u => `https://thingproxy.freeboard.io/fetch/${u}`,
+        ];
+        async function proxyFetch(targetUrl) {
+            for (const make of PROXIES) {
+                try {
+                    const ctrl = new AbortController();
+                    const t = setTimeout(() => ctrl.abort(), 7000);
+                    const res = await fetch(make(targetUrl), { cache: 'no-store', signal: ctrl.signal });
+                    clearTimeout(t);
+                    if (res.ok) return res.json();
+                } catch {}
+            }
+            throw new Error('all proxies failed');
+        }
 
         let watchlist    = JSON.parse(localStorage.getItem('stock_watchlist') || 'null') || DEFAULT_WL.slice();
         let quoteCache   = {};
@@ -353,9 +370,7 @@
         // ── Fetch ──
         async function fetchQuote(sym) {
             const url = `${YF_BASE}${encodeURIComponent(sym)}?interval=1d&range=1mo`;
-            const res = await fetch(PROXY + encodeURIComponent(url), { cache: 'no-store' });
-            if (!res.ok) throw new Error(res.status);
-            const json = await res.json();
+            const json = await proxyFetch(url);
             const r = json.chart?.result?.[0];
             if (!r) throw new Error('no data');
             const m = r.meta || {};
@@ -422,24 +437,26 @@
             el.dataset.trend = trend;
             el.classList.toggle('active', sym === activeSymbol);
             el.innerHTML = d ? `
-                <span class="wl-sym">${sym}</span>
-                <div class="wl-right">
+                <div class="wl-row1">
+                    <span class="wl-sym">${sym}</span>
                     <span class="wl-pct ${cls}">${fmtPct(pct)}</span>
                     <span class="wl-remove" title="remove">✕</span>
                 </div>
-                <span class="wl-price">$${fmtPrice(d.price)}</span>
-                <div></div>
-                <div class="wl-spark-wrap"><canvas class="wl-spark"></canvas></div>
-                <div></div>
+                <div class="wl-row2">
+                    <span class="wl-price">$${fmtPrice(d.price)}</span>
+                </div>
+                <canvas class="wl-spark"></canvas>
             ` : `
-                <span class="wl-sym">${sym}</span>
-                <span class="wl-remove" title="remove">✕</span>
+                <div class="wl-row1">
+                    <span class="wl-sym">${sym}</span>
+                    <span class="wl-remove" title="remove">✕</span>
+                </div>
                 <span class="wl-loading">loading…</span>
-                <div></div>
             `;
             if (d?.prices?.length > 1) {
                 const spark = el.querySelector('.wl-spark');
-                if (spark) drawSparkline(spark, d.prices, pct >= 0);
+                // defer until after browser reflow so clientWidth is available
+                if (spark) requestAnimationFrame(() => drawSparkline(spark, d.prices, pct >= 0));
             }
         }
 
@@ -453,10 +470,10 @@
 
         // ── Sparkline ──
         function drawSparkline(canvas, prices, isUp) {
-            const W = canvas.parentElement.clientWidth || 170;
+            const W = canvas.getBoundingClientRect().width || canvas.closest('.wl-item')?.clientWidth || 186;
             const H = 22;
             canvas.width  = W * 2; canvas.height = H * 2;
-            canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+            canvas.style.width = '100%'; canvas.style.height = H + 'px';
             const ctx = canvas.getContext('2d');
             ctx.scale(2, 2);
             const min = Math.min(...prices), max = Math.max(...prices);
