@@ -7,193 +7,197 @@
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #000000; --green: #00ff41; --green-mid: #00cc44;
-            --green-dim: #008800; --green-dark: #003300;
-            --border: rgba(0,255,65,0.1); --font: 'IBM Plex Mono','Courier New',monospace;
+            --bg:#000000; --green:#00ff41; --green-mid:#00cc44;
+            --green-dim:#008800; --green-dark:#003300;
+            --border:rgba(0,255,65,0.1); --font:'IBM Plex Mono','Courier New',monospace;
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body, html { width:100vw; height:100vh; background:var(--bg); color:var(--green); font-family:var(--font); overflow:hidden; }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body,html{width:100vw;height:100vh;background:var(--bg);color:var(--green);font-family:var(--font);overflow:hidden;}
 
-        /* CRT overlay */
-        body::after {
-            content:''; position:fixed; inset:0; z-index:9000; pointer-events:none;
+        #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+        body::after{
+            content:'';position:fixed;inset:0;z-index:9000;pointer-events:none;
             background:
-                repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.055) 2px, rgba(0,0,0,0.055) 4px),
-                radial-gradient(ellipse at 50% 50%, transparent 48%, rgba(0,0,0,0.42) 100%);
+                repeating-linear-gradient(to bottom,transparent 0px,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px),
+                radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(0,0,0,0.5) 100%);
         }
 
-        /* Scan beam */
-        #scan-beam {
-            position:fixed; left:0; right:0; height:2px; z-index:8999; pointer-events:none;
-            background:linear-gradient(to bottom, transparent, rgba(0,255,65,0.22), transparent);
-            animation:sweepDown 6s linear infinite;
+        #scan-beam{
+            position:fixed;left:0;right:0;height:70px;z-index:8999;pointer-events:none;
+            background:linear-gradient(to bottom,transparent 0%,rgba(0,255,65,0.02) 25%,rgba(0,255,65,0.14) 48%,rgba(0,255,65,0.2) 50%,rgba(0,255,65,0.14) 52%,rgba(0,255,65,0.02) 75%,transparent 100%);
+            animation:sweepDown 5s linear infinite;
         }
-        @keyframes sweepDown { 0%{top:-10px} 100%{top:100vh} }
-
-        /* Top bar */
-        #top-bar {
-            position:fixed; top:0; left:0; right:0; z-index:300;
-            height:32px; display:flex; align-items:center; gap:8px; padding:0 12px;
-            background:rgba(0,0,0,0.96); border-bottom:1px solid var(--border); backdrop-filter:blur(6px);
-            font-size:10px; letter-spacing:0.4px; overflow:hidden;
+        #scan-beam::after{
+            content:'';position:absolute;left:0;right:0;height:1px;top:50%;
+            background:linear-gradient(to right,transparent 0%,rgba(0,255,65,0.0) 5%,rgba(0,255,65,1) 20%,rgba(0,255,65,1) 80%,rgba(0,255,65,0.0) 95%,transparent 100%);
+            box-shadow:0 0 14px rgba(0,255,65,0.9),0 0 35px rgba(0,255,65,0.5),0 0 60px rgba(0,255,65,0.2);
         }
-        .back-btn {
-            color:#005c18; text-decoration:none; border:1px solid rgba(0,255,65,0.18);
-            padding:2px 8px; border-radius:3px; transition:all 0.2s; flex-shrink:0;
+        @keyframes sweepDown{0%{top:-70px}100%{top:calc(100vh + 70px)}}
+
+        #top-bar{
+            position:fixed;top:0;left:0;right:0;z-index:300;
+            height:32px;display:flex;align-items:center;gap:8px;padding:0 12px;
+            background:rgba(0,0,0,0.92);border-bottom:1px solid var(--border);backdrop-filter:blur(6px);
+            font-size:10px;letter-spacing:0.4px;overflow:hidden;
         }
-        .back-btn:hover { color:var(--green); border-color:rgba(0,255,65,0.6); background:rgba(0,255,65,0.05); }
-        .top-sep { color:#001800; flex-shrink:0; }
-        #top-title { color:#004d14; flex-shrink:0; }
-        #status-dot { font-size:9px; color:#005c18; transition:color 0.5s; flex-shrink:0; }
-        #status-dot.live { color:var(--green); animation:blink 2s ease-in-out infinite; }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-        #status-text { color:#005c18; font-size:9px; transition:color 0.5s; flex-shrink:0; }
-        #status-text.live { color:var(--green-mid); }
-
-        /* Source badges */
-        .src-badge {
-            font-size:8px; padding:1px 6px; border-radius:2px; flex-shrink:0;
-            border:1px solid rgba(0,255,65,0.15); letter-spacing:0.8px;
+        .back-btn{
+            color:#005c18;text-decoration:none;border:1px solid rgba(0,255,65,0.18);
+            padding:2px 8px;border-radius:3px;transition:all 0.2s;flex-shrink:0;
         }
-        .src-badge.online  { color:var(--green-mid); border-color:rgba(0,255,65,0.35); }
-        .src-badge.offline { color:#440000; border-color:rgba(255,50,50,0.25); }
+        .back-btn:hover{color:var(--green);border-color:rgba(0,255,65,0.6);background:rgba(0,255,65,0.05);}
+        .top-sep{color:#001800;flex-shrink:0;}
+        #top-title{color:#004d14;flex-shrink:0;}
+        #status-dot{font-size:9px;color:#005c18;transition:color 0.5s;flex-shrink:0;}
+        #status-dot.live{color:var(--green);animation:blink 2s ease-in-out infinite;}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+        #status-text{color:#005c18;font-size:9px;transition:color 0.5s;flex-shrink:0;}
+        #status-text.live{color:var(--green-mid);}
+        .src-badge{font-size:8px;padding:1px 6px;border-radius:2px;flex-shrink:0;border:1px solid rgba(0,255,65,0.15);letter-spacing:0.8px;}
+        .src-badge.online{color:var(--green-mid);border-color:rgba(0,255,65,0.35);}
+        .src-badge.offline{color:#440000;border-color:rgba(255,50,50,0.25);}
 
-        /* Taxon filters */
-        #filters { display:flex; gap:4px; margin-left:auto; flex-shrink:0; }
-        .flt-btn {
-            background:transparent; border:1px solid rgba(0,255,65,0.14); color:#005c18;
-            font-family:var(--font); font-size:8px; padding:2px 7px; cursor:pointer;
-            border-radius:2px; transition:all 0.15s; letter-spacing:0.8px;
+        #filters{display:flex;gap:4px;margin-left:auto;flex-shrink:0;}
+        .flt-btn{
+            background:transparent;border:1px solid rgba(0,255,65,0.14);color:#005c18;
+            font-family:var(--font);font-size:8px;padding:2px 7px;cursor:pointer;
+            border-radius:2px;transition:all 0.15s;letter-spacing:0.8px;
         }
-        .flt-btn:hover { color:var(--green-mid); border-color:rgba(0,255,65,0.4); }
-        .flt-btn.active { color:var(--green); border-color:var(--green); background:rgba(0,255,65,0.06); }
+        .flt-btn:hover{color:var(--green-mid);border-color:rgba(0,255,65,0.4);}
+        .flt-btn.active{color:var(--green);border-color:var(--green);background:rgba(0,255,65,0.06);}
 
-        /* Main scroll area */
-        #main { position:fixed; top:32px; bottom:28px; left:0; right:0; overflow-y:auto; padding:16px; }
-        #main::-webkit-scrollbar { width:3px; }
-        #main::-webkit-scrollbar-thumb { background:rgba(0,255,65,0.15); border-radius:2px; }
+        #main{
+            position:fixed;top:32px;bottom:28px;left:0;right:0;
+            overflow-y:auto;padding:20px;
+        }
+        #main::-webkit-scrollbar{width:3px;}
+        #main::-webkit-scrollbar-thumb{background:rgba(0,255,65,0.15);border-radius:2px;}
 
-        /* Observation grid */
-        #obs-grid {
+        #obs-grid{
             display:grid;
-            grid-template-columns:repeat(auto-fill, minmax(210px, 1fr));
-            gap:12px;
+            grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+            gap:16px;
+            transform-style:preserve-3d;
+            will-change:transform;
         }
 
-        /* Observation card */
-        .obs-card {
-            background:rgba(0,4,0,0.92); border:1px solid rgba(0,255,65,0.18);
-            border-radius:4px; overflow:hidden; cursor:pointer;
-            transition:border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-            animation:cardIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        .obs-card{
+            background:rgba(0,5,0,0.93);
+            border:1px solid rgba(0,255,65,0.22);
+            border-radius:6px;overflow:hidden;cursor:pointer;
+            will-change:transform;
+            transition:border-color 0.25s, box-shadow 0.25s;
         }
-        @keyframes cardIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
-        .obs-card:hover {
-            border-color:rgba(0,255,65,0.65); transform:translateY(-2px);
-            box-shadow:0 8px 28px rgba(0,0,0,0.8), 0 0 18px rgba(0,255,65,0.12);
-        }
+        .obs-card:hover{border-color:rgba(0,255,65,0.8);}
 
-        /* Card photo */
-        .obs-img-wrap {
-            position:relative; height:138px; overflow:hidden; background:#000300;
-            display:flex; align-items:center; justify-content:center;
+        @keyframes flyIn{
+            from{opacity:0;transform:perspective(800px) rotateX(18deg) translateZ(-350px) scale(0.82);}
+            to  {opacity:1;transform:perspective(800px) rotateX(0deg)  translateZ(0px)   scale(1);}
         }
-        .obs-img {
-            width:100%; height:100%; object-fit:cover;
+        .obs-card.fly{animation:flyIn 0.6s cubic-bezier(0.22,1,0.36,1) both;}
+
+        .obs-img-wrap{
+            position:relative;height:148px;overflow:hidden;background:#000300;
+            display:flex;align-items:center;justify-content:center;
+        }
+        .obs-img-wrap::after{
+            content:'';position:absolute;inset:0;pointer-events:none;
+            background:linear-gradient(135deg,transparent 35%,rgba(0,255,65,0.05) 50%,transparent 65%);
+            opacity:0;transition:opacity 0.3s;transform:translateX(-100%);
+        }
+        .obs-card:hover .obs-img-wrap::after{opacity:1;transform:translateX(100%);transition:opacity 0.3s,transform 0.6s ease;}
+        .obs-img{
+            width:100%;height:100%;object-fit:cover;
             filter:sepia(100%) hue-rotate(90deg) brightness(0.82) saturate(2.8) contrast(1.1);
-            transition:transform 0.35s ease;
+            transition:transform 0.4s ease,filter 0.3s;
         }
-        .obs-card:hover .obs-img { transform:scale(1.06); }
-        .obs-no-img {
-            color:#003300; font-size:9px; letter-spacing:2px; text-align:center;
-            line-height:2; user-select:none;
+        .obs-card:hover .obs-img{transform:scale(1.09);filter:sepia(100%) hue-rotate(90deg) brightness(0.9) saturate(3.3) contrast(1.15);}
+        .obs-no-img{color:#003300;font-size:9px;letter-spacing:2px;text-align:center;line-height:2;user-select:none;}
+        .obs-taxon-tag{
+            position:absolute;top:6px;left:7px;font-size:8px;letter-spacing:1.5px;color:#00aa33;
+            background:rgba(0,0,0,0.82);padding:1px 6px;border-radius:2px;border:1px solid rgba(0,255,65,0.2);
+            text-shadow:0 0 8px rgba(0,255,65,0.6);
         }
-        .obs-taxon-tag {
-            position:absolute; top:6px; left:7px;
-            font-size:8px; letter-spacing:1.5px; color:#007a22;
-            background:rgba(0,0,0,0.75); padding:1px 5px; border-radius:2px;
-            border:1px solid rgba(0,255,65,0.15);
-        }
-        .obs-grade {
-            position:absolute; top:6px; right:7px; font-size:9px;
-            padding:1px 5px; border-radius:2px; background:rgba(0,0,0,0.75);
-        }
-        .obs-grade.research  { color:var(--green); border:1px solid rgba(0,255,65,0.3); }
-        .obs-grade.needs_id  { color:#ccaa00;       border:1px solid rgba(200,170,0,0.3); }
-        .obs-grade.casual    { color:#555;           border:1px solid rgba(100,100,100,0.2); }
+        .obs-grade{position:absolute;top:6px;right:7px;font-size:9px;padding:1px 5px;border-radius:2px;background:rgba(0,0,0,0.82);}
+        .obs-grade.research{color:var(--green);border:1px solid rgba(0,255,65,0.35);text-shadow:0 0 8px rgba(0,255,65,0.7);}
+        .obs-grade.needs_id{color:#ccaa00;border:1px solid rgba(200,170,0,0.3);}
+        .obs-grade.casual{color:#555;border:1px solid rgba(100,100,100,0.2);}
 
-        /* Card body */
-        .obs-body { padding:10px 11px; }
-        .obs-sci  { font-size:11px; font-weight:600; color:var(--green); line-height:1.3; font-style:italic; }
-        .obs-common { font-size:9px; color:#007a22; letter-spacing:0.5px; margin-top:2px; }
-        .obs-div  { height:1px; background:rgba(0,255,65,0.07); margin:7px 0; }
-        .obs-meta { font-size:9px; color:#005c18; line-height:1.7; }
-        .obs-place { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .obs-who  { display:block; color:#004400; }
+        .obs-body{padding:10px 12px;}
+        .obs-sci{font-size:11px;font-weight:600;color:var(--green);line-height:1.3;font-style:italic;text-shadow:0 0 14px rgba(0,255,65,0.25);}
+        .obs-common{font-size:9px;color:#007a22;letter-spacing:0.5px;margin-top:2px;}
+        .obs-div{height:1px;background:rgba(0,255,65,0.08);margin:7px 0;}
+        .obs-meta{font-size:9px;color:#005c18;line-height:1.7;}
+        .obs-place{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .obs-who{display:block;color:#004400;}
 
-        /* Loading skeletons */
-        .obs-skeleton { background:rgba(0,4,0,0.92); border:1px solid rgba(0,255,65,0.07); border-radius:4px; overflow:hidden; }
-        .skel-img  { height:138px; background:rgba(0,255,65,0.03); animation:skelPulse 1.4s ease-in-out infinite; }
-        .skel-body { padding:10px 11px; display:flex; flex-direction:column; gap:6px; }
-        .skel-line { height:10px; border-radius:2px; background:rgba(0,255,65,0.04); animation:skelPulse 1.4s ease-in-out infinite; }
-        @keyframes skelPulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+        .obs-skeleton{background:rgba(0,4,0,0.92);border:1px solid rgba(0,255,65,0.07);border-radius:6px;overflow:hidden;}
+        .skel-img{height:148px;background:rgba(0,255,65,0.03);animation:skelPulse 1.4s ease-in-out infinite;}
+        .skel-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px;}
+        .skel-line{height:10px;border-radius:2px;background:rgba(0,255,65,0.04);animation:skelPulse 1.4s ease-in-out infinite;}
+        @keyframes skelPulse{0%,100%{opacity:0.4}50%{opacity:1}}
 
-        /* Load more */
-        #load-wrap { display:flex; justify-content:center; padding:20px 0 8px; }
-        #load-more {
-            background:transparent; border:1px solid rgba(0,255,65,0.2); color:#005c18;
-            font-family:var(--font); font-size:10px; padding:6px 24px; cursor:pointer;
-            border-radius:3px; letter-spacing:1px; transition:all 0.2s;
+        #load-wrap{display:flex;justify-content:center;padding:24px 0 10px;}
+        #load-more{
+            background:transparent;border:1px solid rgba(0,255,65,0.22);color:#005c18;
+            font-family:var(--font);font-size:10px;padding:7px 30px;cursor:pointer;
+            border-radius:3px;letter-spacing:1.5px;transition:all 0.2s;overflow:hidden;position:relative;
         }
-        #load-more:hover { color:var(--green); border-color:rgba(0,255,65,0.6); }
-        #load-more:disabled { color:#002200; border-color:rgba(0,255,65,0.08); cursor:default; }
-        #obs-count { font-size:9px; color:#004400; text-align:center; margin-top:8px; }
+        #load-more::before{
+            content:'';position:absolute;inset:0;
+            background:linear-gradient(90deg,transparent,rgba(0,255,65,0.07),transparent);
+            transform:translateX(-100%);transition:transform 0.5s;
+        }
+        #load-more:hover::before{transform:translateX(100%);}
+        #load-more:hover{color:var(--green);border-color:rgba(0,255,65,0.65);box-shadow:0 0 20px rgba(0,255,65,0.12);}
+        #load-more:disabled{color:#002200;border-color:rgba(0,255,65,0.08);cursor:default;}
+        #obs-count{font-size:9px;color:#004400;text-align:center;margin-top:10px;letter-spacing:1px;}
 
-        /* Bottom bar */
-        #bottom-bar {
-            position:fixed; bottom:0; left:0; right:0; z-index:300; height:28px;
-            display:flex; align-items:center; gap:10px; padding:0 12px;
-            background:rgba(0,1,0,0.97); border-top:1px solid var(--border); font-size:9px;
+        #bottom-bar{
+            position:fixed;bottom:0;left:0;right:0;z-index:300;height:28px;
+            display:flex;align-items:center;gap:10px;padding:0 12px;
+            background:rgba(0,1,0,0.97);border-top:1px solid var(--border);font-size:9px;
         }
-        .bb-icon { color:var(--green); text-shadow:0 0 8px rgba(0,255,65,0.8); animation:blink 2s ease-in-out infinite; }
-        .bb-label { color:var(--green-mid); letter-spacing:2px; font-weight:600; font-size:8px; }
-        #bb-total { color:#005c18; }
-        #bb-updated { color:#004400; margin-left:auto; }
+        .bb-icon{color:var(--green);text-shadow:0 0 8px rgba(0,255,65,0.8);animation:blink 2s ease-in-out infinite;}
+        .bb-label{color:var(--green-mid);letter-spacing:2px;font-weight:600;font-size:8px;}
+        #bb-total{color:#005c18;}
+        #bb-updated{color:#004400;margin-left:auto;}
 
-        /* Detail modal */
-        #detail-overlay {
-            position:fixed; inset:0; z-index:600;
-            background:rgba(0,0,0,0.85); backdrop-filter:blur(8px);
-            display:flex; align-items:center; justify-content:center;
-            opacity:0; visibility:hidden; transition:opacity 0.25s, visibility 0.25s;
+        #detail-overlay{
+            position:fixed;inset:0;z-index:600;
+            background:rgba(0,0,0,0.9);backdrop-filter:blur(12px);
+            display:flex;align-items:center;justify-content:center;
+            opacity:0;visibility:hidden;transition:opacity 0.25s,visibility 0.25s;
         }
-        #detail-overlay.show { opacity:1; visibility:visible; }
-        #detail-modal {
-            background:#020702; border:1px solid rgba(0,255,65,0.35); border-radius:8px;
-            width:560px; max-width:92vw; max-height:90vh; overflow-y:auto;
-            transform:scale(0.88) translateY(20px); opacity:0;
-            transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s;
+        #detail-overlay.show{opacity:1;visibility:visible;}
+        #detail-modal{
+            background:#010901;border:1px solid rgba(0,255,65,0.4);border-radius:8px;
+            width:580px;max-width:93vw;max-height:90vh;overflow-y:auto;
+            transform:perspective(1000px) rotateX(14deg) scale(0.88) translateY(28px);opacity:0;
+            transition:transform 0.42s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s;
+            box-shadow:0 0 70px rgba(0,255,65,0.1),0 40px 90px rgba(0,0,0,0.95);
         }
-        #detail-modal::-webkit-scrollbar { width:3px; }
-        #detail-overlay.show #detail-modal { transform:scale(1) translateY(0); opacity:1; }
-        .dm-img-wrap { height:260px; overflow:hidden; position:relative; }
-        .dm-img { width:100%; height:100%; object-fit:cover; filter:sepia(100%) hue-rotate(90deg) brightness(0.82) saturate(2.8) contrast(1.1); }
-        .dm-no-img { height:100%; display:flex; align-items:center; justify-content:center; color:#003300; font-size:10px; letter-spacing:3px; background:#000300; }
-        .dm-close { position:absolute; top:10px; right:12px; color:#005c18; cursor:pointer; font-size:18px; background:rgba(0,0,0,0.7); padding:2px 8px; border-radius:3px; transition:color 0.2s; }
-        .dm-close:hover { color:var(--green); }
-        .dm-body { padding:20px 22px; display:flex; flex-direction:column; gap:12px; }
-        .dm-sci   { font-size:18px; font-weight:600; color:var(--green); font-style:italic; }
-        .dm-common{ font-size:12px; color:var(--green-mid); letter-spacing:0.5px; }
-        .dm-grid  { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:rgba(0,255,65,0.06); border:1px solid rgba(0,255,65,0.1); border-radius:3px; overflow:hidden; }
-        .dm-cell  { padding:9px 12px; background:#010501; }
-        .dm-key   { font-size:8px; color:#004400; letter-spacing:1.5px; margin-bottom:4px; }
-        .dm-val   { font-size:11px; color:var(--green-mid); }
-        .dm-link  { color:#005c18; text-decoration:none; font-size:10px; letter-spacing:0.5px; border:1px solid rgba(0,255,65,0.15); padding:4px 12px; border-radius:3px; transition:all 0.2s; align-self:flex-start; }
-        .dm-link:hover { color:var(--green); border-color:rgba(0,255,65,0.5); }
+        #detail-modal::-webkit-scrollbar{width:3px;}
+        #detail-overlay.show #detail-modal{transform:perspective(1000px) rotateX(0deg) scale(1) translateY(0);opacity:1;}
+        .dm-img-wrap{height:280px;overflow:hidden;position:relative;}
+        .dm-img{width:100%;height:100%;object-fit:cover;filter:sepia(100%) hue-rotate(90deg) brightness(0.85) saturate(3) contrast(1.1);}
+        .dm-no-img{height:100%;display:flex;align-items:center;justify-content:center;color:#003300;font-size:10px;letter-spacing:3px;background:#000300;}
+        .dm-close{position:absolute;top:10px;right:12px;color:#005c18;cursor:pointer;font-size:18px;background:rgba(0,0,0,0.75);padding:2px 8px;border-radius:3px;transition:color 0.2s;}
+        .dm-close:hover{color:var(--green);}
+        .dm-body{padding:22px 24px;display:flex;flex-direction:column;gap:14px;}
+        .dm-sci{font-size:20px;font-weight:600;color:var(--green);font-style:italic;text-shadow:0 0 22px rgba(0,255,65,0.45);}
+        .dm-common{font-size:12px;color:var(--green-mid);letter-spacing:0.5px;}
+        .dm-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(0,255,65,0.06);border:1px solid rgba(0,255,65,0.12);border-radius:3px;overflow:hidden;}
+        .dm-cell{padding:10px 13px;background:#010501;}
+        .dm-key{font-size:8px;color:#004400;letter-spacing:1.5px;margin-bottom:4px;}
+        .dm-val{font-size:11px;color:var(--green-mid);}
+        .dm-link{color:#005c18;text-decoration:none;font-size:10px;letter-spacing:0.5px;border:1px solid rgba(0,255,65,0.18);padding:5px 14px;border-radius:3px;transition:all 0.2s;align-self:flex-start;}
+        .dm-link:hover{color:var(--green);border-color:rgba(0,255,65,0.5);box-shadow:0 0 16px rgba(0,255,65,0.1);}
     </style>
 </head>
 <body>
 
+<canvas id="bg-canvas"></canvas>
 <div id="scan-beam"></div>
 
 <div id="top-bar">
@@ -220,9 +224,7 @@
 
 <div id="main">
     <div id="obs-grid"></div>
-    <div id="load-wrap">
-        <button id="load-more">LOAD MORE</button>
-    </div>
+    <div id="load-wrap"><button id="load-more">LOAD MORE</button></div>
     <div id="obs-count"></div>
 </div>
 
@@ -238,15 +240,15 @@
     <div id="detail-modal">
         <div class="dm-img-wrap" id="dm-img-wrap"></div>
         <div class="dm-body">
-            <div class="dm-sci" id="dm-sci"></div>
+            <div class="dm-sci"    id="dm-sci"></div>
             <div class="dm-common" id="dm-common"></div>
             <div class="dm-grid">
-                <div class="dm-cell"><div class="dm-key">TAXON</div><div class="dm-val" id="dm-taxon"></div></div>
-                <div class="dm-cell"><div class="dm-key">QUALITY</div><div class="dm-val" id="dm-quality"></div></div>
+                <div class="dm-cell"><div class="dm-key">TAXON</div>   <div class="dm-val" id="dm-taxon"></div></div>
+                <div class="dm-cell"><div class="dm-key">QUALITY</div> <div class="dm-val" id="dm-quality"></div></div>
                 <div class="dm-cell"><div class="dm-key">LOCATION</div><div class="dm-val" id="dm-place"></div></div>
                 <div class="dm-cell"><div class="dm-key">OBSERVED</div><div class="dm-val" id="dm-date"></div></div>
                 <div class="dm-cell"><div class="dm-key">OBSERVER</div><div class="dm-val" id="dm-user"></div></div>
-                <div class="dm-cell"><div class="dm-key">RANK</div><div class="dm-val" id="dm-rank"></div></div>
+                <div class="dm-cell"><div class="dm-key">RANK</div>    <div class="dm-val" id="dm-rank"></div></div>
             </div>
             <a id="dm-link" class="dm-link" href="#" target="_blank" rel="noopener">VIEW ON INATURALIST ↗</a>
         </div>
@@ -254,6 +256,147 @@
 </div>
 
 <script>
+/* ═══════════════════════════════════════════
+   3D CANVAS: starfield + tron perspective grid
+   ═══════════════════════════════════════════ */
+(function () {
+    const canvas = document.getElementById('bg-canvas');
+    const ctx    = canvas.getContext('2d');
+
+    // Stars flying toward viewer
+    const STAR_COUNT = 200;
+    const stars = Array.from({ length: STAR_COUNT }, () => mkStar(true));
+
+    function mkStar(randomZ) {
+        return {
+            x: (Math.random() - 0.5) * 3200,
+            y: (Math.random() - 0.5) * 2400,
+            z: randomZ ? Math.random() * 1600 + 50 : 1600,
+            r: Math.random() * 1.4 + 0.3,
+            spd: Math.random() * 1.8 + 0.5,
+        };
+    }
+
+    // Horizontal tron lines (each has a z depth that decreases)
+    const H_LINES = 14;
+    const hLines  = Array.from({ length: H_LINES }, (_, i) => ({
+        z: 10 + i * (160 / H_LINES),
+    }));
+    const FOV       = 520;
+    const GRID_SPAN = 85; // half-width in world units
+    const EYE_H     = 22; // viewer height above grid plane
+
+    function screenPos(wx, wz, W, H) {
+        const vx = W / 2, vy = H * 0.54;
+        const s  = FOV / (wz + 0.001);
+        return { x: vx + wx * s, y: vy + EYE_H * s };
+    }
+
+    function resize() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function drawScene() {
+        const W = canvas.width, H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+
+        // ── Tron grid ──
+        const vx = W / 2, vy = H * 0.54;
+        ctx.save();
+        ctx.lineWidth = 0.6;
+
+        // Vertical lines (static)
+        const VCOLS = 14;
+        for (let c = 0; c <= VCOLS; c++) {
+            const wx   = -GRID_SPAN + (c / VCOLS) * GRID_SPAN * 2;
+            const far  = screenPos(wx, 180, W, H);
+            const near = screenPos(wx,   3, W, H);
+            const dist = Math.abs(wx / GRID_SPAN);
+            const alpha = (1 - dist * 0.65) * 0.055;
+            ctx.strokeStyle = `rgba(0,255,65,${alpha})`;
+            ctx.beginPath();
+            ctx.moveTo(far.x,  Math.max(vy - 2, far.y));
+            ctx.lineTo(near.x, Math.min(H * 1.08, near.y));
+            ctx.stroke();
+        }
+
+        // Horizontal lines (moving toward viewer)
+        for (const l of hLines) {
+            l.z -= 0.28;
+            if (l.z < 2) l.z += 160;
+
+            const lp = screenPos(-GRID_SPAN, l.z, W, H);
+            const rp = screenPos( GRID_SPAN, l.z, W, H);
+            const sy = lp.y;
+            if (sy < vy - 1 || sy > H * 1.05) continue;
+
+            const progress = Math.min(1, (sy - vy) / (H - vy));
+            const alpha    = progress * 0.085;
+            ctx.strokeStyle = `rgba(0,255,65,${alpha})`;
+            ctx.beginPath();
+            ctx.moveTo(lp.x, sy);
+            ctx.lineTo(rp.x, sy);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+
+        // ── Stars ──
+        const cx = W / 2, cy = H / 2;
+        for (const s of stars) {
+            s.z -= s.spd;
+            if (s.z < 1) Object.assign(s, mkStar(false));
+
+            const sc = FOV / s.z;
+            const sx = cx + s.x * sc;
+            const sy = cy + s.y * sc;
+            if (sx < -5 || sx > W + 5 || sy < -5 || sy > H + 5) continue;
+
+            const alpha = Math.min(0.75, (1600 - s.z) / 900);
+            const size  = Math.max(0.3, s.r * sc * 0.75);
+
+            ctx.beginPath();
+            ctx.arc(sx, sy, size, 0, Math.PI * 2);
+            if (size > 1.6) {
+                ctx.shadowColor = 'rgba(0,255,65,0.9)';
+                ctx.shadowBlur  = 7;
+            }
+            ctx.fillStyle = `rgba(0,255,65,${alpha * 0.7})`;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        requestAnimationFrame(drawScene);
+    }
+    drawScene();
+})();
+
+/* ═══════════════════════════════════════════
+   MOUSE PARALLAX ON CARD GRID
+   ═══════════════════════════════════════════ */
+(function () {
+    const grid = document.getElementById('obs-grid');
+    let tx = 0, ty = 0, cx = 0, cy = 0;
+
+    document.addEventListener('mousemove', e => {
+        tx = (e.clientX / window.innerWidth  - 0.5) *  8;
+        ty = (e.clientY / window.innerHeight - 0.5) * -5;
+    });
+
+    (function tick() {
+        cx += (tx - cx) * 0.04;
+        cy += (ty - cy) * 0.04;
+        grid.style.transform = `perspective(1500px) rotateY(${cx}deg) rotateX(${cy}deg)`;
+        requestAnimationFrame(tick);
+    })();
+})();
+
+/* ═══════════════════════════════════════════
+   DATA, CARDS, AND 3D TILT
+   ═══════════════════════════════════════════ */
 (function () {
     const INAT_BASE = 'https://api.inaturalist.org/v2/observations';
     const PER_PAGE  = 20;
@@ -262,7 +405,8 @@
     let currentPage  = 1;
     let totalResults = 0;
     let loading      = false;
-    let obsCache     = {}; // uuid → observation
+    let obsCache     = {};
+    let cardIndex    = 0;
 
     const grid      = document.getElementById('obs-grid');
     const loadBtn   = document.getElementById('load-more');
@@ -272,7 +416,6 @@
     const bbTotal   = document.getElementById('bb-total');
     const bbUpdated = document.getElementById('bb-updated');
 
-    // ── iNaturalist fetch ──
     async function fetchObs(taxon, page) {
         const params = new URLSearchParams({
             per_page: PER_PAGE, page,
@@ -286,36 +429,32 @@
         return res.json();
     }
 
-    // ── AntAPI probe (graceful) ──
     async function probeAntApi() {
         try {
             const res = await fetch('https://api.antapi.org/', { signal: AbortSignal.timeout(5000) });
             if (res.ok) {
-                document.getElementById('src-ant').className = 'src-badge online';
-                document.getElementById('src-ant').textContent = 'AntAPI ●';
+                const el = document.getElementById('src-ant');
+                el.className = 'src-badge online';
+                el.textContent = 'AntAPI ●';
             }
         } catch {}
     }
 
-    // ── Time helper ──
     function relTime(dateStr) {
         if (!dateStr) return '—';
         const diff = Date.now() - new Date(dateStr).getTime();
         const h = Math.floor(diff / 3600000);
         if (h < 1) return '< 1h ago';
         if (h < 24) return h + 'h ago';
-        const d = Math.floor(h / 24);
-        return d + 'd ago';
+        return Math.floor(h / 24) + 'd ago';
     }
 
-    // ── Photo URL ──
     function photoUrl(obs, size = 'small') {
         const p = obs.photos?.[0];
         if (!p?.url) return null;
         return p.url.replace('square', size);
     }
 
-    // ── Taxon display ──
     const TAXON_SHORT = {
         Aves:'AVES', Mammalia:'MAMMALIA', Insecta:'INSECTA', Plantae:'PLANTAE',
         Fungi:'FUNGI', Reptilia:'REPTILIA', Amphibia:'AMPHIBIA', Arachnida:'ARACHNIDA',
@@ -325,7 +464,6 @@
         return TAXON_SHORT[obs.taxon?.iconic_taxon_name] || (obs.taxon?.iconic_taxon_name?.toUpperCase() || 'UNKNOWN');
     }
 
-    // ── Render skeletons ──
     function showSkeletons(n) {
         for (let i = 0; i < n; i++) {
             const el = document.createElement('div');
@@ -338,11 +476,30 @@
         grid.querySelectorAll('.obs-skeleton').forEach(el => el.remove());
     }
 
-    // ── Render cards ──
-    function renderCard(obs) {
-        const url    = photoUrl(obs, 'small');
-        const tag    = taxonTag(obs);
-        const grade  = obs.quality_grade || 'casual';
+    function add3dTilt(card) {
+        card.addEventListener('mouseenter', () => {
+            card.style.transition = 'border-color 0.2s, box-shadow 0.2s';
+        });
+        card.addEventListener('mousemove', e => {
+            const r  = card.getBoundingClientRect();
+            const nx = (e.clientX - r.left)  / r.width  - 0.5;
+            const ny = (e.clientY - r.top)   / r.height - 0.5;
+            card.style.transform    = `perspective(700px) rotateX(${-ny * 20}deg) rotateY(${nx * 20}deg) translateZ(50px) scale(1.03)`;
+            card.style.boxShadow    = `${-nx * 22}px ${-ny * 22}px 45px rgba(0,0,0,0.85), 0 0 35px rgba(0,255,65,0.22), inset 0 0 20px rgba(0,255,65,0.04)`;
+            card.style.borderColor  = 'rgba(0,255,65,0.85)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transition  = 'transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.5s, border-color 0.25s';
+            card.style.transform   = '';
+            card.style.boxShadow   = '';
+            card.style.borderColor = '';
+        });
+    }
+
+    function renderCard(obs, idx) {
+        const url   = photoUrl(obs, 'small');
+        const tag   = taxonTag(obs);
+        const grade = obs.quality_grade || 'casual';
         const gradeSymbol = grade === 'research' ? '● RG' : grade === 'needs_id' ? '○ ID?' : '· CAS';
         const sci    = obs.taxon?.name || '—';
         const common = obs.taxon?.preferred_common_name || '';
@@ -350,14 +507,13 @@
         const user   = obs.user?.login || '—';
 
         const card = document.createElement('div');
-        card.className = 'obs-card';
+        card.className = 'obs-card fly';
+        card.style.animationDelay = `${idx * 0.055}s`;
         card.dataset.uuid = obs.uuid;
         card.innerHTML = `
             <div class="obs-img-wrap">
-                ${url
-                    ? `<img class="obs-img" src="${url}" loading="lazy" alt="" onerror="this.style.display='none';this.parentElement.querySelector('.obs-no-img').style.display='flex'">`
-                    : ''}
-                <div class="obs-no-img" style="display:${url ? 'none' : 'flex'}; flex-direction:column; gap:4px;">
+                ${url ? `<img class="obs-img" src="${url}" loading="lazy" alt="" onerror="this.style.display='none';this.parentElement.querySelector('.obs-no-img').style.display='flex'">` : ''}
+                <div class="obs-no-img" style="display:${url ? 'none' : 'flex'};flex-direction:column;gap:4px;">
                     <span style="font-size:22px;color:#003300">◉</span>
                     <span style="font-size:8px;letter-spacing:2px;">NO VISUAL</span>
                 </div>
@@ -372,14 +528,14 @@
                     <span class="obs-place">▸ ${place}</span>
                     <span class="obs-who">${relTime(obs.observed_on)} · @${user}</span>
                 </div>
-            </div>
-        `;
+            </div>`;
+
+        add3dTilt(card);
         card.addEventListener('click', () => openDetail(obs.uuid));
         obsCache[obs.uuid] = obs;
         return card;
     }
 
-    // ── Load observations ──
     async function loadObs(reset = false) {
         if (loading) return;
         loading = true;
@@ -387,19 +543,17 @@
         statusDot.className = ''; statusTxt.className = '';
         statusTxt.textContent = 'SCANNING';
 
-        if (reset) {
-            grid.innerHTML = '';
-            currentPage = 1;
-        }
+        if (reset) { grid.innerHTML = ''; currentPage = 1; cardIndex = 0; }
 
         showSkeletons(PER_PAGE);
-
         try {
             const data = await fetchObs(currentTaxon, currentPage);
             totalResults = data.total_results || 0;
             clearSkeletons();
 
-            (data.results || []).forEach(obs => grid.appendChild(renderCard(obs)));
+            (data.results || []).forEach((obs, i) => {
+                grid.appendChild(renderCard(obs, cardIndex++));
+            });
 
             currentPage++;
             const shown = grid.querySelectorAll('.obs-card').length;
@@ -407,11 +561,11 @@
             bbTotal.textContent  = `${totalResults.toLocaleString()} TOTAL OBSERVATIONS`;
             bbUpdated.textContent = 'UPDATED ' + new Date().toLocaleTimeString();
 
-            statusDot.className  = 'live'; statusTxt.className = 'live';
+            statusDot.className = 'live'; statusTxt.className = 'live';
             statusTxt.textContent = 'LIVE';
-            loadBtn.disabled = shown >= totalResults;
+            loadBtn.disabled    = shown >= totalResults;
             loadBtn.textContent = shown >= totalResults ? 'ALL LOADED' : 'LOAD MORE';
-        } catch (err) {
+        } catch {
             clearSkeletons();
             statusTxt.textContent = 'ERROR';
             loadBtn.disabled = false;
@@ -419,26 +573,24 @@
         loading = false;
     }
 
-    // ── Detail modal ──
     function openDetail(uuid) {
         const obs = obsCache[uuid];
         if (!obs) return;
-
-        const url  = photoUrl(obs, 'medium');
+        const url = photoUrl(obs, 'medium');
         const imgWrap = document.getElementById('dm-img-wrap');
         imgWrap.innerHTML = url
             ? `<img class="dm-img" src="${url}" alt=""><span class="dm-close" onclick="closeDetail()">✕</span>`
             : `<div class="dm-no-img">NO VISUAL DATA</div><span class="dm-close" onclick="closeDetail()">✕</span>`;
 
-        document.getElementById('dm-sci').textContent    = obs.taxon?.name || '—';
-        document.getElementById('dm-common').textContent = (obs.taxon?.preferred_common_name || '').toUpperCase() || '—';
-        document.getElementById('dm-taxon').textContent  = obs.taxon?.iconic_taxon_name || '—';
-        document.getElementById('dm-quality').textContent= obs.quality_grade || '—';
-        document.getElementById('dm-place').textContent  = obs.place_guess || '—';
-        document.getElementById('dm-date').textContent   = obs.observed_on || '—';
-        document.getElementById('dm-user').textContent   = '@' + (obs.user?.login || '—');
-        document.getElementById('dm-rank').textContent   = obs.taxon?.rank || '—';
-        document.getElementById('dm-link').href          = obs.uri || '#';
+        document.getElementById('dm-sci').textContent     = obs.taxon?.name || '—';
+        document.getElementById('dm-common').textContent  = (obs.taxon?.preferred_common_name || '').toUpperCase() || '—';
+        document.getElementById('dm-taxon').textContent   = obs.taxon?.iconic_taxon_name || '—';
+        document.getElementById('dm-quality').textContent = obs.quality_grade || '—';
+        document.getElementById('dm-place').textContent   = obs.place_guess || '—';
+        document.getElementById('dm-date').textContent    = obs.observed_on || '—';
+        document.getElementById('dm-user').textContent    = '@' + (obs.user?.login || '—');
+        document.getElementById('dm-rank').textContent    = obs.taxon?.rank || '—';
+        document.getElementById('dm-link').href           = obs.uri || '#';
 
         document.getElementById('detail-overlay').classList.add('show');
     }
@@ -451,7 +603,6 @@
     };
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
 
-    // ── Filters ──
     document.querySelectorAll('.flt-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.flt-btn').forEach(b => b.classList.remove('active'));
@@ -461,10 +612,8 @@
         });
     });
 
-    // ── Load more ──
     loadBtn.addEventListener('click', () => loadObs(false));
 
-    // ── Init ──
     probeAntApi();
     loadObs(true);
     setInterval(() => { if (currentPage === 2) loadObs(true); }, 120000);
