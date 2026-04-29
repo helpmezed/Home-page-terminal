@@ -256,7 +256,6 @@
 <script>
 (function () {
     const INAT_BASE = 'https://api.inaturalist.org/v2/observations';
-    const FIELDS    = 'taxon,observed_on,place_guess,photos,user,quality_grade,description,uri';
     const PER_PAGE  = 20;
 
     let currentTaxon = '';
@@ -277,9 +276,9 @@
     async function fetchObs(taxon, page) {
         const params = new URLSearchParams({
             per_page: PER_PAGE, page,
-            order: 'created_at', order_by: 'desc',
+            order_by: 'created_at', order: 'desc',
             photos: 'true', quality_grade: 'research,needs_id',
-            fields: FIELDS
+            fields: 'all'
         });
         if (taxon) params.set('iconic_taxa', taxon);
         const res = await fetch(`${INAT_BASE}?${params}`);
