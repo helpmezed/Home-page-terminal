@@ -172,50 +172,9 @@
 </div>
 
 <script>
-    /* Invidious instances in priority order */
-    const INSTANCES = [
-        'https://inv.nadeko.net',
-        'https://invidious.io',
-        'https://yewtu.be',
-        'https://vid.puffyan.us',
-        'https://iv.ggtyler.dev',
-        'https://invidious.protokolla.fi'
-    ];
-
-    /* itag reference: 22=720p mp4, 18=360p mp4, 140=128k m4a audio */
-    const FORMATS = [
-        { label: 'MP4',  sub: '720p · VIDEO',  itag: '22',  ext: 'mp4'  },
-        { label: 'MP4',  sub: '360p · VIDEO',  itag: '18',  ext: 'mp4'  },
-        { label: 'M4A',  sub: '128k · AUDIO',  itag: '140', ext: 'm4a'  },
-    ];
-
     function extractId(url) {
-        const m = url.match(/(?:[?&]v=|youtu\.be\/|embed\/|\/v\/)([a-zA-Z0-9_-]{11})/);
+        const m = url.match(/(?:[?&]v=|youtu\.be\/|embed\/|\/v\/|shorts\/)([a-zA-Z0-9_-]{11})/);
         return m ? m[1] : null;
-    }
-
-    function abortIn(ms) {
-        const c = new AbortController();
-        const t = setTimeout(() => c.abort(), ms);
-        return { signal: c.signal, cancel: () => clearTimeout(t) };
-    }
-
-    async function resolveInstance(videoId) {
-        for (const inst of INSTANCES) {
-            const { signal, cancel } = abortIn(7000);
-            try {
-                const res = await fetch(
-                    `${inst}/api/v1/videos/${videoId}?fields=title,lengthSeconds`,
-                    { signal }
-                );
-                cancel();
-                if (res.ok) {
-                    const d = await res.json();
-                    return { instance: inst, title: d.title || 'Unknown Title' };
-                }
-            } catch { cancel(); }
-        }
-        throw new Error('All Invidious instances failed to respond');
     }
 
     function log(msg, type = 'ok') {
@@ -226,6 +185,8 @@
         out.appendChild(d);
         out.scrollTop = out.scrollHeight;
     }
+
+    const EXT_MAP = { 'MP4': 'mp4', 'M4A': 'm4a' };
 
     async function initiateExtraction() {
         const urlRaw = document.getElementById('yt-url').value.trim();
@@ -250,35 +211,37 @@
         log(`VIDEO ID: ${videoId}`, 'dim');
         log('PROBING INVIDIOUS NETWORK...', 'dim');
 
-        let instance, title;
+        let data;
         try {
-            ({ instance, title } = await resolveInstance(videoId));
+            const res = await fetch(`/api/yt?id=${encodeURIComponent(videoId)}`);
+            data = await res.json();
+            if (!res.ok || !data.ok) throw new Error(data.error || 'API error');
         } catch (e) {
-            log('ALL INVIDIOUS INSTANCES UNREACHABLE.', 'err');
+            log('EXTRACTION FAILED: ' + e.message, 'err');
             log('The video may be unavailable, or try again later.', 'dim');
             btn.disabled = false;
             return;
         }
 
-        log(`NODE: ${instance}`, 'dim');
-        log(`TITLE: ${title}`, 'ok');
+        log(`NODE: ${data.instance}`, 'dim');
+        log(`TITLE: ${data.title}`, 'ok');
         log('BUILDING DOWNLOAD LINKS...', 'dim');
 
-        /* Build one link per format using Invidious proxy (local=true adds
-           Content-Disposition:attachment so the browser downloads, not plays) */
         const row = document.getElementById('dl-row');
-        FORMATS.forEach(({ label, sub, itag, ext }) => {
-            const href = `${instance}/latest_version?id=${videoId}&itag=${itag}&local=true`;
+        const safeName = data.title.replace(/[^a-z0-9 _-]/gi, '_').slice(0, 80);
+        data.formats.forEach(({ label, desc, url }) => {
+            const ext = EXT_MAP[label] || 'mp4';
             const a = document.createElement('a');
             a.className = 'dl-link';
-            a.href = href;
+            a.href = url;
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
-            a.innerHTML = `<span class="dl-fmt">${label}</span><span class="dl-desc">${sub}</span>`;
+            a.download = `${safeName}.${ext}`;
+            a.innerHTML = `<span class="dl-fmt">${label}</span><span class="dl-desc">${desc}</span>`;
             row.appendChild(a);
         });
 
-        document.getElementById('dl-title').textContent = '▸ ' + title;
+        document.getElementById('dl-title').textContent = '▸ ' + data.title;
         opts.style.display = 'flex';
         log('EXTRACTION COMPLETE. SELECT FORMAT BELOW.', 'done');
 
