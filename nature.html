@@ -23,17 +23,6 @@
                 radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(0,0,0,0.5) 100%);
         }
 
-        #scan-beam{
-            position:fixed;left:0;right:0;height:70px;z-index:8999;pointer-events:none;
-            background:linear-gradient(to bottom,transparent 0%,rgba(0,255,65,0.02) 25%,rgba(0,255,65,0.14) 48%,rgba(0,255,65,0.2) 50%,rgba(0,255,65,0.14) 52%,rgba(0,255,65,0.02) 75%,transparent 100%);
-            animation:sweepDown 5s linear infinite;
-        }
-        #scan-beam::after{
-            content:'';position:absolute;left:0;right:0;height:1px;top:50%;
-            background:linear-gradient(to right,transparent 0%,rgba(0,255,65,0.0) 5%,rgba(0,255,65,1) 20%,rgba(0,255,65,1) 80%,rgba(0,255,65,0.0) 95%,transparent 100%);
-            box-shadow:0 0 14px rgba(0,255,65,0.9),0 0 35px rgba(0,255,65,0.5),0 0 60px rgba(0,255,65,0.2);
-        }
-        @keyframes sweepDown{0%{top:-70px}100%{top:calc(100vh + 70px)}}
 
         #top-bar{
             position:fixed;top:0;left:0;right:0;z-index:300;
@@ -57,14 +46,6 @@
         .src-badge.online{color:var(--green-mid);border-color:rgba(0,255,65,0.35);}
         .src-badge.offline{color:#440000;border-color:rgba(255,50,50,0.25);}
 
-        #filters{display:flex;gap:4px;margin-left:auto;flex-shrink:0;}
-        .flt-btn{
-            background:transparent;border:1px solid rgba(0,255,65,0.14);color:#005c18;
-            font-family:var(--font);font-size:8px;padding:2px 7px;cursor:pointer;
-            border-radius:2px;transition:all 0.15s;letter-spacing:0.8px;
-        }
-        .flt-btn:hover{color:var(--green-mid);border-color:rgba(0,255,65,0.4);}
-        .flt-btn.active{color:var(--green);border-color:var(--green);background:rgba(0,255,65,0.06);}
 
         #main{
             position:fixed;top:32px;bottom:28px;left:0;right:0;
@@ -77,24 +58,16 @@
             display:grid;
             grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
             gap:16px;
-            transform-style:preserve-3d;
-            will-change:transform;
         }
 
         .obs-card{
             background:rgba(0,5,0,0.93);
             border:1px solid rgba(0,255,65,0.22);
             border-radius:6px;overflow:hidden;cursor:pointer;
-            will-change:transform;
             transition:border-color 0.25s, box-shadow 0.25s;
         }
         .obs-card:hover{border-color:rgba(0,255,65,0.8);}
 
-        @keyframes flyIn{
-            from{opacity:0;transform:perspective(800px) rotateX(18deg) translateZ(-350px) scale(0.82);}
-            to  {opacity:1;transform:perspective(800px) rotateX(0deg)  translateZ(0px)   scale(1);}
-        }
-        .obs-card.fly{animation:flyIn 0.6s cubic-bezier(0.22,1,0.36,1) both;}
 
         .obs-img-wrap{
             position:relative;height:148px;overflow:hidden;background:#000300;
@@ -198,7 +171,6 @@
 <body>
 
 <canvas id="bg-canvas"></canvas>
-<div id="scan-beam"></div>
 
 <div id="top-bar">
     <a class="back-btn" href="index.html">← back</a>
@@ -210,16 +182,6 @@
     <span class="top-sep">|</span>
     <span class="src-badge online" id="src-inat">iNaturalist ●</span>
     <span class="src-badge offline" id="src-ant">AntAPI ✕</span>
-    <div id="filters">
-        <button class="flt-btn active" data-taxon="">ALL</button>
-        <button class="flt-btn" data-taxon="Aves">AVES</button>
-        <button class="flt-btn" data-taxon="Mammalia">MAMMALIA</button>
-        <button class="flt-btn" data-taxon="Insecta">INSECTA</button>
-        <button class="flt-btn" data-taxon="Plantae">PLANTAE</button>
-        <button class="flt-btn" data-taxon="Fungi">FUNGI</button>
-        <button class="flt-btn" data-taxon="Reptilia">REPTILIA</button>
-        <button class="flt-btn" data-taxon="Arachnida">ARACHNIDA</button>
-    </div>
 </div>
 
 <div id="main">
@@ -374,25 +336,6 @@
     drawScene();
 })();
 
-/* ═══════════════════════════════════════════
-   MOUSE PARALLAX ON CARD GRID
-   ═══════════════════════════════════════════ */
-(function () {
-    const grid = document.getElementById('obs-grid');
-    let tx = 0, ty = 0, cx = 0, cy = 0;
-
-    document.addEventListener('mousemove', e => {
-        tx = (e.clientX / window.innerWidth  - 0.5) *  8;
-        ty = (e.clientY / window.innerHeight - 0.5) * -5;
-    });
-
-    (function tick() {
-        cx += (tx - cx) * 0.04;
-        cy += (ty - cy) * 0.04;
-        grid.style.transform = `perspective(1500px) rotateY(${cx}deg) rotateX(${cy}deg)`;
-        requestAnimationFrame(tick);
-    })();
-})();
 
 /* ═══════════════════════════════════════════
    DATA, CARDS, AND 3D TILT
@@ -479,27 +422,7 @@
         grid.querySelectorAll('.obs-skeleton').forEach(el => el.remove());
     }
 
-    function add3dTilt(card) {
-        card.addEventListener('mouseenter', () => {
-            card.style.transition = 'border-color 0.2s, box-shadow 0.2s';
-        });
-        card.addEventListener('mousemove', e => {
-            const r  = card.getBoundingClientRect();
-            const nx = (e.clientX - r.left)  / r.width  - 0.5;
-            const ny = (e.clientY - r.top)   / r.height - 0.5;
-            card.style.transform    = `perspective(700px) rotateX(${-ny * 20}deg) rotateY(${nx * 20}deg) translateZ(50px) scale(1.03)`;
-            card.style.boxShadow    = `${-nx * 22}px ${-ny * 22}px 45px rgba(0,0,0,0.85), 0 0 35px rgba(0,255,65,0.22), inset 0 0 20px rgba(0,255,65,0.04)`;
-            card.style.borderColor  = 'rgba(0,255,65,0.85)';
-        });
-        card.addEventListener('mouseleave', () => {
-            card.style.transition  = 'transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.5s, border-color 0.25s';
-            card.style.transform   = '';
-            card.style.boxShadow   = '';
-            card.style.borderColor = '';
-        });
-    }
-
-    function renderCard(obs, idx) {
+    function renderCard(obs) {
         const url   = photoUrl(obs, 'small');
         const tag   = taxonTag(obs);
         const grade = obs.quality_grade || 'casual';
@@ -510,8 +433,7 @@
         const user   = obs.user?.login || '—';
 
         const card = document.createElement('div');
-        card.className = 'obs-card fly';
-        card.style.animationDelay = `${idx * 0.055}s`;
+        card.className = 'obs-card';
         card.dataset.uuid = obs.uuid;
         card.innerHTML = `
             <div class="obs-img-wrap">
@@ -533,7 +455,6 @@
                 </div>
             </div>`;
 
-        add3dTilt(card);
         card.addEventListener('click', () => openDetail(obs.uuid));
         obsCache[obs.uuid] = obs;
         return card;
@@ -554,8 +475,9 @@
             totalResults = data.total_results || 0;
             clearSkeletons();
 
-            (data.results || []).forEach((obs, i) => {
-                grid.appendChild(renderCard(obs, cardIndex++));
+            (data.results || []).forEach(obs => {
+                grid.appendChild(renderCard(obs));
+                cardIndex++;
             });
 
             currentPage++;
@@ -605,15 +527,6 @@
         if (e.target === document.getElementById('detail-overlay')) closeDetail();
     };
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
-
-    document.querySelectorAll('.flt-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.flt-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentTaxon = btn.dataset.taxon;
-            loadObs(true);
-        });
-    });
 
     loadBtn.addEventListener('click', () => loadObs(false));
 

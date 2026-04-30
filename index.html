@@ -24,7 +24,7 @@
 
         .layer-fg {
             position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%;
-            overflow-y: auto; overflow-x: hidden; padding-right: 4px; padding-bottom: 150px; scroll-behavior: smooth;
+            overflow-y: auto; overflow-x: hidden; padding-right: 4px; padding-bottom: 44px; scroll-behavior: smooth;
             scrollbar-width: thin;
             scrollbar-color: rgba(0, 255, 65, 0.3) transparent;
         }
@@ -452,11 +452,11 @@
             50% { color: #005c18; text-shadow: 0 0 8px rgba(0,255,65,0.2); }
         }
 
-        /* ── HN Nexus Wire ── */
+        /* ── HN Wire Feed ── */
         #hn-wire {
             position: absolute;
             bottom: 0; left: 0; right: 0;
-            height: 150px;
+            height: 44px;
             z-index: 3;
             display: flex;
             flex-direction: column;
@@ -466,7 +466,7 @@
         }
         .hn-wire-header {
             flex-shrink: 0; display: flex; align-items: center;
-            height: 20px; border-bottom: 1px solid rgba(0,255,65,0.09);
+            height: 22px; border-bottom: 1px solid rgba(0,255,65,0.09);
         }
         .hn-wire-label {
             display: flex; align-items: center; gap: 5px;
@@ -482,16 +482,18 @@
             color: #003b00; font-size: 8px; letter-spacing: 1.5px;
         }
         .hn-wire-live-dot { width: 5px; height: 5px; border-radius: 50%; background: #00ff41; box-shadow: 0 0 6px #00ff41; animation: hn-pulse 1.6s ease-in-out infinite; flex-shrink: 0; }
-        #hn-canvas { flex: 1; display: block; cursor: crosshair; width: 100%; }
-        #hn-tooltip {
-            position: absolute; z-index: 10; pointer-events: none;
-            background: rgba(0,3,0,0.96); border: 1px solid rgba(0,255,65,0.28);
-            padding: 4px 9px; font-size: 10px; color: #00cc44;
-            max-width: 480px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            border-radius: 3px; opacity: 0; transition: opacity 0.12s;
-            box-shadow: 0 0 14px rgba(0,255,65,0.12);
-            font-family: 'Courier New', monospace;
+        #hn-ticker-wrap {
+            flex: 1; overflow: hidden; display: flex; align-items: center;
+            padding: 0 10px;
         }
+        #hn-ticker {
+            white-space: nowrap; font-size: 9px; color: #007a22; letter-spacing: 0.4px;
+            display: inline-block;
+            animation: hnScroll 80s linear infinite;
+        }
+        #hn-ticker a { color: #007a22; text-decoration: none; }
+        #hn-ticker a:hover { color: #00cc44; }
+        @keyframes hnScroll { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
         @keyframes hn-pulse { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
     </style>
 </head>
@@ -541,7 +543,7 @@
                         <div class="tp-launch-widget" id="tp-open-btn" onclick="openTerminalPages()">
                             <div class="tp-launch-header">
                                 <span>PAGES</span>
-                                <span class="tp-lh-right">5 routes</span>
+                                <span class="tp-lh-right">6 routes</span>
                             </div>
                             <div class="tp-launch-body">
                                 <span class="tp-launch-prompt">$</span>
@@ -571,21 +573,20 @@
                 <div class="output-area" id="output"></div>
             </div>
 
-            <!-- HN Nexus Wire -->
+            <!-- HN Wire Feed -->
             <div id="hn-wire">
                 <div class="hn-wire-header">
                     <div class="hn-wire-label">
                         <span class="hn-wire-icon">◈</span>
-                        <span class="hn-wire-tag">HN·NEXUS</span>
+                        <span class="hn-wire-tag">HN·FEED</span>
                     </div>
-                    <div class="hn-wire-info">FRONT PAGE CONSTELLATION</div>
+                    <div class="hn-wire-info">HACKER NEWS FRONT PAGE</div>
                     <div class="hn-wire-corner">
                         <div class="hn-wire-live-dot" id="hn-live-dot" style="opacity:0.2"></div>
                         <span id="hn-live-label">FEED</span>
                     </div>
                 </div>
-                <canvas id="hn-canvas"></canvas>
-                <div id="hn-tooltip"></div>
+                <div id="hn-ticker-wrap"><span id="hn-ticker">FETCHING…</span></div>
             </div>
 
         </div>
@@ -635,6 +636,13 @@
                         <div class="tp-page-info">
                             <span class="tp-page-name">Nature Scan</span>
                             <span class="tp-page-desc">live observations · bioscan · iNaturalist</span>
+                        </div>
+                    </a>
+                    <a class="tp-page-btn" href="news.html">
+                        <span class="tp-page-icon">◈</span>
+                        <div class="tp-page-info">
+                            <span class="tp-page-name">HN Nexus</span>
+                            <span class="tp-page-desc">front page constellation · live stories</span>
                         </div>
                     </a>
                 </div>
@@ -1856,29 +1864,14 @@
             draw();
         })();
 
-        // ── HN Nexus Wire (Constellation) ──
+        // ── HN Wire Feed (ticker) ──
         (async function() {
-            const canvas = document.getElementById('hn-canvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const liveDot = document.getElementById('hn-live-dot');
+            const ticker   = document.getElementById('hn-ticker');
+            const liveDot  = document.getElementById('hn-live-dot');
             const liveLabel = document.getElementById('hn-live-label');
-            const tooltip = document.getElementById('hn-tooltip');
-
-            let W, H, dpr, particles = [], mouse = { x: -9999, y: -9999 };
-            let hovered = null, frameCount = 0, animFrame;
-
-            function resize() {
-                dpr = Math.min(window.devicePixelRatio || 1, 2);
-                W = canvas.offsetWidth  || canvas.parentElement?.offsetWidth  || 600;
-                H = canvas.offsetHeight || canvas.parentElement?.offsetHeight || 130;
-                canvas.width  = W * dpr;
-                canvas.height = H * dpr;
-                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            }
+            if (!ticker) return;
 
             async function fetchStories() {
-                // Primary: Algolia HN API (blocked by some ad blockers)
                 try {
                     const ctrl = new AbortController();
                     const t = setTimeout(() => ctrl.abort(), 7000);
@@ -1889,8 +1882,7 @@
                         const hits = (data.hits || []).filter(h => h.title);
                         if (hits.length) return hits;
                     }
-                } catch(e) {}
-                // Fallback: official HN Firebase API
+                } catch {}
                 try {
                     const topRes = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
                     if (!topRes.ok) return [];
@@ -1901,224 +1893,26 @@
                     return items.filter(s => s && s.title).map(s => ({
                         title: s.title,
                         url: s.url || `https://news.ycombinator.com/item?id=${s.id}`,
-                        objectID: String(s.id),
-                        points: s.score || 0,
-                        num_comments: s.descendants || 0
+                        objectID: String(s.id), points: s.score || 0
                     }));
-                } catch(e) { return []; }
+                } catch { return []; }
             }
 
             function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-            const RANK_COLORS = [
-                '#00ff41','#00ff41','#00ff41',
-                '#00cc44','#00cc44','#00cc44','#00cc44','#00cc44',
-                '#007a22','#007a22','#007a22','#007a22',
-                '#005c18','#005c18','#005c18','#005c18',
-                '#004d10','#004d10','#004d10','#004d10','#004d10','#004d10'
-            ];
-
-            class StoryNode {
-                constructor(story, rank) {
-                    this.story = story;
-                    this.rank = rank;
-                    this.pts = story.points || 0;
-                    this.cmt = story.num_comments || 0;
-                    this.url = story.url || ('https://news.ycombinator.com/item?id=' + story.objectID);
-                    this.title = story.title || 'Untitled';
-                    this.x = 20 + Math.random() * (W - 40);
-                    this.y = 10 + Math.random() * (H - 20);
-                    const a = Math.random() * Math.PI * 2, spd = 0.12 + Math.random() * 0.32;
-                    this.vx = Math.cos(a) * spd;
-                    this.vy = Math.sin(a) * spd;
-                    this.baseSize = 2.5 + Math.min(this.pts / 42, 5);
-                    this.size = this.baseSize;
-                    this.color = RANK_COLORS[Math.min(rank - 1, RANK_COLORS.length - 1)];
-                    this.glow = 0;
-                    this.phase = Math.random() * Math.PI * 2;
-                    this.freq = 0.007 + Math.random() * 0.007;
-                    this.orbitAngle = Math.random() * Math.PI * 2;
-                }
-                update() {
-                    this.phase += this.freq;
-                    this.orbitAngle += 0.02;
-                    this.x += this.vx + Math.sin(this.phase * 1.2) * 0.1;
-                    this.y += this.vy + Math.cos(this.phase * 0.85) * 0.1;
-                    this.vx *= 0.9993; this.vy *= 0.9993;
-                    // Drift toward center
-                    const ddx = W/2 - this.x, ddy = H/2 - this.y;
-                    if (Math.sqrt(ddx*ddx+ddy*ddy) > Math.min(W,H)*0.44) {
-                        this.vx += ddx * 0.00015; this.vy += ddy * 0.00015;
-                    }
-                    const spd = Math.sqrt(this.vx*this.vx+this.vy*this.vy);
-                    if (spd > 0.75) { this.vx=(this.vx/spd)*0.75; this.vy=(this.vy/spd)*0.75; }
-                    // Boundaries
-                    if (this.x < 14) this.vx += 0.02; if (this.x > W-14) this.vx -= 0.02;
-                    if (this.y < 8)  this.vy += 0.02; if (this.y > H-8)  this.vy -= 0.02;
-                    // Mouse
-                    const mdx = mouse.x - this.x, mdy = mouse.y - this.y;
-                    const md = Math.sqrt(mdx*mdx+mdy*mdy);
-                    if (this.hitTest(mouse.x, mouse.y)) {
-                        this.glow = Math.min(1, this.glow + 0.14);
-                    } else if (md < 80) {
-                        this.vx -= mdx * (1-md/80) * 0.04 * 0.2;
-                        this.vy -= mdy * (1-md/80) * 0.04 * 0.2;
-                        this.glow = Math.min(0.5, this.glow + 0.05);
-                    } else {
-                        this.glow = Math.max(0, this.glow - 0.04);
-                    }
-                    this.size = this.baseSize * (1 + Math.sin(this.phase*2.1+frameCount*0.009)*0.2) * (1 + this.glow * 1.3);
-                }
-                draw() {
-                    const g = this.glow, s = this.size;
-                    // Glow aura
-                    if (g > 0.04) {
-                        const gr = ctx.createRadialGradient(this.x,this.y,s*0.3,this.x,this.y,s*4+g*14);
-                        gr.addColorStop(0, `rgba(0,255,65,${0.42*g})`);
-                        gr.addColorStop(0.5, `rgba(0,180,50,${0.12*g})`);
-                        gr.addColorStop(1, 'rgba(0,255,65,0)');
-                        ctx.fillStyle = gr;
-                        ctx.beginPath(); ctx.arc(this.x,this.y,s*4+g*14,0,Math.PI*2); ctx.fill();
-                    }
-                    // Orbit ring + dot for top 3
-                    if (this.rank <= 3) {
-                        const orR = s * 2.6 + 4;
-                        ctx.strokeStyle = `rgba(0,255,65,${0.15+g*0.22})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.setLineDash([3,7]);
-                        ctx.beginPath(); ctx.ellipse(this.x,this.y,orR*0.95,orR*0.48,0,0,Math.PI*2); ctx.stroke();
-                        ctx.setLineDash([]);
-                        const ox = this.x + Math.cos(this.orbitAngle)*orR*0.95;
-                        const oy = this.y + Math.sin(this.orbitAngle)*orR*0.48;
-                        ctx.fillStyle = `rgba(0,255,65,${0.65+g*0.35})`;
-                        ctx.beginPath(); ctx.arc(ox,oy,1.3,0,Math.PI*2); ctx.fill();
-                    }
-                    // Body
-                    const bg = ctx.createRadialGradient(this.x-s*.25,this.y-s*.25,0,this.x,this.y,s);
-                    bg.addColorStop(0,'rgba(200,255,220,0.95)');
-                    bg.addColorStop(0.35,this.color);
-                    bg.addColorStop(1,'rgba(0,18,5,0.3)');
-                    ctx.fillStyle = bg;
-                    ctx.beginPath(); ctx.arc(this.x,this.y,s,0,Math.PI*2); ctx.fill();
-                    // Bright core
-                    if (g > 0.18) {
-                        ctx.fillStyle = `rgba(220,255,235,${0.6*g})`;
-                        ctx.beginPath(); ctx.arc(this.x,this.y,s*0.32,0,Math.PI*2); ctx.fill();
-                    }
-                    // Rank label (top 5 always, others on hover)
-                    if (this.rank <= 5 || g > 0.4) {
-                        ctx.fillStyle = `rgba(0,255,65,${0.35+g*0.55})`;
-                        ctx.font = 'bold 7px monospace';
-                        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-                        ctx.fillText(String(this.rank).padStart(2,'0'), this.x, this.y - s - 2);
-                        ctx.textBaseline = 'alphabetic';
-                    }
-                }
-                hitTest(mx, my) {
-                    if (mx < -100) return false;
-                    const dx = mx-this.x, dy = my-this.y;
-                    return Math.sqrt(dx*dx+dy*dy) < Math.max(this.size+10,16);
-                }
-            }
-
-            function buildParticles(stories) {
-                particles = stories.map((s, i) => new StoryNode(s, i + 1));
-            }
-
-            function draw() {
-                ctx.clearRect(0, 0, W, H);
-                ctx.fillStyle = 'rgba(0,2,0,0.98)';
-                ctx.fillRect(0, 0, W, H);
-                // Faint grid
-                ctx.strokeStyle = 'rgba(0,255,65,0.028)'; ctx.lineWidth = 0.5;
-                for (let x = 0; x < W; x += 32) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
-                for (let y = 0; y < H; y += 22) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-                // Scanlines
-                for (let y = 0; y < H; y += 3) { ctx.fillStyle='rgba(0,0,0,0.06)'; ctx.fillRect(0,y,W,1); }
-
-                frameCount++;
-                for (const p of particles) p.update();
-
-                // Connections
-                const CR = 115;
-                for (let i = 0; i < particles.length; i++) {
-                    const a = particles[i];
-                    for (let j = i+1; j < particles.length; j++) {
-                        const b = particles[j];
-                        const dx = a.x-b.x, dy = a.y-b.y;
-                        const dist = Math.sqrt(dx*dx+dy*dy);
-                        if (dist < CR) {
-                            const t = 1 - dist/CR;
-                            const gb = Math.max(a.glow, b.glow);
-                            const alpha = t * 0.32 * (1 + gb);
-                            ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
-                            ctx.strokeStyle = `rgba(0,255,65,${alpha})`;
-                            ctx.lineWidth = 0.5 + gb * 2;
-                            ctx.stroke();
-                            if (gb > 0.2) {
-                                ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
-                                ctx.strokeStyle = `rgba(100,255,140,${alpha*0.4*gb})`;
-                                ctx.lineWidth = (0.5+gb*2)*2.2;
-                                ctx.stroke();
-                            }
-                        }
-                    }
-                }
-
-                // Particles sorted by glow (brightest on top)
-                [...particles].sort((a,b)=>a.glow-b.glow).forEach(p=>p.draw());
-
-                // Cursor ring
-                if (mouse.x > -100) {
-                    ctx.strokeStyle='rgba(0,255,65,0.12)'; ctx.lineWidth=0.8;
-                    ctx.setLineDash([4,13]); ctx.lineDashOffset=-frameCount*0.5;
-                    ctx.beginPath(); ctx.arc(mouse.x,mouse.y,60,0,Math.PI*2); ctx.stroke();
-                    ctx.setLineDash([]);
-                }
-
-                animFrame = requestAnimationFrame(draw);
-            }
-
-            // Events
-            canvas.addEventListener('mousemove', e => {
-                const r = canvas.getBoundingClientRect();
-                mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
-                hovered = null;
-                for (const p of particles) { if (p.hitTest(mouse.x, mouse.y)) { hovered = p; break; } }
-                if (hovered && tooltip) {
-                    tooltip.innerHTML = `<span style="color:#00ff41;font-weight:bold">${hovered.rank}.</span> ${esc(hovered.title)} <span style="color:#004d10"> · ▲${hovered.pts} ⌘${hovered.cmt}</span>`;
-                    tooltip.style.opacity = '1';
-                    tooltip.style.left = Math.min(mouse.x+14, W-490)+'px';
-                    tooltip.style.top  = Math.max(mouse.y-32, 4)+'px';
-                    canvas.style.cursor = 'pointer';
-                } else {
-                    if (tooltip) tooltip.style.opacity = '0';
-                    canvas.style.cursor = 'crosshair';
-                }
-            });
-            canvas.addEventListener('mouseleave', () => {
-                mouse.x = -9999; mouse.y = -9999; hovered = null;
-                if (tooltip) tooltip.style.opacity = '0';
-            });
-            canvas.addEventListener('click', () => {
-                if (hovered) window.open(hovered.url, '_blank', 'noopener,noreferrer');
-            });
-            window.addEventListener('resize', resize);
-
-            resize();
-            const stories = await fetchStories();
-            resize(); // re-measure after async — layout is fully settled now
-            if (stories.length) {
-                buildParticles(stories);
+            async function load() {
+                const stories = await fetchStories();
+                if (!stories.length) return;
+                ticker.innerHTML = stories.map((s, i) => {
+                    const url = s.url || ('https://news.ycombinator.com/item?id=' + s.objectID);
+                    return `<span style="color:#003b00">${i+1}.</span> <a href="${url}" target="_blank" rel="noopener">${esc(s.title)}</a>`;
+                }).join('<span style="color:#002200;padding:0 18px">◈</span>');
                 if (liveDot) liveDot.style.opacity = '1';
                 if (liveLabel) { liveLabel.textContent = 'LIVE'; liveLabel.style.color = '#005c18'; }
             }
-            draw();
 
-            setInterval(async () => {
-                const fresh = await fetchStories();
-                if (fresh.length) buildParticles(fresh);
-            }, 5 * 60 * 1000);
+            load();
+            setInterval(load, 5 * 60 * 1000);
         })();
 
         // ── Glitch Status & Glyph Cycle ──
