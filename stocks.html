@@ -727,16 +727,23 @@
 
         window.addEventListener('resize', () => {
             if (activeSymbol && chartData) drawChart(chartData.prices, chartData.isUp, -1);
-            wlList.querySelectorAll('.wl-spark').forEach((c, i) => {
-                const sym = watchlist[i]; const d = quoteCache[sym];
+            wlList.querySelectorAll('.wl-spark').forEach(c => {
+                const sym = c.closest('.wl-item')?.dataset.sym;
+                const d = quoteCache[sym];
                 if (d?.prices?.length > 1) drawSparkline(c, d.prices, d.pctChange >= 0);
             });
         });
 
         // ── Init ──
         renderWatchlist();
-        refreshAll().then(() => { if (watchlist.length) selectSymbol(watchlist[0]); });
-        setInterval(refreshAll, REFRESH_MS);
+        let refreshing = false;
+        async function guardedRefresh() {
+            if (refreshing) return;
+            refreshing = true;
+            try { await refreshAll(); } finally { refreshing = false; }
+        }
+        guardedRefresh().then(() => { if (watchlist.length) selectSymbol(watchlist[0]); });
+        setInterval(guardedRefresh, REFRESH_MS);
     })();
     </script>
 </body>
