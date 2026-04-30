@@ -1870,18 +1870,41 @@
 
             function resize() {
                 dpr = Math.min(window.devicePixelRatio || 1, 2);
-                W = canvas.offsetWidth;
-                H = canvas.offsetHeight;
-                canvas.width = W * dpr;
+                W = canvas.offsetWidth  || canvas.parentElement?.offsetWidth  || 600;
+                H = canvas.offsetHeight || canvas.parentElement?.offsetHeight || 130;
+                canvas.width  = W * dpr;
                 canvas.height = H * dpr;
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             }
 
             async function fetchStories() {
+                // Primary: Algolia HN API (blocked by some ad blockers)
                 try {
-                    const res = await fetch('https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=22');
-                    const data = await res.json();
-                    return (data.hits || []).filter(h => h.title);
+                    const ctrl = new AbortController();
+                    const t = setTimeout(() => ctrl.abort(), 7000);
+                    const res = await fetch('https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=22', { signal: ctrl.signal });
+                    clearTimeout(t);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const hits = (data.hits || []).filter(h => h.title);
+                        if (hits.length) return hits;
+                    }
+                } catch(e) {}
+                // Fallback: official HN Firebase API
+                try {
+                    const topRes = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+                    if (!topRes.ok) return [];
+                    const ids = await topRes.json();
+                    const items = await Promise.all(ids.slice(0, 22).map(id =>
+                        fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(r => r.json()).catch(() => null)
+                    ));
+                    return items.filter(s => s && s.title).map(s => ({
+                        title: s.title,
+                        url: s.url || `https://news.ycombinator.com/item?id=${s.id}`,
+                        objectID: String(s.id),
+                        points: s.score || 0,
+                        num_comments: s.descendants || 0
+                    }));
                 } catch(e) { return []; }
             }
 
@@ -2084,6 +2107,7 @@
 
             resize();
             const stories = await fetchStories();
+            resize(); // re-measure after async — layout is fully settled now
             if (stories.length) {
                 buildParticles(stories);
                 if (liveDot) liveDot.style.opacity = '1';
