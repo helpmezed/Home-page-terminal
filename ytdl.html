@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>matrix://yt.extract</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --green: #00ff41;
+        --green-mid: #00cc44;
+        --green-dim: #007a22;
+        --bg: #030303;
+        --panel: #050a05;
+        --font: 'IBM Plex Mono', 'Courier New', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        background: var(--bg); color: var(--green); font-family: var(--font);
+        min-height: 100vh; display: flex; flex-direction: column;
+        align-items: center; overflow-x: hidden;
+    }
+    body::after {
+        content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9000;
+        background:
+            repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px),
+            radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0,0,0,0.45) 100%);
+    }
+
+    #top-bar {
+        position: sticky; top: 0; width: 100%; z-index: 300;
+        height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 12px;
+        background: rgba(0,0,0,0.95); border-bottom: 1px solid rgba(0,255,65,0.18);
+        backdrop-filter: blur(6px); font-size: 10px; letter-spacing: 0.4px;
+    }
+    .back-btn {
+        color: #005c18; text-decoration: none; border: 1px solid rgba(0,255,65,0.18);
+        padding: 2px 8px; border-radius: 3px; transition: all 0.2s; flex-shrink: 0;
+    }
+    .back-btn:hover { color: var(--green); border-color: rgba(0,255,65,0.6); background: rgba(0,255,65,0.05); }
+    .top-sep { color: #001800; flex-shrink: 0; }
+    #top-title { color: #004d14; flex-shrink: 0; }
+
+    .main-wrap {
+        width: 100%; max-width: 720px;
+        padding: 36px 20px 60px;
+        display: flex; flex-direction: column; gap: 16px;
+    }
+
+    .panel {
+        border: 1px solid rgba(0,255,65,0.2);
+        background: var(--panel);
+        border-radius: 4px; overflow: hidden;
+    }
+    .panel-header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 14px; border-bottom: 1px dashed rgba(0,255,65,0.12);
+        font-size: 10px; color: var(--green-dim); letter-spacing: 1.2px;
+    }
+    .ph-dot { color: var(--green); font-size: 9px; text-shadow: 0 0 8px rgba(0,255,65,0.9); }
+
+    .input-row { display: flex; align-items: stretch; }
+    .input-prefix {
+        padding: 0 12px; border-right: 1px solid rgba(0,255,65,0.12);
+        display: flex; align-items: center;
+        font-size: 8px; color: var(--green-dim); letter-spacing: 1.5px;
+        background: rgba(0,255,65,0.02); flex-shrink: 0;
+    }
+    #yt-url {
+        flex: 1; background: transparent; border: none;
+        color: var(--green); padding: 13px 14px;
+        font-family: var(--font); font-size: 13px;
+        outline: none; caret-color: var(--green);
+    }
+    #yt-url::placeholder { color: #002800; }
+    #yt-url:focus { background: rgba(0,255,65,0.012); }
+
+    .options-row { display: flex; border-top: 1px solid rgba(0,255,65,0.08); }
+    .opt-group {
+        display: flex; align-items: center; flex: 1;
+        border-right: 1px solid rgba(0,255,65,0.08);
+        transition: opacity 0.2s;
+    }
+    .opt-group:last-child { border-right: none; }
+    .opt-label {
+        padding: 9px 12px; font-size: 8px; color: var(--green-dim);
+        letter-spacing: 1.2px; border-right: 1px solid rgba(0,255,65,0.08);
+        flex-shrink: 0; background: rgba(0,255,65,0.02);
+    }
+    .opt-select {
+        flex: 1; background: transparent; border: none;
+        color: var(--green); font-family: var(--font);
+        font-size: 11px; padding: 9px 10px; outline: none; cursor: pointer;
+        -webkit-appearance: none; appearance: none;
+    }
+    .opt-select option { background: #050a05; color: var(--green); }
+
+    #extract-btn {
+        width: 100%; background: transparent; border: none;
+        border-top: 1px solid rgba(0,255,65,0.15);
+        color: var(--green-dim); font-family: var(--font);
+        font-size: 11px; letter-spacing: 2.5px; padding: 12px;
+        cursor: pointer; transition: all 0.2s;
+        position: relative; overflow: hidden;
+    }
+    #extract-btn::before {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(0,255,65,0.06), transparent);
+        transform: translateX(-100%); transition: transform 0.5s;
+    }
+    #extract-btn:hover:not(:disabled)::before { transform: translateX(100%); }
+    #extract-btn:hover:not(:disabled) {
+        color: var(--green); background: rgba(0,255,65,0.03);
+        border-top-color: rgba(0,255,65,0.4);
+    }
+    #extract-btn:disabled { color: #002200; cursor: default; }
+
+    .console {
+        min-height: 180px; max-height: 320px; overflow-y: auto;
+        padding: 14px; background: #000; font-size: 12px; line-height: 1.65;
+        border-radius: 4px; border: 1px solid rgba(0,255,65,0.1);
+    }
+    .console::-webkit-scrollbar { width: 3px; }
+    .console::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.15); border-radius: 2px; }
+    .log-dim  { color: var(--green-dim); }
+    .log-ok   { color: var(--green); }
+    .log-err  { color: #ff4444; }
+    .log-done { color: #fff; text-shadow: 0 0 10px rgba(200,255,220,0.5); }
+
+    #dl-btn {
+        display: none; width: 100%; text-align: center;
+        background: rgba(0,255,65,0.06); border: 1px solid rgba(0,255,65,0.4);
+        color: var(--green); font-family: var(--font);
+        font-size: 12px; letter-spacing: 2px;
+        padding: 14px; border-radius: 4px;
+        cursor: pointer; text-decoration: none;
+        transition: all 0.2s;
+        animation: dlPulse 2s ease-in-out infinite;
+    }
+    #dl-btn:hover {
+        background: rgba(0,255,65,0.12);
+        box-shadow: 0 0 22px rgba(0,255,65,0.2);
+    }
+    @keyframes dlPulse {
+        0%, 100% { box-shadow: 0 0 6px rgba(0,255,65,0.12); }
+        50%       { box-shadow: 0 0 18px rgba(0,255,65,0.25); }
+    }
+
+    .powered-by { font-size: 9px; color: #002200; text-align: center; letter-spacing: 0.8px; }
+    .powered-by a { color: #004d10; text-decoration: none; }
+    .powered-by a:hover { color: var(--green-dim); }
+</style>
+</head>
+<body>
+
+<div id="top-bar">
+    <a class="back-btn" href="index.html">← back</a>
+    <span class="top-sep">|</span>
+    <span id="top-title">matrix://yt.extract</span>
+</div>
+
+<div class="main-wrap">
+
+    <div class="panel">
+        <div class="panel-header">
+            <span class="ph-dot">◈</span>
+            YT-EXTRACT // MP4 · MP3 DOWNLOADER
+        </div>
+        <div class="input-row">
+            <span class="input-prefix">TARGET URL</span>
+            <input type="text" id="yt-url"
+                placeholder="https://youtube.com/watch?v=..."
+                autocomplete="off" spellcheck="false">
+        </div>
+        <div class="options-row">
+            <div class="opt-group">
+                <span class="opt-label">MODE</span>
+                <select class="opt-select" id="mode-select" onchange="onModeChange()">
+                    <option value="auto">Video + Audio (MP4)</option>
+                    <option value="audio">Audio Only (MP3)</option>
+                </select>
+            </div>
+            <div class="opt-group" id="quality-group">
+                <span class="opt-label">QUALITY</span>
+                <select class="opt-select" id="quality-select">
+                    <option value="1080">1080p</option>
+                    <option value="720">720p</option>
+                    <option value="480">480p</option>
+                    <option value="360">360p</option>
+                </select>
+            </div>
+        </div>
+        <button id="extract-btn" onclick="initiateExtraction()">[ INITIATE EXTRACTION ]</button>
+    </div>
+
+    <div class="console" id="console">
+        <div class="log-dim">> SYSTEM STANDBY. AWAITING TARGET URL...</div>
+    </div>
+
+    <a id="dl-btn" href="#" target="_blank" rel="noopener noreferrer">⬇ &nbsp; DOWNLOAD FILE</a>
+
+    <div class="powered-by">
+        POWERED BY <a href="https://cobalt.tools" target="_blank" rel="noopener">cobalt.tools</a>
+        &nbsp;·&nbsp; OPEN SOURCE &nbsp;·&nbsp; NO DATA STORED
+    </div>
+
+</div>
+
+<script>
+    const COBALT_API = 'https://api.cobalt.tools/';
+
+    function onModeChange() {
+        const audio = document.getElementById('mode-select').value === 'audio';
+        const qg = document.getElementById('quality-group');
+        qg.style.opacity = audio ? '0.3' : '1';
+        qg.style.pointerEvents = audio ? 'none' : 'auto';
+    }
+
+    async function initiateExtraction() {
+        const urlRaw  = document.getElementById('yt-url').value.trim();
+        const mode    = document.getElementById('mode-select').value;
+        const quality = document.getElementById('quality-select').value;
+        const btn     = document.getElementById('extract-btn');
+        const dlBtn   = document.getElementById('dl-btn');
+
+        dlBtn.style.display = 'none';
+        dlBtn.href = '#';
+
+        if (!urlRaw) { logErr("NO TARGET URL PROVIDED."); return; }
+        if (!urlRaw.includes('youtube.com') && !urlRaw.includes('youtu.be')) {
+            logErr("INVALID TARGET: Must be a YouTube URL."); return;
+        }
+
+        btn.disabled = true;
+        document.getElementById('console').innerHTML = '';
+
+        log(`TARGET ACQUIRED: ${urlRaw}`, 'dim');
+        log(`MODE: ${mode === 'audio' ? 'AUDIO ONLY → MP3' : 'VIDEO + AUDIO → MP4 @ ' + quality + 'p'}`, 'dim');
+        log('QUERYING COBALT EXTRACTION ENGINE...', 'dim');
+
+        try {
+            const body = mode === 'audio'
+                ? { url: urlRaw, downloadMode: 'audio', audioFormat: 'mp3', filenameStyle: 'pretty' }
+                : { url: urlRaw, downloadMode: 'auto', videoQuality: quality, filenameStyle: 'pretty' };
+
+            const res = await fetch(COBALT_API, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || data.status === 'error') {
+                throw new Error(data.error?.code || `HTTP ${res.status}`);
+            }
+
+            let downloadUrl = data.url;
+            if (!downloadUrl && data.picker?.length) {
+                downloadUrl = data.picker[0].url;
+                log(`PICKER MODE: ${data.picker.length} STREAMS — USING PRIMARY`, 'dim');
+            }
+            if (!downloadUrl) throw new Error('Service returned no download URL');
+
+            log('STREAM RESOLVED. DOWNLOAD TUNNEL READY.', 'ok');
+            log('EXTRACTION COMPLETE.', 'done');
+
+            dlBtn.href = downloadUrl;
+            dlBtn.style.display = 'block';
+            log('CLICK THE BUTTON BELOW TO SAVE YOUR FILE.', 'done');
+
+        } catch (err) {
+            logErr('EXTRACTION FAILED: ' + err.message);
+            log('CHECK: Video must be public and not age-restricted.', 'dim');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function log(msg, type = 'ok') {
+        const out = document.getElementById('console');
+        const d = document.createElement('div');
+        d.className = 'log-' + type;
+        d.textContent = '> ' + msg;
+        out.appendChild(d);
+        out.scrollTop = out.scrollHeight;
+    }
+
+    function logErr(msg) { log(msg, 'err'); }
+
+    document.getElementById('yt-url').addEventListener('keydown', e => {
+        if (e.key === 'Enter') initiateExtraction();
+    });
+</script>
+</body>
+</html>
