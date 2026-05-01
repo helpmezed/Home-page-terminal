@@ -1,5 +1,3 @@
-const ytdl = require('@distube/ytdl-core');
-
 module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
 
@@ -9,22 +7,43 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const info = await ytdl.getInfo(`https://www.youtube.com/watch?v=${id}`);
-        const title = info.videoDetails.title || 'Unknown Title';
+        // Dynamic import — youtubei.js is ESM-first
+        const { Innertube } = await import('youtubei.js');
 
-        const formats = [];
-        for (const [itag, label, desc] of [
-            ['22',  'MP4', '720p · VIDEO+AUDIO'],
-            ['18',  'MP4', '360p · VIDEO+AUDIO'],
-            ['140', 'M4A', '128k · AUDIO ONLY'],
-        ]) {
-            try {
-                const f = ytdl.chooseFormat(info.formats, { quality: itag });
-                if (f?.url) formats.push({ label, desc, urls: [f.url] });
-            } catch {}
+        const yt = await Innertube.create();
+
+        // ANDROID client uses Google's mobile app API, avoids the
+        // "Sign in to confirm you're not a bot" WEB client block on datacenters
+        const info = await yt.getBasicInfo(id, 'ANDROID');
+
+        const title = info.basic_info.title || 'Unknown Title';
+
+        if (info.playability_status?.status === 'LOGIN_REQUIRED') {
+            return res.status(403).json({ error: 'Video is private or age-restricted' });
         }
 
-        if (!formats.length) throw new Error('No downloadable formats found for this video');
+        const all = [
+            ...(info.streaming_data?.formats || []),
+            ...(info.streaming_data?.adaptive_formats || []),
+        ];
+
+        const targets = [
+            { itag: 22,  label: 'MP4', desc: '720p · VIDEO+AUDIO' },
+            { itag: 18,  label: 'MP4', desc: '360p · VIDEO+AUDIO' },
+            { itag: 140, label: 'M4A', desc: '128k · AUDIO ONLY'  },
+        ];
+
+        const formats = [];
+        for (const { itag, label, desc } of targets) {
+            const f = all.find(x => x.itag === itag);
+            if (f?.url) formats.push({ label, desc, urls: [f.url] });
+        }
+
+        if (!formats.length) {
+            return res.status(502).json({
+                error: 'No formats found. Available itags: ' + all.map(x => x.itag).join(', ')
+            });
+        }
 
         return res.status(200).json({ ok: true, title, formats });
     } catch (e) {
