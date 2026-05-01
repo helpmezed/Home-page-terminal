@@ -215,10 +215,15 @@
         try {
             const res = await fetch(`/api/yt?id=${encodeURIComponent(videoId)}`);
             data = await res.json();
-            if (!res.ok || !data.ok) throw new Error(data.error || 'API error');
+            if (!res.ok || !data.ok) {
+                const msg = data.error || 'API error';
+                log('EXTRACTION FAILED: ' + msg, 'err');
+                if (data.details) data.details.forEach(d => log(d, 'dim'));
+                btn.disabled = false;
+                return;
+            }
         } catch (e) {
             log('EXTRACTION FAILED: ' + e.message, 'err');
-            log('The video may be unavailable, or try again later.', 'dim');
             btn.disabled = false;
             return;
         }
