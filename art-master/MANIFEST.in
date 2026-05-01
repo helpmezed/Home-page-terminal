@@ -1,5 +1,0 @@
-include LICENSE
-include *.md
-include *.yml
-include *.txt
-include *.ipynb
