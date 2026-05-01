@@ -122,6 +122,14 @@
     }
     .dl-link .dl-fmt { display: block; font-size: 13px; font-weight: 600; margin-bottom: 3px; color: var(--green); }
     .dl-link .dl-desc { display: block; font-size: 8px; color: #005c18; letter-spacing: 1px; }
+    .dl-link .dl-srv { display: block; font-size: 7px; color: #002800; letter-spacing: 0.5px; margin-top: 4px; }
+
+    .srv-cycle {
+        font-size: 8px; color: #003300; letter-spacing: 1px; text-align: center;
+        padding: 4px 0; cursor: pointer; background: none; border: none;
+        font-family: var(--font); width: 100%;
+    }
+    .srv-cycle:hover { color: var(--green-dim); }
 
     .note {
         font-size: 9px; color: #003300; letter-spacing: 0.6px; line-height: 1.6;
@@ -228,27 +236,47 @@
             return;
         }
 
-        log(`NODE: ${data.instance}`, 'dim');
         log(`TITLE: ${data.title}`, 'ok');
         log('BUILDING DOWNLOAD LINKS...', 'dim');
 
         const row = document.getElementById('dl-row');
         const safeName = data.title.replace(/[^a-z0-9 _-]/gi, '_').slice(0, 80);
-        data.formats.forEach(({ label, desc, url }) => {
+
+        // Track which server index each format button is on
+        const srvIndex = [];
+
+        data.formats.forEach(({ label, desc, urls }, i) => {
             const ext = EXT_MAP[label] || 'mp4';
+            srvIndex[i] = 0;
+
+            const host = u => new URL(u).hostname;
+
             const a = document.createElement('a');
             a.className = 'dl-link';
-            a.href = url;
+            a.href = urls[0];
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
             a.download = `${safeName}.${ext}`;
-            a.innerHTML = `<span class="dl-fmt">${label}</span><span class="dl-desc">${desc}</span>`;
+            a.innerHTML = `<span class="dl-fmt">${label}</span><span class="dl-desc">${desc}</span><span class="dl-srv">${host(urls[0])}</span>`;
+
+            // Clicking the server label cycles to the next instance
+            a.addEventListener('click', ev => {
+                if (!ev.target.classList.contains('dl-srv')) return;
+                ev.preventDefault();
+                srvIndex[i] = (srvIndex[i] + 1) % urls.length;
+                const nextUrl = urls[srvIndex[i]];
+                a.href = nextUrl;
+                a.querySelector('.dl-srv').textContent = host(nextUrl);
+            });
+
             row.appendChild(a);
         });
 
         document.getElementById('dl-title').textContent = '▸ ' + data.title;
         opts.style.display = 'flex';
         log('EXTRACTION COMPLETE. SELECT FORMAT BELOW.', 'done');
+        if (data.formats[0]?.urls?.length > 1)
+            log('If a button shows a captcha, click the server name to switch.', 'dim');
 
         btn.disabled = false;
     }

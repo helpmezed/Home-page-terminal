@@ -1,3 +1,20 @@
+// Instances without aggressive bot protection, in priority order.
+// These URLs are navigated by the user's browser (not fetched by our server),
+// so Vercel datacenter IP blocks don't apply to downloads.
+const DL_INSTANCES = [
+    'https://inv.nadeko.net',
+    'https://iv.ggtyler.dev',
+    'https://invidious.protokolla.fi',
+    'https://invidious.privacyredirect.com',
+    'https://yewtu.be',
+];
+
+const ITAGS = [
+    { label: 'MP4', desc: '720p · VIDEO+AUDIO', itag: '22' },
+    { label: 'MP4', desc: '360p · VIDEO+AUDIO', itag: '18' },
+    { label: 'M4A', desc: '128k · AUDIO ONLY',  itag: '140' },
+];
+
 module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
 
@@ -6,8 +23,7 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid video ID' });
     }
 
-    // YouTube oEmbed is a public API used by Discord/Slack for link previews —
-    // it works from any IP without auth and returns the video title.
+    // YouTube oEmbed works from any IP (same API Discord/Slack use for previews).
     let title = 'Unknown Title';
     try {
         const r = await fetch(
@@ -20,22 +36,18 @@ module.exports = async function handler(req, res) {
         } else if (r.status === 401 || r.status === 404) {
             return res.status(404).json({ error: 'Video not found or is private' });
         }
-    } catch (e) {
-        // title stays "Unknown Title" — downloads still work
-    }
-
-    // These URLs are navigated by the user's browser, not fetched by our server,
-    // so Invidious's datacenter IP blocks don't apply here.
-    const inst = 'https://yewtu.be';
+    } catch {}
 
     return res.status(200).json({
         ok: true,
         title,
-        instance: inst,
-        formats: [
-            { label: 'MP4', desc: '720p · VIDEO+AUDIO', url: `${inst}/latest_version?id=${id}&itag=22&local=true` },
-            { label: 'MP4', desc: '360p · VIDEO+AUDIO', url: `${inst}/latest_version?id=${id}&itag=18&local=true` },
-            { label: 'M4A', desc: '128k · AUDIO ONLY',  url: `${inst}/latest_version?id=${id}&itag=140&local=true` },
-        ],
+        formats: ITAGS.map(({ label, desc, itag }) => ({
+            label,
+            desc,
+            // Multiple server URLs per format — client cycles through them
+            urls: DL_INSTANCES.map(inst =>
+                `${inst}/latest_version?id=${id}&itag=${itag}&local=true`
+            ),
+        })),
     });
 };
