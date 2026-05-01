@@ -119,13 +119,13 @@
         .shortcut-placeholder:hover { opacity: 0.9 !important; border-color: rgba(0,255,65,0.5) !important; } /* Adjusted opacity */
         .placeholder-x { font-size: 36px; color: #00ff41; line-height: 1; text-shadow: 0 0 12px rgba(0,255,65,0.6); } /* Increased font size and shadow */
 
-        /* Tasks Module Styles */
-        .tasks-list { display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: #00cc44; margin-top: 6px; opacity: 0; transition: opacity 0.5s;} /* Increased font size, gap, margin */
+        /* Tabs widget */
+        .tasks-list { display: flex; flex-direction: column; gap: 2px; color: #00cc44; opacity: 0; transition: opacity 0.5s; max-height: 180px; overflow-y: auto; }
         .tasks-list.visible { opacity: 1; }
+        .tasks-list::-webkit-scrollbar { width: 3px; }
+        .tasks-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.12); border-radius: 2px; }
         .task-item { display: flex; align-items: flex-start; gap: 8px; }
-        .task-box { color: #00ff41; font-weight: bold; white-space: pre; }
-        .task-text { color: #00cc44; word-break: break-word; }
-        .task-text.done { text-decoration: line-through; opacity: 0.5; }
+        .task-text { color: #00cc44; }
 
         .output-area { display: flex; flex-direction: column; gap: 4px; padding: 0 10px; font-size: 13px; z-index: 2;}
         .command-echo { margin-bottom: 3px; color: #00ff41; font-size: 16px; } /* Increased font size and margin */
@@ -815,16 +815,23 @@
             localStorage.setItem('startpage_bms', JSON.stringify(arr));
         }
         
-        // Open-tab tracker via BroadcastChannel
+        // Tab tracker — extension (all Firefox tabs) takes priority over BroadcastChannel fallback
+        let firefoxTabs = null; // null until extension connects
+
+        window.addEventListener('hp_tabs_update', e => {
+            firefoxTabs = e.detail;
+            renderTabs();
+        });
+
+        // BroadcastChannel fallback (same-origin pages only)
         const openTabs = new Map();
         const _tabCh = ('BroadcastChannel' in window) ? new BroadcastChannel('hp_tabs') : null;
-
         if (_tabCh) {
             _tabCh.addEventListener('message', e => {
                 const { type, id, name, icon, href } = e.data;
                 if (type === 'open' || type === 'pong') openTabs.set(id, { name, icon, href });
                 else if (type === 'close') openTabs.delete(id);
-                renderTabs();
+                if (!firefoxTabs) renderTabs();
             });
             _tabCh.postMessage({ type: 'ping' });
         }
@@ -1174,29 +1181,44 @@
             const list = document.getElementById('tasks-list');
             const countEl = document.getElementById('tab-count');
             if (animate) list.classList.add('visible');
-
-            if (openTabs.size === 0) {
-                list.innerHTML = `<div class="task-item"><span class="task-text" style="opacity:0.3; font-size:11px; letter-spacing:1px;">NO ACTIVE TABS</span></div>`;
-                if (countEl) countEl.textContent = '';
-                return;
-            }
-
-            if (countEl) countEl.textContent = openTabs.size + ' open';
             list.innerHTML = '';
-            for (const [, tab] of openTabs) {
-                const a = document.createElement('a');
-                a.href = tab.href;
-                a.target = '_blank';
-                a.rel = 'noopener';
-                a.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 2px;text-decoration:none;border-radius:4px;transition:background 0.15s;';
-                a.onmouseenter = () => a.style.background = 'rgba(0,255,65,0.05)';
-                a.onmouseleave = () => a.style.background = '';
-                a.innerHTML = `
-                    <span style="color:#007a22;font-size:9px;flex-shrink:0;">◉</span>
-                    <span class="task-text" style="font-size:12px;letter-spacing:0.4px;">${tab.icon} ${tab.name}</span>
-                    <span style="margin-left:auto;font-size:9px;color:#003300;letter-spacing:0.5px;flex-shrink:0;">${tab.href.replace(/^\//, '').replace('.html','')}</span>
-                `;
-                list.appendChild(a);
+
+            if (firefoxTabs) {
+                // Extension mode — full Firefox tab list
+                if (countEl) countEl.textContent = firefoxTabs.length + ' tabs';
+                firefoxTabs.forEach(tab => {
+                    let domain = '';
+                    try { domain = new URL(tab.url).hostname.replace(/^www\./, ''); } catch {}
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display:flex;align-items:center;gap:7px;padding:4px 2px;border-radius:3px;overflow:hidden;';
+                    row.innerHTML = `
+                        <span style="color:${tab.active ? '#00ff41' : '#007a22'};font-size:8px;flex-shrink:0;">${tab.active ? '▶' : '◉'}</span>
+                        <span class="task-text" style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${tab.active ? 'color:#00ff41;' : ''}">${tab.title}</span>
+                        <span style="font-size:9px;color:#003300;flex-shrink:0;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${domain}</span>
+                    `;
+                    list.appendChild(row);
+                });
+            } else if (openTabs.size > 0) {
+                // BroadcastChannel fallback — same-origin pages only
+                if (countEl) countEl.textContent = openTabs.size + ' open';
+                for (const [, tab] of openTabs) {
+                    const a = document.createElement('a');
+                    a.href = tab.href;
+                    a.target = '_blank';
+                    a.rel = 'noopener';
+                    a.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 2px;text-decoration:none;border-radius:4px;transition:background 0.15s;';
+                    a.onmouseenter = () => a.style.background = 'rgba(0,255,65,0.05)';
+                    a.onmouseleave = () => a.style.background = '';
+                    a.innerHTML = `
+                        <span style="color:#007a22;font-size:9px;flex-shrink:0;">◉</span>
+                        <span class="task-text" style="font-size:12px;letter-spacing:0.4px;">${tab.icon} ${tab.name}</span>
+                        <span style="margin-left:auto;font-size:9px;color:#003300;letter-spacing:0.5px;flex-shrink:0;">${tab.href.replace(/^\//, '').replace('.html','')}</span>
+                    `;
+                    list.appendChild(a);
+                }
+            } else {
+                if (countEl) countEl.textContent = '';
+                list.innerHTML = `<div class="task-item"><span class="task-text" style="opacity:0.3;font-size:10px;letter-spacing:1px;">NO ACTIVE TABS</span></div>`;
             }
         }
 

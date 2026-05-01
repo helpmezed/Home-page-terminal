@@ -1,0 +1,16 @@
+{
+  "manifest_version": 2,
+  "name": "Matrix Homepage — Tab Tracker",
+  "version": "1.0",
+  "description": "Shows your open Firefox tabs in the TABS.LIVE widget.",
+  "permissions": ["tabs", "<all_urls>"],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [{
+    "matches": ["*://*/*"],
+    "js": ["content.js"],
+    "run_at": "document_idle"
+  }]
+}
