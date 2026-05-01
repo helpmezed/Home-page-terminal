@@ -305,75 +305,105 @@
         /* ── Terminal Pages Hub ── */
         #tp-overlay {
             position: fixed; inset: 0; z-index: 500;
-            background: rgba(0,0,0,0.72);
-            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.65);
+            display: flex; align-items: flex-start; justify-content: center;
+            padding-top: 80px;
             opacity: 0; visibility: hidden;
-            transition: opacity 0.28s ease, visibility 0.28s ease;
-            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
         }
         #tp-overlay.tp-show { opacity: 1; visibility: visible; }
 
         #tp-modal {
-            background: #050505;
-            border: 1px solid rgba(0,255,65,0.35);
-            border-radius: 12px;
-            padding: 0; width: 420px; /* Increased width */
-            width: 340px;
-            box-shadow: 0 32px 80px rgba(0,0,0,0.95), 0 0 40px rgba(0,255,65,0.08);
-            transform: scale(0.82) translateY(28px);
+            background: #060606;
+            border: 1px solid rgba(0,255,65,0.28);
+            border-radius: 8px;
+            width: 560px; max-width: calc(100vw - 32px);
+            max-height: 70vh;
+            display: flex; flex-direction: column;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.92), 0 0 32px rgba(0,255,65,0.06);
+            transform: translateY(-20px) scale(0.96);
             opacity: 0;
-            transition: transform 0.38s cubic-bezier(0.34,1.56,0.64,1), opacity 0.28s ease;
+            transition: transform 0.22s cubic-bezier(0.34,1.3,0.64,1), opacity 0.18s ease;
             overflow: hidden;
         }
-        #tp-overlay.tp-show #tp-modal { transform: scale(1) translateY(0); opacity: 1; }
+        #tp-overlay.tp-show #tp-modal { transform: translateY(0) scale(1); opacity: 1; }
 
         .tp-titlebar {
-            display: flex; align-items: center; gap: 7px;
-            padding: 14px 18px; /* Increased padding */
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 9px 14px;
             background: rgba(0,255,65,0.03);
-            border-bottom: 1px solid rgba(0,255,65,0.12);
+            border-bottom: 1px solid rgba(0,255,65,0.1);
+            flex-shrink: 0;
         }
-        .tp-dot { width: 14px; height: 14px; border-radius: 50%; } /* Increased size */
-        .tp-dot-r { background: #2a2a2a; }
-        .tp-dot-y { background: #2a2a2a; }
-        .tp-dot-g { background: #1a4a20; }
-        .tp-title-text {
-            margin-left: 8px; font-size: 14px; color: #005c18; letter-spacing: 0.6px; /* Increased font size, margin, letter spacing */
-        }
+        .tp-title-text { font-size: 10px; color: #004d14; letter-spacing: 1.6px; }
         .tp-close-x {
-            margin-left: auto; cursor: pointer; color: #003b00; font-size: 18px; /* Increased font size */
-            line-height: 1; padding: 4px 6px; border-radius: 3px; /* Increased padding */
-            transition: color 0.2s, background 0.2s;
+            font-size: 9px; color: #003000; letter-spacing: 1.2px;
+            cursor: pointer; padding: 3px 8px;
+            border: 1px solid rgba(0,255,65,0.12); border-radius: 3px;
+            transition: all 0.15s; font-family: var(--font);
         }
-        .tp-close-x:hover { color: #00ff41; background: rgba(0,255,65,0.08); }
+        .tp-close-x:hover { color: #00ff41; border-color: rgba(0,255,65,0.4); background: rgba(0,255,65,0.05); }
 
-        .tp-body { padding: 20px 16px; display: flex; flex-direction: column; gap: 10px; }
+        .tp-search-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(0,255,65,0.1);
+            flex-shrink: 0;
+        }
+        .tp-prompt { color: #007a22; font-size: 15px; }
+        #tp-search {
+            flex: 1; background: transparent; border: none; outline: none;
+            color: #00ff41; font-family: var(--font); font-size: 15px;
+            caret-color: #00ff41;
+        }
+        #tp-search::placeholder { color: #003300; }
 
-        .tp-label {
-            font-size: 10px; color: #003b00; letter-spacing: 1.5px;
-            text-transform: uppercase; margin-bottom: 4px;
+        .tp-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+        .tp-list::-webkit-scrollbar { width: 3px; }
+        .tp-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.12); border-radius: 2px; }
+
+        .tp-entry {
+            display: flex; align-items: center; gap: 14px;
+            padding: 11px 16px;
+            cursor: pointer; text-decoration: none;
+            border-left: 2px solid transparent;
+            transition: background 0.1s, border-color 0.1s;
+        }
+        .tp-entry:hover, .tp-entry.tp-active {
+            background: rgba(0,255,65,0.05);
+            border-left-color: rgba(0,255,65,0.55);
+        }
+        .tp-eicon {
+            font-size: 16px; width: 22px; text-align: center;
+            flex-shrink: 0; color: #005c18; transition: color 0.1s;
+        }
+        .tp-entry.tp-active .tp-eicon, .tp-entry:hover .tp-eicon { color: #00cc44; }
+        .tp-einfo { flex: 1; min-width: 0; }
+        .tp-ename {
+            font-size: 13px; color: #00cc44; letter-spacing: 0.4px; font-weight: 600;
+            transition: color 0.1s;
+        }
+        .tp-entry.tp-active .tp-ename, .tp-entry:hover .tp-ename { color: #00ff41; }
+        .tp-edesc { font-size: 10px; color: #004d14; letter-spacing: 0.3px; margin-top: 2px; }
+        .tp-earrow {
+            font-size: 11px; color: #002a00; flex-shrink: 0;
+            transition: color 0.1s, transform 0.1s;
+        }
+        .tp-entry.tp-active .tp-earrow, .tp-entry:hover .tp-earrow {
+            color: #007a22; transform: translateX(3px);
         }
 
-        .tp-page-btn {
-            display: flex; align-items: center; gap: 16px; /* Increased gap */
-            padding: 14px 18px; border-radius: 8px; /* Increased padding */
-            border: 1px solid rgba(0,255,65,0.2);
-            background: rgba(0,255,65,0.025);
-            color: #00cc44; text-decoration: none; font-size: 16px; /* Increased font size */
-            transition: all 0.22s cubic-bezier(0.34,1.56,0.64,1);
-            cursor: pointer; /* Increased font size */
+        .tp-statusbar {
+            display: flex; align-items: center; gap: 14px;
+            padding: 7px 16px;
+            border-top: 1px solid rgba(0,255,65,0.08);
+            background: rgba(0,0,0,0.4);
+            font-size: 9px; color: #003000; letter-spacing: 1.2px;
+            flex-shrink: 0;
         }
-        .tp-page-btn:hover {
-            border-color: rgba(0,255,65,0.7);
-            background: rgba(0,255,65,0.07);
-            color: #00ff41;
-            transform: translateX(4px);
-            box-shadow: 0 0 14px rgba(0,255,65,0.15), inset 0 0 8px rgba(0,255,65,0.04);
-        } /* Increased font size, width, gap */
-        .tp-page-icon { font-size: 22px; flex-shrink: 0; width: 28px; text-align: center; }
-        .tp-page-info { display: flex; flex-direction: column; gap: 3px; }
-        .tp-page-name { font-weight: bold; font-size: 13px; }
-        .tp-page-desc { font-size: 10px; color: #005c18; letter-spacing: 0.3px; }
+        .tp-sb-sep { color: #001800; }
+        #tp-count { margin-left: auto; color: #004d14; }
 
         .mini-matrix-canvas {
             border: 1px solid rgba(0, 255, 65, 0.12);
@@ -692,63 +722,21 @@
         <div id="tp-overlay" onclick="handleTpOverlayClick(event)">
             <div id="tp-modal">
                 <div class="tp-titlebar">
-                    <div class="tp-dot tp-dot-r"></div>
-                    <div class="tp-dot tp-dot-y" style="margin-left:6px;"></div>
-                    <div class="tp-dot tp-dot-g"></div>
-                    <span class="tp-title-text">neo@matrix: ~/pages</span>
-                    <span class="tp-close-x" onclick="closeTerminalPages()">✕</span>
+                    <span class="tp-title-text">NEO@MATRIX:~/PAGES</span>
+                    <span class="tp-close-x" onclick="closeTerminalPages()">ESC</span>
                 </div>
-                <div class="tp-body">
-                    <div class="tp-label">// select a terminal page</div>
-                    <a class="tp-page-btn" href="discipline.html">
-                        <span class="tp-page-icon">⌖</span>
-                        <div class="tp-page-info">
-                            <span class="tp-page-name">Discipline</span>
-                            <span class="tp-page-desc">motivational terminal · process flow</span>
-                        </div>
-                    </a>
-                    <a class="tp-page-btn" href="tools.html">
-                        <span class="tp-page-icon">{}</span>
-                        <div class="tp-page-info">
-                            <span class="tp-page-name">Tools DB</span>
-                            <span class="tp-page-desc">curated tool index · matrix theme</span>
-                        </div>
-                    </a>
-                    <a class="tp-page-btn" href="board.html">
-                        <span class="tp-page-icon">◈</span>
-                        <div class="tp-page-info">
-                            <span class="tp-page-name">Bulletin Board</span>
-                            <span class="tp-page-desc">live shared board · real-time pins</span>
-                        </div>
-                    </a>
-                    <a class="tp-page-btn" href="stocks.html">
-                        <span class="tp-page-icon">▲</span>
-                        <div class="tp-page-info">
-                            <span class="tp-page-name">Stock Feed</span>
-                            <span class="tp-page-desc">live prices · charts · watchlist</span>
-                        </div>
-                    </a>
-                    <a class="tp-page-btn" href="nature.html">
-                        <span class="tp-page-icon">◉</span>
-                        <div class="tp-page-info">
-                            <span class="tp-page-name">Nature Scan</span>
-                            <span class="tp-page-desc">live observations · bioscan · iNaturalist</span>
-                        </div>
-                    </a>
-                    <a class="tp-page-btn" href="news.html">
-                        <span class="tp-page-icon">◈</span>
-                        <div class="tp-page-info">
-                            <span class="tp-page-name">HN Nexus</span>
-                            <span class="tp-page-desc">front page constellation · live stories</span>
-                        </div>
-                    </a>
-                    <a class="tp-page-btn" href="ytdl.html">
-                        <span class="tp-page-icon">⬇</span>
-                        <div class="tp-page-info">
-                            <span class="tp-page-name">YT Extract</span>
-                            <span class="tp-page-desc">youtube → MP4 · MP3 downloader</span>
-                        </div>
-                    </a>
+                <div class="tp-search-row">
+                    <span class="tp-prompt">$</span>
+                    <input type="text" id="tp-search" placeholder="filter routes..." autocomplete="off" spellcheck="false">
+                </div>
+                <div class="tp-list" id="tp-list"></div>
+                <div class="tp-statusbar">
+                    <span>↑↓ NAVIGATE</span>
+                    <span class="tp-sb-sep">·</span>
+                    <span>↵ OPEN</span>
+                    <span class="tp-sb-sep">·</span>
+                    <span>ESC CLOSE</span>
+                    <span id="tp-count">7 ROUTES</span>
                 </div>
             </div>
         </div>
@@ -930,8 +918,57 @@
 
         const MIN_SLOTS = 12;
 
+        const TP_PAGES = [
+            { icon: '⌖', name: 'Discipline',     desc: 'motivational terminal · process flow',      href: 'discipline.html' },
+            { icon: '{}', name: 'Tools DB',       desc: 'curated tool index · matrix theme',         href: 'tools.html'      },
+            { icon: '◈', name: 'Bulletin Board', desc: 'live shared board · real-time pins',        href: 'board.html'      },
+            { icon: '▲', name: 'Stock Feed',     desc: 'live prices · charts · watchlist',          href: 'stocks.html'     },
+            { icon: '◉', name: 'Nature Scan',    desc: 'live observations · bioscan · iNaturalist', href: 'nature.html'     },
+            { icon: '◈', name: 'HN Nexus',       desc: 'front page constellation · live stories',   href: 'news.html'       },
+            { icon: '⬇', name: 'YT Extract',     desc: 'youtube → MP4 · M4A downloader',           href: 'ytdl.html'       },
+        ];
+
+        let tpActive = 0;
+        let tpFiltered = [...TP_PAGES];
+
+        function renderTpList(filter) {
+            filter = (filter || '').toLowerCase();
+            tpFiltered = TP_PAGES.filter(p =>
+                !filter || p.name.toLowerCase().includes(filter) || p.desc.toLowerCase().includes(filter)
+            );
+            tpActive = 0;
+            const list = document.getElementById('tp-list');
+            list.innerHTML = '';
+            tpFiltered.forEach((p, i) => {
+                const a = document.createElement('a');
+                a.className = 'tp-entry' + (i === 0 ? ' tp-active' : '');
+                a.href = p.href;
+                a.innerHTML = `<span class="tp-eicon">${p.icon}</span><div class="tp-einfo"><div class="tp-ename">${p.name}</div><div class="tp-edesc">${p.desc}</div></div><span class="tp-earrow">→</span>`;
+                a.addEventListener('mouseenter', () => { tpActive = i; updateTpActive(); });
+                a.addEventListener('click', e => {
+                    if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+                    e.preventDefault();
+                    closeTerminalPages();
+                    setTimeout(() => navigateWithTransition(p.href), 60);
+                });
+                list.appendChild(a);
+            });
+            document.getElementById('tp-count').textContent = tpFiltered.length + ' ROUTE' + (tpFiltered.length !== 1 ? 'S' : '');
+        }
+
+        function updateTpActive() {
+            document.querySelectorAll('.tp-entry').forEach((el, i) => {
+                el.classList.toggle('tp-active', i === tpActive);
+                if (i === tpActive) el.scrollIntoView({ block: 'nearest' });
+            });
+        }
+
         function openTerminalPages() {
             document.getElementById('tp-overlay').classList.add('tp-show');
+            const s = document.getElementById('tp-search');
+            s.value = '';
+            renderTpList('');
+            setTimeout(() => s.focus(), 50);
         }
         function closeTerminalPages() {
             document.getElementById('tp-overlay').classList.remove('tp-show');
@@ -939,18 +976,24 @@
         function handleTpOverlayClick(e) {
             if (e.target === document.getElementById('tp-overlay')) closeTerminalPages();
         }
+
+        document.getElementById('tp-search').addEventListener('input', e => renderTpList(e.target.value));
+
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && document.getElementById('tp-overlay').classList.contains('tp-show')) {
-                closeTerminalPages();
-            }
-        });
-        document.querySelectorAll('.tp-page-btn').forEach(btn => {
-            btn.addEventListener('click', e => {
-                if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+            if (!document.getElementById('tp-overlay').classList.contains('tp-show')) return;
+            if (e.key === 'Escape') { closeTerminalPages(); return; }
+            if (e.key === 'ArrowDown') {
                 e.preventDefault();
-                closeTerminalPages();
-                setTimeout(() => navigateWithTransition(btn.getAttribute('href')), 60);
-            });
+                tpActive = Math.min(tpActive + 1, tpFiltered.length - 1);
+                updateTpActive();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                tpActive = Math.max(tpActive - 1, 0);
+                updateTpActive();
+            } else if (e.key === 'Enter') {
+                const p = tpFiltered[tpActive];
+                if (p) { closeTerminalPages(); setTimeout(() => navigateWithTransition(p.href), 60); }
+            }
         });
 
         function navigateWithTransition(url) {
