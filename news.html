@@ -105,7 +105,14 @@
             clearTimeout(t);
             if (res.ok) {
                 const data = await res.json();
-                const hits = (data.hits || []).filter(h => h.title);
+                const hits = (data.hits || []).filter(h => h.title).map(h => ({
+                    ...h,
+                    preview: h.story_text ? h.story_text.replace(/<[^>]+>/g, '').trim().slice(0, 260) : '',
+                    type: h.title.startsWith('Ask HN:') ? 'ASK' :
+                          h.title.startsWith('Show HN:') ? 'SHOW' :
+                          h.title.startsWith('Tell HN:') ? 'TELL' :
+                          h.type === 'job' ? 'JOB' : 'LINK',
+                }));
                 if (hits.length) return hits;
             }
         } catch {}
@@ -122,7 +129,12 @@
                 objectID: String(s.id),
                 points: s.score || 0,
                 num_comments: s.descendants || 0,
-                author: s.by
+                author: s.by,
+                preview: s.text ? s.text.replace(/<[^>]+>/g, '').trim().slice(0, 260) : '',
+                type: s.title.startsWith('Ask HN:') ? 'ASK' :
+                      s.title.startsWith('Show HN:') ? 'SHOW' :
+                      s.title.startsWith('Tell HN:') ? 'TELL' :
+                      s.type === 'job' ? 'JOB' : 'LINK',
             }));
         } catch { return []; }
     }
@@ -146,10 +158,12 @@
             this.pts = story.points || 0;
             this.cmt = story.num_comments || 0;
             this.author = story.author || 'anon';
+            this.preview = story.preview || '';
+            this.type = story.type || 'LINK';
             try {
-                this.domain = story.url ? new URL(story.url).hostname.replace('www.', '') : 'ycombinator.com';
+                this.domain = story.url ? new URL(story.url).hostname.replace('www.', '') : 'news.ycombinator.com';
             } catch {
-                this.domain = 'ycombinator.com';
+                this.domain = 'news.ycombinator.com';
             }
             this.url = story.url || ('https://news.ycombinator.com/item?id=' + story.objectID);
             this.title = story.title || 'Untitled';
@@ -310,13 +324,19 @@
         hovered = null;
         for (const p of particles) { if (p.hitTest(mouse.x, mouse.y)) { hovered = p; break; } }
         if (hovered) {
+            const typeColor = { ASK: '#00cc44', SHOW: '#00aa44', TELL: '#008833', JOB: '#007a22', LINK: '#005c18' };
             tooltip.innerHTML = `
-                <div style="font-weight:bold;color:#00ff41;margin-bottom:6px;">${hovered.rank}. ${esc(hovered.title)}</div>
-                <div style="font-size:11px;color:#008800;margin-bottom:4px;">
-                    ${esc(hovered.domain)} · by @${esc(hovered.author)}
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <span style="font-size:9px;color:${typeColor[hovered.type]||'#005c18'};letter-spacing:1.4px;border:1px solid rgba(0,255,65,0.22);padding:2px 7px;border-radius:2px;">${hovered.type}</span>
+                    <span style="font-size:9px;color:#004d14;letter-spacing:1px;">#${String(hovered.rank).padStart(2,'0')}</span>
+                    <span style="font-size:9px;color:#003b00;margin-left:auto;">▲${hovered.pts} · ⌘${hovered.cmt}</span>
                 </div>
-                <div style="font-size:11px;color:#005c18;">
-                    ▲${hovered.pts} pts · ⌘${hovered.cmt} comments
+                <div style="font-weight:600;color:#00ff41;margin-bottom:${hovered.preview ? 9 : 8}px;line-height:1.45;font-size:13px;">${esc(hovered.title)}</div>
+                ${hovered.preview ? `<div style="font-size:11px;color:#007a22;margin-bottom:9px;line-height:1.55;border-left:2px solid rgba(0,255,65,0.22);padding-left:9px;">${esc(hovered.preview)}</div>` : ''}
+                <div style="font-size:10px;color:#004d14;display:flex;gap:10px;align-items:center;">
+                    <span>${esc(hovered.domain)}</span>
+                    <span style="color:#002a00;">·</span>
+                    <span>@${esc(hovered.author)}</span>
                 </div>
             `;
             tooltip.style.opacity = '1';
