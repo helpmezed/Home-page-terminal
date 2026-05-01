@@ -184,14 +184,17 @@
             this.phase += this.freq;
             this.orbitAngle += 0.015;
 
-            // Repulsion logic to prevent bunching
+            // Repulsion — compare squared distances to avoid sqrt in the common (no-overlap) case
             for (let i = 0; i < particles.length; i++) {
                 const other = particles[i];
                 if (other === this) continue;
                 const dx = other.x - this.x, dy = other.y - this.y;
-                const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                const distSq = dx*dx + dy*dy;
                 const minDist = (this.size + other.size) * 2.2;
-                if (dist < minDist) { this.vx -= dx/dist * 0.01; this.vy -= dy/dist * 0.01; }
+                if (distSq > 0 && distSq < minDist * minDist) {
+                    const dist = Math.sqrt(distSq);
+                    this.vx -= dx/dist * 0.01; this.vy -= dy/dist * 0.01;
+                }
             }
 
             this.x += this.vx + Math.sin(this.phase * 1.2) * 0.12;
@@ -270,6 +273,7 @@
     }
 
     function draw() {
+        if (document.hidden) { requestAnimationFrame(draw); return; }
         ctx.clearRect(0, 0, W, H);
         ctx.fillStyle = 'rgba(0,2,0,0.98)';
         ctx.fillRect(0, 0, W, H);
@@ -281,14 +285,15 @@
         frameCount++;
         for (const p of particles) p.update();
 
-        const CR = 160;
+        const CR = 160, CR_SQ = CR * CR;
         for (let i = 0; i < particles.length; i++) {
             const a = particles[i];
             for (let j = i+1; j < particles.length; j++) {
                 const b = particles[j];
                 const dx = a.x-b.x, dy = a.y-b.y;
-                const dist = Math.sqrt(dx*dx+dy*dy);
-                if (dist < CR) {
+                const distSq = dx*dx+dy*dy;
+                if (distSq < CR_SQ) {
+                    const dist = Math.sqrt(distSq);
                     const t = 1 - dist/CR;
                     const gb = Math.max(a.glow, b.glow);
                     const alpha = t * 0.28 * (1 + gb);
@@ -387,6 +392,7 @@
     draw();
 
     setInterval(async () => {
+        if (document.hidden) return;
         const fresh = await fetchStories();
         if (fresh.length) {
             buildParticles(fresh);
