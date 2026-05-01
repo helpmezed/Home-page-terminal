@@ -16,10 +16,10 @@
         min-height: 100vh; display: flex; flex-direction: column;
         align-items: center; overflow-x: hidden;
     }
-    body::after {
+    .crt-overlay {
         content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9000;
         background:
-            repeating-linear-gradient(to bottom,transparent 0px,transparent 2px,rgba(0,0,0,0.08) 2px,rgba(0,0,0,0.08) 4px),
+            repeating-linear-gradient(to bottom,transparent 0px,transparent 2px,rgba(0,0,0,0.1) 2px,rgba(0,0,0,0.1) 4px),
             radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(0,0,0,0.55) 100%);
     }
     #top-bar {
@@ -35,6 +35,16 @@
     .back-btn:hover { color: var(--green); border-color: rgba(0,255,65,0.6); background: rgba(0,255,65,0.05); }
     .top-sep { color: #001800; }
     #top-title { color: #004d14; }
+    
+    #node-status { 
+        margin-left: auto; font-size: 9px; color: var(--green-dim); 
+        display: flex; align-items: center; gap: 6px;
+    }
+    .status-pulse { 
+        width: 6px; height: 6px; background: var(--green); 
+        border-radius: 50%; box-shadow: 0 0 8px var(--green);
+        animation: blink 2s infinite;
+    }
 
     .main-wrap {
         width: 100%; max-width: 800px;
@@ -42,11 +52,14 @@
         display: flex; flex-direction: column; gap: 16px;
     }
 
-    .panel { border: 1px solid rgba(0,255,65,0.2); background: var(--panel); border-radius: 4px; overflow: hidden; }
+    .panel { 
+        border: 1px solid rgba(0,255,65,0.2); background: var(--panel); 
+        border-radius: 4px; overflow: hidden; position: relative;
+    }
     .panel-header {
         display: flex; align-items: center; gap: 8px;
         padding: 8px 14px; border-bottom: 1px dashed rgba(0,255,65,0.12);
-        font-size: 13px; color: var(--green-dim); letter-spacing: 1.5px;
+        font-size: 13px; color: var(--green-mid); letter-spacing: 1.5px;
     }
     .ph-dot { color: var(--green); font-size: 9px; text-shadow: 0 0 8px rgba(0,255,65,0.9); }
 
@@ -85,11 +98,20 @@
         border-top-color: rgba(0,255,65,0.4);
     }
     #extract-btn:disabled { color: #002200; cursor: default; }
+    #extract-btn.extracting {
+        animation: scan-btn 1.5s infinite linear;
+        color: var(--green);
+    }
+    @keyframes scan-btn {
+        0% { background: rgba(0,255,65,0.02); }
+        50% { background: rgba(0,255,65,0.08); }
+        100% { background: rgba(0,255,65,0.02); }
+    }
 
     .console {
         min-height: 180px; max-height: 320px; overflow-y: auto;
         padding: 18px; background: #000; font-size: 14px; line-height: 1.7;
-        border-radius: 4px; border: 1px solid rgba(0,255,65,0.1);
+        border-radius: 4px; border: 1px solid rgba(0,255,65,0.15);
     }
     .console::-webkit-scrollbar { width: 4px; }
     .console::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.15); border-radius: 2px; }
@@ -98,14 +120,16 @@
     .log-err  { color: #ff4444; }
     .log-done { color: #fff; text-shadow: 0 0 10px rgba(200,255,220,0.5); }
 
-    /* Download options grid */ /* Increased font sizes and padding */
-    #dl-options { display: none; flex-direction: column; gap: 8px; }
+    /* Download options grid */
+    #dl-options { 
+        display: none; flex-direction: column; gap: 12px; 
+        animation: fadeIn 0.4s ease-out;
+    }
     #dl-title {
         font-size: 14px; color: var(--green-dim); letter-spacing: 0.8px;
         padding: 2px 0; border-bottom: 1px solid rgba(0,255,65,0.08); padding-bottom: 8px;
         margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .dl-row { display: flex; gap: 8px; }
     .dl-link {
         flex: 1; display: block; text-align: center;
         background: rgba(0,255,65,0.04); border: 1px solid rgba(0,255,65,0.28); font-size: 12px;
@@ -123,19 +147,21 @@
     .dl-link .dl-desc { display: block; font-size: 10px; color: #005c18; letter-spacing: 1.2px; }
     .dl-link .dl-srv { display: block; font-size: 9px; color: #002800; letter-spacing: 0.8px; margin-top: 5px; }
 
-    .srv-cycle {
-        font-size: 10px; color: #003300; letter-spacing: 1.2px; text-align: center;
-        padding: 6px 0; cursor: pointer; background: none; border: none;
-        font-family: var(--font); width: 100%;
-    }
-    .srv-cycle:hover { color: var(--green-dim); }
-
     .note {
         font-size: 9px; color: #003300; letter-spacing: 0.6px; line-height: 1.6;
-        text-align: center;
-    } /* Increased to 11px below */
+        text-align: center; margin-top: 10px;
+    }
     .note a { color: #005c18; text-decoration: none; }
     .note a:hover { color: var(--green-dim); }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .dl-row { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+        gap: 12px; 
+    }
 </style>
 </head>
 <body>
@@ -144,6 +170,10 @@
     <a class="back-btn" href="index.html">← back</a>
     <span class="top-sep">|</span>
     <span id="top-title">matrix://yt.extract</span>
+    <div id="node-status">
+        <div class="status-pulse"></div>
+        UPLINK: ACTIVE
+    </div>
 </div>
 
 <div class="main-wrap">
@@ -178,13 +208,18 @@
 
 </div>
 
+<div class="crt-overlay"></div>
+
 <script>
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
     function extractId(url) {
         const m = url.match(/(?:[?&]v=|youtu\.be\/|embed\/|\/v\/|shorts\/)([a-zA-Z0-9_-]{11})/);
         return m ? m[1] : null;
     }
 
-    function log(msg, type = 'ok') {
+    async function log(msg, type = 'ok', delay = 0) {
+        if (delay > 0) await sleep(delay);
         const out = document.getElementById('console');
         const d = document.createElement('div');
         d.className = 'log-' + type;
@@ -204,39 +239,41 @@
         document.getElementById('dl-row').innerHTML = '';
 
         if (!urlRaw) { log('NO TARGET URL PROVIDED.', 'err'); return; }
-        if (!urlRaw.includes('youtube.com') && !urlRaw.includes('youtu.be')) {
+        if (!urlRaw.includes('youtube.com') && !urlRaw.includes('youtu.be') && !urlRaw.includes('youtube-nocookie.com')) {
             log('INVALID TARGET: Must be a YouTube URL.', 'err'); return;
         }
 
         const videoId = extractId(urlRaw);
         if (!videoId) { log('COULD NOT PARSE VIDEO ID FROM URL.', 'err'); return; }
 
-        btn.disabled = true;
+        btn.disabled = true; btn.classList.add('extracting'); btn.textContent = '[ EXTRACTING... ]';
         document.getElementById('console').innerHTML = '';
 
-        log(`TARGET: ${urlRaw}`, 'dim');
-        log(`VIDEO ID: ${videoId}`, 'dim');
-        log('RESOLVING VIA EXTRACTION API...', 'dim');
+        await log(`TARGET: ${urlRaw.slice(0, 50)}...`, 'dim');
+        await log(`VIDEO ID: ${videoId}`, 'dim', 150);
+        await log('RESOLVING VIA EXTRACTION API...', 'dim', 200);
 
         let data;
         try {
             const res = await fetch(`/api/yt?id=${encodeURIComponent(videoId)}`);
             data = await res.json();
             if (!res.ok || !data.ok) {
-                log('EXTRACTION FAILED: ' + (data.error || 'Unknown error'), 'err');
+                await log('EXTRACTION FAILED: ' + (data.error || 'Unknown error'), 'err', 100);
                 if (data.details) data.details.forEach(d => log(d, 'dim'));
-                btn.disabled = false;
+                btn.disabled = false; btn.classList.remove('extracting'); btn.textContent = '[ RESOLVE & EXTRACT ]';
                 return;
             }
         } catch (e) {
-            log('EXTRACTION FAILED: ' + e.message, 'err');
-            btn.disabled = false;
+            await log('EXTRACTION FAILED: ' + e.message, 'err', 100);
+            btn.disabled = false; btn.classList.remove('extracting'); btn.textContent = '[ RESOLVE & EXTRACT ]';
             return;
         }
 
-        if (data._client) log(`CLIENT: ${data._client}`, 'dim');
-        log(`TITLE: ${data.title}`, 'ok');
-        log('BUILDING DOWNLOAD LINKS...', 'dim');
+        if (data._client) await log(`CLIENT_NODE: ${data._client}`, 'dim', 100);
+        await log('METADATA RECEIVED.', 'ok', 100);
+        await log(`TITLE: ${data.title}`, 'ok', 50);
+        await log('HANDSHAKE COMPLETE.', 'dim', 100);
+        await log('BUILDING DOWNLOAD LINKS...', 'dim', 150);
 
         const row = document.getElementById('dl-row');
         const safeName = data.title.replace(/[^a-z0-9 _-]/gi, '_').slice(0, 80);
@@ -276,11 +313,11 @@
 
         document.getElementById('dl-title').textContent = '▸ ' + data.title;
         opts.style.display = 'flex';
-        log('EXTRACTION COMPLETE. SELECT FORMAT BELOW.', 'done');
+        await log('EXTRACTION COMPLETE. SELECT FORMAT BELOW.', 'done', 200);
         if (data.formats[0]?.urls?.length > 1)
-            log('If a button shows a captcha, click the server name to switch.', 'dim');
+            await log('Hint: Click the server name to cycle nodes if one is slow.', 'dim', 100);
 
-        btn.disabled = false;
+        btn.disabled = false; btn.classList.remove('extracting'); btn.textContent = '[ RESOLVE & EXTRACT ]';
     }
 
     document.getElementById('yt-url').addEventListener('keydown', e => {

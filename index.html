@@ -187,11 +187,10 @@
         }
         .prompt-bracket { color: #007a22; }
 
-        .search-input { background: transparent; border: none; color: #00ff41; font-family: inherit; font-size: inherit; flex: 1; padding: 9px 14px; outline: none; caret-color: #00ff41; text-shadow: 0 0 4px rgba(0,255,65,0.4); transition: padding 0.45s cubic-bezier(0.25,0.46,0.45,0.94); }
-        .search-input:focus { padding: 18px 18px; } /* Increased padding on focus */
+        .search-input { background: transparent; border: none; color: #00ff41; font-family: system-ui, -apple-system, sans-serif; font-size: inherit; flex: 1; padding: 12px 14px; outline: none; caret-color: #00ff41; text-shadow: 0 0 4px rgba(0,255,65,0.4); transition: all 0.3s ease; }
         .search-input::placeholder { color: rgba(0,255,65,0.3); opacity: 1; } /* Adjusted placeholder color */
         .prompt-line:focus-within {
-            border-color: rgba(0,255,65,0.8);
+            border-color: rgba(0, 255, 65, 0.9);
             box-shadow: 0 0 42px rgba(0,255,65,0.2), 0 2px 10px rgba(0,0,0,0.7), inset 0 0 22px rgba(0,255,65,0.06);
         }
         .user { color: #00ff41; font-weight: bold; text-shadow: 0 0 5px rgba(0,255,65,0.4); }
@@ -276,33 +275,32 @@
 
         .tp-launch-widget {
             width: 100%;
-            border: 1px solid rgba(0,255,65,0.18); /* Adjusted border opacity */
-            border-radius: 4px;
-            background: rgba(0,255,65,0.01);
-            overflow: hidden;
+            height: 44px;
+            border: 1px solid rgba(0, 255, 65, 0.35);
+            border-radius: 8px;
+            background: rgba(0, 255, 65, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            transition: border-color 0.2s, background 0.2s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #00ff41;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-top: 4px;
         }
-        .tp-launch-widget:hover { /* Adjusted hover effect */
-            border-color: rgba(0,255,65,0.45);
-            background: rgba(0,255,65,0.03);
+        .tp-launch-widget:hover {
+            background: rgba(0, 255, 65, 0.15);
+            border-color: rgba(0, 255, 65, 0.9);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.25);
+            transform: translateY(-1px);
         }
-        .tp-launch-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 3px 7px;
-            border-bottom: 1px solid rgba(0,255,65,0.08);
-            font-size: 12px; letter-spacing: 1px; color: #003b00; /* Increased font size and letter spacing */
+        .tp-launch-widget:active {
+            transform: translateY(0) scale(0.97);
         }
-        .tp-launch-header .tp-lh-right { color: #005c18; }
-        .tp-launch-body {
-            padding: 5px 7px;
-            font-size: 13px; color: #005c18; letter-spacing: 0.4px; /* Increased font size and letter spacing */
-            display: flex; align-items: center; gap: 6px;
-        }
-        .tp-launch-widget:hover .tp-launch-body { color: #00cc44; }
-        .tp-launch-prompt { color: #007a22; font-size: 13px; } /* Increased font size */
-        .tp-launch-cmd { color: #00cc44; }
-        .tp-launch-widget:hover .tp-launch-cmd { color: #00ff41; }
 
         /* ── Terminal Pages Hub ── */
         #tp-overlay {
@@ -493,29 +491,58 @@
         /* ── Bento Grid Layout ── */
         .bento-grid {
             display: grid;
-            grid-template-columns: 210px 1fr 195px;
-            grid-template-rows: auto auto auto auto;
+            grid-template-columns: 240px 1fr 220px;
+            grid-template-rows: auto;
             grid-template-areas:
                 "search  search  search"
                 "ascii   info    sidebar"
                 "meta    links   tasks"
                 "geo     spacex  spacex";
-            gap: 10px;
-            padding: 6px 8px 0;
+            gap: 12px;
+            padding: 10px 12px 0;
         }
         .bento-cell {
-            background: rgba(3, 8, 3, 0.7);
+            background: rgba(3, 10, 3, 0.75);
             border: 1px solid rgba(0, 255, 65, 0.14);
-            border-radius: 6px;
+            border-radius: 8px;
             overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bento-cell:hover {
+            border-color: rgba(0, 255, 65, 0.45);
+            background: rgba(5, 15, 5, 0.9);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.08);
+            transform: translateY(-2px);
         }
         .bento-cell-label {
             display: flex; justify-content: space-between; align-items: center;
-            font-size: 8px; letter-spacing: 1.8px; color: #003b00;
-            padding: 4px 10px;
-            border-bottom: 1px solid rgba(0, 255, 65, 0.07);
-            background: rgba(0, 255, 65, 0.025);
+            font-size: 10px; letter-spacing: 2.2px; color: #008800;
+            padding: 6px 12px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.1);
+            background: rgba(0, 255, 65, 0.05);
+            font-weight: 600;
+            text-transform: uppercase;
         }
+
+        @media (max-width: 1200px) {
+            .bento-grid {
+                grid-template-columns: 240px 1fr;
+                grid-template-areas:
+                    "search  search"
+                    "ascii   info"
+                    "sidebar tasks"
+                    "meta    links"
+                    "geo     spacex";
+            }
+        }
+        @media (max-width: 800px) {
+            .bento-grid {
+                grid-template-columns: 1fr;
+                grid-template-areas: "search" "ascii" "info" "sidebar" "tasks" "links" "meta" "geo" "spacex";
+            }
+            .terminal { zoom: 1; }
+        }
+
         .bcl-right { color: #002200; }
         .b-search  { grid-area: search; }
         .b-ascii   { grid-area: ascii;   display: flex; align-items: center; justify-content: center; padding: 10px 6px; }
@@ -589,14 +616,7 @@
                         <div class="bento-cell-label"><span>◈ PAGES</span><span class="bcl-right">7 routes</span></div>
                         <div style="padding:8px 8px 6px;">
                             <div class="tp-launch-widget" id="tp-open-btn" onclick="openTerminalPages()">
-                                <div class="tp-launch-header">
-                                    <span>TERMINAL</span>
-                                    <span class="tp-lh-right">./list</span>
-                                </div>
-                                <div class="tp-launch-body">
-                                    <span class="tp-launch-prompt">$</span>
-                                    <span class="tp-launch-cmd">./pages --list</span>
-                                </div>
+                                Open Terminal Pages
                             </div>
                         </div>
                         <div class="bento-cell-label">
