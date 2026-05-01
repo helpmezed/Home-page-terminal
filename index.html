@@ -751,7 +751,7 @@
                 { type: 'info', label: "Time", id: "info-time" },
                 { type: 'info', label: "Location", value: "Salem, NH" },
                 { type: 'info', label: "Weather", value: "62°F / Clear" },
-                { type: 'info', label: "Engine", value: "DuckDuckGo" }
+                { type: 'info', label: "Engine", value: config.defaultEngine.includes('duckduckgo') ? 'DuckDuckGo' : 'Google' }
             ];
         }
 
@@ -1219,7 +1219,7 @@
 
         const outputEl = document.getElementById('output');
         const layerFgEl = document.getElementById('layer-fg');
-        let commandHistory = [], historyIndex = -1;
+        let commandHistory = JSON.parse(localStorage.getItem('startpage_history')) || [], historyIndex = -1;
 
         function printEcho(cmd) {
             const div = document.createElement('div');
@@ -1272,7 +1272,12 @@
             if (primary === 'task') {
                 const action = args[1];
                 if (action === 'add') {
-                    customTasks.push({ text: args.slice(2).join(' '), done: false });
+                    const taskText = args.slice(2).join(' ').trim();
+                    if (!taskText) {
+                        printResult("ERROR: Task text cannot be empty.");
+                        return;
+                    }
+                    customTasks.push({ text: taskText, done: false });
                     localStorage.setItem('startpage_tasks', JSON.stringify(customTasks));
                     renderTasks();
                     printResult("Task appended successfully.");
@@ -1450,9 +1455,11 @@
             e.preventDefault();
             closeSuggestions();
             if (searchInput.value) {
-                commandHistory.unshift(searchInput.value);
+                const cmd = searchInput.value;
+                commandHistory = [cmd, ...commandHistory.filter(h => h !== cmd)].slice(0, 50);
+                localStorage.setItem('startpage_history', JSON.stringify(commandHistory));
                 historyIndex = -1;
-                executeCommand(searchInput.value);
+                executeCommand(cmd);
                 searchInput.value = '';
                 setEngineBadge('');
             }

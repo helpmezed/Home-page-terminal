@@ -3,338 +3,899 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tools DB</title>
+    <title>Tools DB | Neo-Matrix Terminal</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --green: #050705;
+            --green-dim: #00cc44;
+            --green-dark: #003b00;
+            --green-deeper: #002200;
+            --bg: #050505;
+            --red: #ef2929;
+            --card-bg: rgba(0, 0, 0, 0.7);
+            --border-color: rgba(0, 255, 65, 0.2);
+            --font-mono: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background: #000000; display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; height: 100vh;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            font-size: 14px; line-height: 1.4; overflow: hidden; color: #00ff41;
+            background: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            height: 100vh;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.4;
+            overflow: hidden;
+            color: var(--green);
+            background-image:
+                radial-gradient(ellipse at 50% 50%, rgba(0, 255, 65, 0.015) 0%, transparent 70%),
+                radial-gradient(ellipse at 20% 80%, rgba(0, 200, 60, 0.01) 0%, transparent 50%);
+            animation: bodyPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes bodyPulse {
+            0%,
+            100% {
+                background-color: #000000;
+            }
+            25% {
+                background-color: #000100;
+            }
+            50% {
+                background-color: #000200;
+            }
+            75% {
+                background-color: #000100;
+            }
         }
 
         .terminal {
-            background: #050505; border-radius: 8px; padding: 10px; width: 1120px; max-width: 98vw;
-            height: 96vh; box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 20px rgba(0, 255, 65, 0.05);
-            position: relative; display: flex; flex-direction: column;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 16px 18px;
+            width: 1160px;
+            max-width: 98vw;
+            height: 96vh;
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.9),
+                0 0 30px rgba(0, 255, 65, 0.05),
+                0 0 80px rgba(0, 255, 65, 0.02),
+                inset 0 0 20px rgba(0, 255, 65, 0.04);
+            position: relative;
+            display: flex;
+            flex-direction: column;
             border: 1px solid rgba(0, 255, 65, 0.2);
-            clip-path: inset(0 round 8px);
+            animation: terminalGlow 6s ease-in-out infinite;
+            overflow: hidden;
+        }
+
+        @keyframes terminalGlow {
+            0%,
+            100% {
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 255, 65, 0.05), 0 0 80px rgba(0, 255, 65, 0.02), inset 0 0 20px rgba(0, 255, 65, 0.04);
+            }
+            50% {
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(0, 255, 65, 0.08), 0 0 100px rgba(0, 255, 65, 0.03), inset 0 0 25px rgba(0, 255, 65, 0.06);
+            }
+        }
+
+        .terminal::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 5;
+            background: repeating-linear-gradient(to bottom,
+                    transparent 0px,
+                    transparent 2px,
+                    rgba(0, 0, 0, 0.03) 2px,
+                    rgba(0, 0, 0, 0.03) 4px);
+            animation: scanlineDrift 12s linear infinite;
+            border-radius: 12px;
+        }
+
+        @keyframes scanlineDrift {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 0 100px;
+            }
+        }
+
+        .terminal::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 4;
+            background: radial-gradient(ellipse at 50% 50%, transparent 48%, rgba(0, 0, 0, 0.5) 100%);
+            border-radius: 12px;
+            animation: vignetteBreathe 5s ease-in-out infinite;
+        }
+
+        @keyframes vignetteBreathe {
+            0%,
+            100% {
+                opacity: 0.85;
+            }
+            50% {
+                opacity: 1;
+            }
         }
 
         .layer-fg {
-            position: relative; z-index: 2; display: flex; flex-direction: column; height: 100%;
-            overflow-y: auto; overflow-x: hidden; padding-right: 4px; scroll-behavior: smooth;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 6px;
+            scroll-behavior: smooth;
             scrollbar-width: thin;
             scrollbar-color: rgba(0, 255, 65, 0.3) transparent;
         }
-        .layer-fg::-webkit-scrollbar { width: 6px; }
-        .layer-fg::-webkit-scrollbar-track { background: transparent; }
-        .layer-fg::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.3); border-radius: 3px; }
+
+        .layer-fg::-webkit-scrollbar {
+            width: 6px;
+        }
+        .layer-fg::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .layer-fg::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 65, 0.3);
+            border-radius: 3px;
+        }
 
         .layer-bg {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;
-            pointer-events: none; font-family: 'DejaVu Sans Mono', monospace; line-height: 1.1;
-            white-space: pre; overflow: hidden;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            pointer-events: none;
+            font-family: var(--font-mono);
+            line-height: 1.1;
+            white-space: pre;
+            overflow: hidden;
+            border-radius: 12px;
         }
-        .bg-element { position: absolute; }
 
-        .bg-skull { color: #00cc44; top: 10%; left: 50%; transform: translateX(-50%); opacity: 0.11; font-size: 15px; font-weight: bold; text-shadow: 0 0 10px rgba(0,255,65,0.2); }
-        .bg-cathedral { color: #00ff41; bottom: 8%; right: 2%; opacity: 0.13; font-size: 11px; }
-        .bg-spider { color: #00ff41; position: absolute; opacity: 0.24; font-size: 11px; text-shadow: 0 0 5px rgba(0,255,65,0.5); }
-        .spider-1 { left: 6%; top: 2%; }
-        .spider-2 { right: 18%; top: 5%; }
+        .bg-element {
+            position: absolute;
+            transition: all 0.5s ease;
+        }
+        .bg-skull {
+            color: #00cc44;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.11;
+            font-size: 15px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+            animation: skullBreathe 7s ease-in-out infinite, skullFloat 12s ease-in-out infinite;
+            will-change: transform, opacity;
+        }
+        @keyframes skullBreathe {
+            0%,
+            100% {
+                opacity: 0.09;
+                text-shadow: 0 0 8px rgba(0, 255, 65, 0.15);
+            }
+            30% {
+                opacity: 0.14;
+                text-shadow: 0 0 16px rgba(0, 255, 65, 0.35);
+            }
+            60% {
+                opacity: 0.10;
+                text-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+            }
+        }
+        @keyframes skullFloat {
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            25% {
+                transform: translateX(-50%) translateY(-3px);
+            }
+            50% {
+                transform: translateX(-50%) translateY(1px);
+            }
+            75% {
+                transform: translateX(-50%) translateY(-2px);
+            }
+        }
+        .bg-cathedral {
+            color: #00ff41;
+            bottom: 8%;
+            right: 2%;
+            opacity: 0.13;
+            font-size: 11px;
+            animation: cathedralGlow 9s ease-in-out infinite;
+        }
+        @keyframes cathedralGlow {
+            0%,
+            100% {
+                opacity: 0.10;
+                text-shadow: 0 0 4px rgba(0, 255, 65, 0.1);
+            }
+            50% {
+                opacity: 0.17;
+                text-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+            }
+        }
+        .bg-spider {
+            color: #00ff41;
+            position: absolute;
+            opacity: 0.24;
+            font-size: 11px;
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+            animation: spiderCrawl 20s linear infinite;
+        }
+        .spider-1 {
+            left: 6%;
+            top: 2%;
+            animation-delay: 0s;
+        }
+        .spider-2 {
+            right: 18%;
+            top: 5%;
+            animation-delay: -7s;
+        }
+        @keyframes spiderCrawl {
+            0% {
+                transform: translate(0, 0);
+            }
+            10% {
+                transform: translate(8px, -5px);
+            }
+            20% {
+                transform: translate(3px, 2px);
+            }
+            30% {
+                transform: translate(12px, -8px);
+            }
+            40% {
+                transform: translate(6px, -3px);
+            }
+            50% {
+                transform: translate(10px, 4px);
+            }
+            60% {
+                transform: translate(2px, -6px);
+            }
+            70% {
+                transform: translate(9px, 1px);
+            }
+            80% {
+                transform: translate(4px, -2px);
+            }
+            90% {
+                transform: translate(11px, -4px);
+            }
+            100% {
+                transform: translate(0, 0);
+            }
+        }
         .bg-graveyard {
-            color: #003b00; bottom: 1%; left: 0; width: 100%; display: flex;
-            justify-content: space-around; opacity: 0.4; font-size: 12px; font-weight: bold;
+            color: #003b00;
+            bottom: 1%;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            opacity: 0.4;
+            font-size: 12px;
+            font-weight: bold;
+            animation: graveyardFlicker 11s ease-in-out infinite;
         }
-
-        .terminal-header {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-bottom: 6px;
-            border-bottom: 1px solid rgba(0, 255, 65, 0.15); position: sticky; top: 0;
-            background: rgba(5, 5, 5, 0.95); z-index: 10;
-            font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
-            -webkit-backdrop-filter: blur(3px);
-            backdrop-filter: blur(3px);
+        @keyframes graveyardFlicker {
+            0%,
+            100% {
+                opacity: 0.35;
+            }
+            15% {
+                opacity: 0.5;
+            }
+            16% {
+                opacity: 0.3;
+            }
+            17% {
+                opacity: 0.48;
+            }
+            45% {
+                opacity: 0.38;
+            }
+            70% {
+                opacity: 0.52;
+            }
+            71% {
+                opacity: 0.33;
+            }
+            85% {
+                opacity: 0.46;
+            }
         }
-
-        .gothic-dot { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; font-size: 14px; text-shadow: 0 0 5px currentColor; }
-        .gothic-dot.red { color: #003b00; }
-        .gothic-dot.yellow { color: #00cc44; }
-        .gothic-dot.green { color: #00ff41; }
-
-        .terminal-title { color: #00cc44; font-size: 12px; margin-left: 6px; letter-spacing: 0.5px; text-shadow: 0 0 3px rgba(0,255,65,0.3); }
-
         .bg-eye {
-            color: #004800; top: 42%; right: 1%; opacity: 0.22; font-size: 56px;
+            color: #004800;
+            top: 42%;
+            right: 1%;
+            opacity: 0.22;
+            font-size: 56px;
             font-family: 'Segoe UI Historic', 'Apple Symbols', serif;
-            transform: translateY(-50%); text-shadow: 0 0 28px rgba(0,255,65,0.12);
+            transform: translateY(-50%);
+            text-shadow: 0 0 28px rgba(0, 255, 65, 0.12);
+            animation: eyeGlow 8s ease-in-out infinite, eyeFloat 14s ease-in-out infinite;
         }
-
+        @keyframes eyeGlow {
+            0%,
+            100% {
+                text-shadow: 0 0 20px rgba(0, 255, 65, 0.08);
+                opacity: 0.18;
+            }
+            30% {
+                text-shadow: 0 0 40px rgba(0, 255, 65, 0.25);
+                opacity: 0.28;
+            }
+            60% {
+                text-shadow: 0 0 25px rgba(0, 255, 65, 0.15);
+                opacity: 0.20;
+            }
+            85% {
+                text-shadow: 0 0 50px rgba(0, 255, 65, 0.35);
+                opacity: 0.30;
+            }
+        }
+        @keyframes eyeFloat {
+            0%,
+            100% {
+                transform: translateY(-50%) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-52%) rotate(1deg);
+            }
+            50% {
+                transform: translateY(-48%) rotate(-0.5deg);
+            }
+            75% {
+                transform: translateY(-51%) rotate(0.8deg);
+            }
+        }
         .bg-rain {
-            color: #003300; font-size: 10px; opacity: 0.28;
-            font-family: 'DejaVu Sans Mono', 'Courier New', monospace;
-            writing-mode: vertical-rl; text-orientation: upright;
-            top: 0; width: 12px; height: 100%; overflow: hidden; white-space: nowrap; letter-spacing: 1px;
+            color: #003300;
+            font-size: 10px;
+            opacity: 0.28;
+            font-family: var(--font-mono);
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            top: 0;
+            width: 14px;
+            height: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            letter-spacing: 1px;
+            animation: rainFall 3s linear infinite;
         }
-        .rain-1 { left: 4px; }
-        .rain-2 { right: 4px; }
-
-        .terminal::after {
-            content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 4;
-            background:
-                repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.055) 2px, rgba(0,0,0,0.055) 4px),
-                radial-gradient(ellipse at 50% 50%, transparent 48%, rgba(0,0,0,0.42) 100%);
+        .rain-1 {
+            left: 4px;
+            animation-delay: 0s;
+        }
+        .rain-2 {
+            right: 4px;
+            animation-delay: -1.5s;
+        }
+        @keyframes rainFall {
+            0% {
+                transform: translateY(-10%);
+                opacity: 0.15;
+            }
+            50% {
+                opacity: 0.35;
+            }
+            100% {
+                transform: translateY(5%);
+                opacity: 0.15;
+            }
+        }
+        .bg-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .particle {
+            position: absolute;
+            color: #00ff41;
+            font-size: 8px;
+            opacity: 0;
+            font-family: var(--font-mono);
+            animation: particleDrop linear infinite;
+            text-shadow: 0 0 6px rgba(0, 255, 65, 0.7);
+        }
+        @keyframes particleDrop {
+            0% {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            5% {
+                opacity: 0.7;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% {
+                transform: translateY(105vh);
+                opacity: 0;
+            }
         }
 
-        .tools-content { padding: 6px; animation: fadeIn 0.4s ease; display: flex; gap: 14px; align-items: flex-start; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* ---------- LAYOUT OVERHAUL ---------- */
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.15);
+            position: sticky;
+            top: 0;
+            background: rgba(5, 5, 5, 0.95);
+            z-index: 10;
+            backdrop-filter: blur(4px);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            letter-spacing: 0.3px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
 
-        .tools-left-panel { display: flex; flex-direction: column; gap: 10px; align-items: center; flex-shrink: 0; }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-        .tools-right-panel { flex: 1; min-width: 0; }
+        .gothic-dot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            font-size: 14px;
+            text-shadow: 0 0 5px currentColor;
+            animation: dotPulse 2s ease-in-out infinite;
+        }
+        .gothic-dot.red {
+            color: #003b00;
+            animation-delay: 0s;
+        }
+        .gothic-dot.yellow {
+            color: #00cc44;
+            animation-delay: 0.4s;
+        }
+        .gothic-dot.green {
+            color: #00ff41;
+            animation-delay: 0.8s;
+        }
+        @keyframes dotPulse {
+            0%,
+            100% {
+                text-shadow: 0 0 5px currentColor;
+                transform: scale(1);
+            }
+            50% {
+                text-shadow: 0 0 12px currentColor, 0 0 20px currentColor;
+                transform: scale(1.3);
+            }
+        }
+
+        .terminal-path {
+            color: #00cc44;
+            font-size: 12px;
+            margin-left: 6px;
+            text-shadow: 0 0 4px rgba(0, 255, 65, 0.3);
+            white-space: nowrap;
+        }
+
+        .header-clock {
+            color: #00ff41;
+            font-size: 13px;
+            font-weight: bold;
+            text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+            white-space: nowrap;
+            animation: clockPulse 1s step-end infinite;
+        }
+        @keyframes clockPulse {
+            0%,
+            100% {
+                text-shadow: 0 0 6px rgba(0, 255, 65, 0.5);
+            }
+            50% {
+                text-shadow: 0 0 14px rgba(0, 255, 65, 0.9), 0 0 20px rgba(0, 255, 65, 0.4);
+            }
+        }
+
+        .logo-container {
+            width: 100%;
+            height: 140px;
+            margin: 0 auto 16px;
+            position: relative;
+            z-index: 1;
+            border-bottom: 1px dashed rgba(0, 255, 65, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-container canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .action-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.12);
+        }
 
         .btn-return {
-            display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: #ef2929;
-            border: 1px solid #ef2929; padding: 6px 14px; margin-bottom: 12px; border-radius: 6px;
-            font-weight: bold; background: rgba(239, 41, 41, 0.05); text-decoration: none;
-            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: #ef2929;
+            border: 1px solid #ef2929;
+            padding: 7px 18px;
+            border-radius: 6px;
+            font-weight: bold;
+            background: rgba(239, 41, 41, 0.05);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-size: 12px;
+            font-family: var(--font-mono);
+            position: relative;
+            overflow: hidden;
         }
-        .btn-return:hover { background: rgba(239, 41, 41, 0.15); box-shadow: 0 0 15px rgba(239, 41, 41, 0.4); text-shadow: 0 0 5px #ef2929; }
-
-        .tools-ascii-title {
-            color: #00ff41; text-shadow: 0 0 10px rgba(0,255,65,0.6); font-family: 'DejaVu Sans Mono', monospace;
-            font-size: 10px; line-height: 1.2; text-align: center; margin-bottom: 12px; white-space: pre;
+        .btn-return::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(239, 41, 41, 0.25);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+        }
+        .btn-return:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        .btn-return:hover {
+            background: rgba(239, 41, 41, 0.12);
+            box-shadow: 0 0 25px rgba(239, 41, 41, 0.5);
+            text-shadow: 0 0 8px #ef2929;
+            transform: translateY(-1px);
+            border-color: #ff4444;
         }
 
-        .tools-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding-bottom: 20px; }
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            padding-bottom: 24px;
+        }
+
+        /* Unified monospace aesthetic for all tool content */
         .tool-card {
-            border: 1px solid rgba(0, 255, 65, 0.2); background: rgba(0, 0, 0, 0.6); padding: 10px;
-            border-radius: 8px; transition: all 0.3s ease;
-            -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
-            display: flex; flex-direction: column;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            padding: 14px 16px;
+            border-radius: 10px;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: cardReveal 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+            font-family: var(--font-mono);
+            letter-spacing: 0.2px;
+        }
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.04), transparent);
+            transition: left 0.6s ease;
+            pointer-events: none;
+        }
+        .tool-card:hover::before {
+            left: 100%;
         }
         .tool-card:hover {
-            transform: translateY(-4px); border-color: rgba(0, 255, 65, 0.7);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 255, 65, 0.15);
-        }
-        .tool-title { font-size: 14px; font-weight: bold; color: #00ff41; text-shadow: 0 0 5px rgba(0,255,65,0.4); margin-bottom: 2px; }
-        .tool-url { font-size: 11px; color: #00cc44; margin-bottom: 6px; text-decoration: none; display: inline-block; word-break: break-all; transition: 0.2s; }
-        .tool-url:hover { color: #00ff41; text-shadow: 0 0 5px #00ff41; }
-        .tool-desc { font-size: 13px; color: #eeeeec; opacity: 0.85; line-height: 1.5; }
-
-        .mini-matrix-canvas {
-            border: 1px solid rgba(0, 255, 65, 0.12); border-radius: 4px; opacity: 0.72;
-            animation: canvasPulse 4s ease-in-out infinite;
-        }
-        @keyframes canvasPulse {
-            0%, 100% { box-shadow: 0 0 4px rgba(0,255,65,0.1); }
-            50% { box-shadow: 0 0 12px rgba(0,255,65,0.22); }
+            transform: translateY(-5px) scale(1.02);
+            border-color: rgba(0, 255, 65, 0.6);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 255, 65, 0.15);
+            background: rgba(0, 10, 0, 0.75);
+            z-index: 3;
         }
 
-        .signal-monitor {
-            width: 190px; font-family: 'DejaVu Sans Mono', monospace; font-size: 10px;
-            border: 1px solid rgba(0, 255, 65, 0.12); border-radius: 4px; padding: 5px 7px;
-            color: #00cc44; background: rgba(0,255,65,0.015);
+        .tool-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #00ff41;
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.4);
+            margin-bottom: 6px;
+            letter-spacing: 0.4px;
         }
-        .signal-header {
-            color: #005c18; margin-bottom: 3px; letter-spacing: 0.5px;
-            display: flex; justify-content: space-between;
-        }
-        .signal-header .glitch-status {
-            color: #00ff41; text-shadow: 0 0 5px rgba(0,255,65,0.5);
-            animation: glitchFlicker 0.08s ease infinite;
-        }
-        @keyframes glitchFlicker { 0%, 94%, 100% { opacity: 1; } 95% { opacity: 0.4; } 97% { opacity: 0.8; } }
-        .signal-wave { color: #00cc44; letter-spacing: 1px; line-height: 1.3; }
-        .signal-wave-row { display: block; }
-
-        .left-glyph {
-            width: 190px; font-family: 'DejaVu Sans Mono', monospace; font-size: 11px;
-            text-align: center; color: #003b00; letter-spacing: 3px;
-            border: 1px solid rgba(0,255,65,0.08); border-radius: 4px; padding: 4px 0;
-            animation: glyphCycle 3s ease-in-out infinite;
-        }
-        @keyframes glyphCycle {
-            0%, 100% { color: #003b00; text-shadow: none; }
-            50% { color: #005c18; text-shadow: 0 0 8px rgba(0,255,65,0.2); }
+        .tool-card:hover .tool-title {
+            text-shadow: 0 0 12px rgba(0, 255, 65, 0.8);
         }
 
-        .tools-stat-box {
-            width: 190px; font-family: 'DejaVu Sans Mono', monospace; font-size: 10px;
-            border: 1px solid rgba(0,255,65,0.08); border-radius: 4px; padding: 5px 7px;
-            color: #005c18; background: rgba(0,255,65,0.01);
+        .tool-url-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 8px;
+            font-size: 11px;
+            color: #00cc44;
         }
-        .tools-stat-box .stat-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
-        .tools-stat-box .stat-val { color: #00cc44; }
+        .tool-url-icon {
+            color: #00ff41;
+            font-size: 10px;
+            opacity: 0.8;
+        }
+        .tool-url {
+            color: #00cc44;
+            text-decoration: none;
+            word-break: break-all;
+            transition: color 0.3s;
+            border-bottom: 1px dotted transparent;
+        }
+        .tool-url:hover {
+            color: #ffffff;
+            text-shadow: 0 0 6px #00ff41;
+            border-bottom-color: rgba(0, 255, 65, 0.6);
+        }
+
+        .tool-desc {
+            font-size: 12px;
+            color: #d3d7cf;
+            opacity: 0.85;
+            line-height: 1.5;
+            transition: opacity 0.3s;
+        }
+        .tool-card:hover .tool-desc {
+            opacity: 1;
+        }
+
+        /* Staggered reveal delays */
+        .tool-card:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+        .tool-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+        .tool-card:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+        .tool-card:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+        .tool-card:nth-child(5) {
+            animation-delay: 0.25s;
+        }
+        .tool-card:nth-child(6) {
+            animation-delay: 0.3s;
+        }
+        .tool-card:nth-child(7) {
+            animation-delay: 0.35s;
+        }
+        .tool-card:nth-child(8) {
+            animation-delay: 0.4s;
+        }
+        .tool-card:nth-child(9) {
+            animation-delay: 0.45s;
+        }
+        .tool-card:nth-child(10) {
+            animation-delay: 0.5s;
+        }
+        .tool-card:nth-child(11) {
+            animation-delay: 0.55s;
+        }
+        .tool-card:nth-child(12) {
+            animation-delay: 0.6s;
+        }
+        .tool-card:nth-child(13) {
+            animation-delay: 0.65s;
+        }
+        .tool-card:nth-child(14) {
+            animation-delay: 0.7s;
+        }
+        .tool-card:nth-child(15) {
+            animation-delay: 0.75s;
+        }
+
+        @keyframes cardReveal {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+                filter: blur(3px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+
+        @media (max-width: 950px) {
+            .tools-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            .terminal {
+                padding: 14px;
+            }
+            .logo-container {
+                height: 110px;
+            }
+        }
+        @media (max-width: 650px) {
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+            .logo-container {
+                height: 90px;
+            }
+            .header-left {
+                gap: 6px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="terminal">
         <div class="layer-bg">
             <div class="bg-element bg-skull">
-               _,.-------.,_
-            ,;~'             '~;,
-          ,;                      ;,
-         ;                        ;
-        ,'                        ',
-       ,;                          ;,
-       ; ;      .          .      ; ;
-       | ;   ______      ______   ; |
-       |  `/~"      ~" . "~      "~\'  |
-       |  ~  ,-~~~^~, | ,~^~~~-,  ~  |
-        |   |        }:{        |   |
-        |   l       / | \       !   |
-        .~  (__,.--" .^. "--.,__)  ~.
-        |     ---;' / | \ `;---     |
-         \__.       \/^\/       .__/
-          V| \                 / |V
-           | |T~\___!___!___/~T| |
-           | |`IIII_I_I_I_IIII'| |
-           |  \,III I I I III,/  |
-            \   `~~~~~~~~~~'    /
-              \   .       .   /
+                _,.-------.,_
+                ,;~'             '~;,
+                ,;                      ;,
+                ;                        ;
+                ,'                        ',
+                ,;                          ;,
+                ; ;      .          .      ; ;
+                | ;   ______      ______   ; |
+                |  `/~"      ~" . "~      "~\'  |
+                |  ~  ,-~~~^~, | ,~^~~~-,  ~  |
+                |   |        }:{        |   |
+                |   l       / | \       !   |
+                .~  (__,.--" .^. "--.,__)  ~.
+                |     ---;' / | \ `;---     |
+                \__.       \/^\/       .__/
+                V| \                 / |V
+                | |T~\___!___!___/~T| |
+                | |`IIII_I_I_I_IIII'| |
+                |  \,III I I I III,/  |
+                \   `~~~~~~~~~~'    /
+                \   .       .   /
                 \.    ^    ./
-                  ^~~~^~~~^
+                ^~~~^~~~^
             </div>
-
             <div class="bg-element bg-cathedral">
-                 |
+                |
                 / \
-               /   \
-              /_____\
-             |       |
-             |  ___  |
-             | |_|_| |
-             | |_|_| |
-            /|       |\
-           / |  ___  | \
-          /  | |_|_| |  \
-         /___|_______|___\
-        |                 |
-        |   _   ___   _   |
-        |  | | |   | | |  |
-        |  | | |   | | |  |
-        |  |_| |___| |_|  |
-       /|                 |\
-      / |                 | \
-     /__|_________________|__\
+                /   \
+                /_____\
+                |       |
+                |  ___  |
+                | |_|_| |
+                | |_|_| |
+                /|       |\
+                / |  ___  | \
+                /  | |_|_| |  \
+                /___|_______|___\
+                |                 |
+                |   _   ___   _   |
+                |  | | |   | | |  |
+                |  | | |   | | |  |
+                |  |_| |___| |_|  |
+                /|                 |\
+                / |                 | \
+                /__|_________________|__\
             </div>
-
             <div class="bg-element bg-spider spider-1">
-      ___
-     /╲ |/╲
-    / ꍘ|ꍘ \
-   |   --   |
-    \  __  /
-     \/  \/
-    /|    |\
-   / |    | \
+                ___
+                /╲ |/╲
+                / ꍘ|ꍘ \
+                | -- |
+                \ __ /
+                \/ \/
+                /| |\
+                / | | \
             </div>
-
             <div class="bg-element bg-spider spider-2">
-       |
-    /╲ | /╲
-   / ꍘ|ꍘ \
-  |  \__/  |
-   \      /
-    \/\/\/
+                |
+                /╲ | /╲
+                / ꍘ|ꍘ \
+                | \__/ |
+                \ /
+                \/\/\/
             </div>
-
             <div class="bg-element bg-eye">𓂀</div>
             <div class="bg-element bg-rain rain-1">ﾊﾐﾋｰｳｼﾅﾓﾆｺﾑﾘｱﾒｶｷﾑﾕﾗｾﾈｽﾀﾇﾍｦ01010110010110100101ﾊﾐﾋｰｳｼﾅﾓﾆｺ</div>
             <div class="bg-element bg-rain rain-2">011001010ﾓﾆｺﾑﾘｱﾒｶｷﾑﾕﾗｾﾈｽﾀﾇﾍﾊﾐﾋｰｳｼﾅ1101010010110ﾑﾘｱﾒｶ</div>
-
             <div class="bg-element bg-graveyard">
-                <span>
-      ✞
-  ┌──────┐
-  │      │
-  │ RIP  │
-  │      │
-  └──────┘
-                </span>
-                <span>
-    ✟─✟─✟
-  ┌──────┐
-  │      │
-  │R·I·P │
-  │      │
-  └──────┘
-                </span>
-                <span>
-      ✞
-  ┌──────┐
-  │ ░░░░ │
-  │ RIP  │
-  │ ░░░░ │
-  └──────┘
-                </span>
-                <span>
-    ☩  ☩
-  ┌──────┐
-  │      │
-  │ R.I.P│
-  │      │
-  └──────┘
-                </span>
+                <span>✞ ┌──────┐ │      │ │ RIP  │ │      │ └──────┘</span>
+                <span>✟─✟─✟ ┌──────┐ │      │ │R·I·P │ │      │ └──────┘</span>
+                <span>✞ ┌──────┐ │ ░░░░ │ │ RIP  │ │ ░░░░ │ └──────┘</span>
+                <span>☩ ☩ ┌──────┐ │      │ │ R.I.P│ │      │ └──────┘</span>
             </div>
+            <div class="bg-particles" id="particles-container"></div>
         </div>
 
         <div class="layer-fg">
             <div class="terminal-header">
-                <span class="gothic-dot red">✟</span>
-                <span class="gothic-dot yellow">✟</span>
-                <span class="gothic-dot green">✟</span>
-                <span class="terminal-title">neo@matrix: ~/tools</span>
-                <span class="terminal-title" id="clock" style="margin-left: auto;"></span>
+                <div class="header-left">
+                    <span class="gothic-dot red">✟</span>
+                    <span class="gothic-dot yellow">✟</span>
+                    <span class="gothic-dot green">✟</span>
+                    <span class="terminal-path">neo@matrix:~/tools/</span>
+                </div>
+                <div class="header-clock" id="clock"></div>
             </div>
 
-            <div class="tools-content">
-                <div class="tools-left-panel">
-                    <canvas id="mini-matrix" class="mini-matrix-canvas" width="190" height="65"></canvas>
-                    <div class="signal-monitor">
-                        <div class="signal-header">
-                            <span>SIG&nbsp;▶</span>
-                            <span id="glitch-status" class="glitch-status">ONLINE ●</span>
-                        </div>
-                        <span id="signal-wave-1" class="signal-wave signal-wave-row"></span>
-                        <span id="signal-wave-2" class="signal-wave signal-wave-row" style="color:#005c18;"></span>
-                    </div>
-                    <div class="left-glyph" id="left-glyph">⌖ ✦ ✟ ⊗ ◈ ⟁</div>
-                    <div class="tools-stat-box" id="tools-stat-box">
-                        <div class="stat-row"><span>TOOLS</span><span class="stat-val" id="stat-count">—</span></div>
-                        <div class="stat-row"><span>INDEX</span><span class="stat-val">DB·v1</span></div>
-                        <div class="stat-row"><span>STATUS</span><span class="stat-val" id="stat-status">LOADING</span></div>
-                    </div>
-                </div>
-
-                <div class="tools-right-panel">
-                    <a class="btn-return" href="index.html">&#x2190; Return to Nexus</a>
-
-                    <div class="tools-ascii-title">
- ▄▄▄█████▓▒█████   ▒█████   ██▓      ██████
- ▓  ██▒ ▓▒██▒  ██▒▒██▒  ██▒▓██▒    ▒██    ▒
- ▒ ▓██░ ▒░██░  ██▒▒██░  ██▒▒██░    ░ ▓██▄
- ░ ▓██▓ ░▒██   ██░▒██   ██░▒██░      ▒   ██▒
-   ▒██▒ ░░ ████▓▒░░ ████▓▒░░██████▒▒██████▒▒
-   ▒ ░░  ░ ▒░▒░▒░ ░ ▒░▒░▒░ ░ ▒░▓  ░▒ ▒▓▒ ▒ ░
-     ░     ░ ▒ ▒░   ░ ▒ ▒░ ░ ░ ▒  ░░ ░▒  ░ ░
-   ░     ░ ░ ░ ▒  ░ ░ ░ ▒    ░ ░   ░  ░  ░
-             ░ ░      ░ ░      ░  ░      ░
-                    </div>
-
-                    <div class="tools-grid" id="tools-grid"></div>
-                </div>
+            <div class="logo-container" id="logoContainer">
+                <canvas id="logoCanvas"></canvas>
             </div>
+
+            <div class="action-bar">
+                <a class="btn-return" href="index.html">&#x2190; Return to Nexus</a>
+            </div>
+
+            <div class="tools-grid" id="tools-grid"></div>
         </div>
     </div>
 
     <script>
         function updateClock() {
             const now = new Date();
-            document.getElementById('clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds();
+            const colon = seconds % 2 === 0 ? ':' : ' ';
+            document.getElementById('clock').textContent = `${hours}${colon}${minutes}`;
         }
-        setInterval(updateClock, 1000);
+        setInterval(updateClock, 500);
         updateClock();
 
         const toolsData = [
@@ -356,93 +917,220 @@
         ];
 
         const grid = document.getElementById('tools-grid');
-        toolsData.forEach(tool => {
+        toolsData.forEach((tool, index) => {
             const card = document.createElement('div');
             card.className = 'tool-card';
             card.innerHTML = `
                 <div class="tool-title">${tool.name}</div>
-                <a href="https://${tool.url}" target="_blank" class="tool-url">https://${tool.url}</a>
+                <div class="tool-url-row">
+                    <span class="tool-url-icon">↗</span>
+                    <a href="https://${tool.url}" target="_blank" class="tool-url" onclick="event.stopPropagation();">${tool.url}</a>
+                </div>
                 <div class="tool-desc">${tool.desc}</div>
             `;
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('a')) {
+                    window.open(`https://${tool.url}`, '_blank');
+                }
+            });
             grid.appendChild(card);
         });
-
-        document.getElementById('stat-count').textContent = toolsData.length;
-        document.getElementById('stat-status').textContent = 'READY';
 
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') window.location.href = 'index.html';
         });
 
-        // ── Mini Matrix Rain ──
+        (function createParticles() {
+            const container = document.getElementById('particles-container');
+            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ▮▯▰▱▲△◆◇■□●○☆★';
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('span');
+                p.className = 'particle';
+                p.textContent = chars[Math.floor(Math.random() * chars.length)];
+                p.style.left = Math.random() * 95 + '%';
+                p.style.top = -(Math.random() * 100) + '%';
+                p.style.animationDuration = (Math.random() * 6 + 4) + 's';
+                p.style.animationDelay = (Math.random() * 8) + 's';
+                container.appendChild(p);
+            }
+        })();
+
+        const terminal = document.querySelector('.terminal');
+        const bgSkull = document.querySelector('.bg-skull');
+        const bgEye = document.querySelector('.bg-eye');
+        const bgCathedral = document.querySelector('.bg-cathedral');
+        terminal.addEventListener('mousemove', (e) => {
+            const rect = terminal.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width - 0.5;
+            const y = (e.clientY - rect.top) / rect.height - 0.5;
+            if (bgSkull) bgSkull.style.transform = `translateX(calc(-50% + ${x * 12}px)) translateY(${y * 8}px)`;
+            if (bgEye) bgEye.style.transform = `translateY(-50%) translateX(${x * 6}px) translateY(${y * 6}px)`;
+            if (bgCathedral) bgCathedral.style.transform = `translateX(${x * -10}px) translateY(${y * -8}px)`;
+        });
+        terminal.addEventListener('mouseleave', () => {
+            if (bgSkull) bgSkull.style.transform = 'translateX(-50%) translateY(0)';
+            if (bgEye) bgEye.style.transform = 'translateY(-50%) translateX(0) translateY(0)';
+            if (bgCathedral) bgCathedral.style.transform = 'translateX(0) translateY(0)';
+        });
+
         (function() {
-            const canvas = document.getElementById('mini-matrix');
+            const container = document.getElementById('logoContainer');
+            const canvas = document.getElementById('logoCanvas');
             const ctx = canvas.getContext('2d');
-            const CHARS = 'ｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ01';
-            const FONT_SIZE = 10;
-            const cols = Math.floor(canvas.width / FONT_SIZE);
-            const drops = Array.from({length: cols}, () => (Math.random() * -canvas.height / FONT_SIZE) | 0);
+            let width, height;
+            let grid = [];
+            let drops = [];
+            let mouse = { x: -1000, y: -1000 };
+            const cellWidth = 12;
+            const cellHeight = 18;
+            let cols, rows;
 
-            function draw() {
-                ctx.fillStyle = 'rgba(0,0,0,0.045)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.font = `${FONT_SIZE}px monospace`;
-                drops.forEach((y, i) => {
-                    const x = i * FONT_SIZE;
-                    ctx.fillStyle = '#ccffdd';
-                    ctx.fillText(CHARS[Math.random() * CHARS.length | 0], x, y * FONT_SIZE);
-                    ctx.fillStyle = '#00ff41';
-                    ctx.fillText(CHARS[Math.random() * CHARS.length | 0], x, (y - 1) * FONT_SIZE);
-                    ctx.fillStyle = '#00801f';
-                    ctx.fillText(CHARS[Math.random() * CHARS.length | 0], x, (y - 2) * FONT_SIZE);
-                    if (y * FONT_SIZE > canvas.height && Math.random() > 0.975) drops[i] = 0;
-                    drops[i]++;
-                });
+            const standardChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&*+-/;:.,()_ØłþFOPN■□○●^~`'=<>†‡§ÞÆ×".split('');
+            const gothicSymbols = ["☠", "☾", "⛤", "⚔", "⚰", "⛓", "☥", "♰", "♱", "🦇", "🕷", "👁"];
+            const FPS = 30;
+            const frameInterval = 1000 / FPS;
+            let lastTime = 0;
+
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = e.clientX - rect.left;
+                mouse.y = e.clientY - rect.top;
+            });
+            canvas.addEventListener('mouseleave', () => {
+                mouse.x = -1000;
+                mouse.y = -1000;
+            });
+
+            function resizeCanvas() {
+                const rect = container.getBoundingClientRect();
+                const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+                width = rect.width;
+                height = rect.height;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                cols = Math.ceil(width / cellWidth);
+                rows = Math.ceil(height / cellHeight);
+                initMatrixGrid();
             }
-            setInterval(draw, 55);
-        })();
 
-        // ── Signal Waveform ──
-        (function() {
-            const WAVE = ['▁','▂','▃','▄','▅','▆','▇','█'];
-            let phase = 0;
-            const w1 = document.getElementById('signal-wave-1');
-            const w2 = document.getElementById('signal-wave-2');
-            function update() {
-                const cols = 18;
-                let r1 = '', r2 = '';
+            function getRandomChar() {
+                const rand = Math.random();
+                if (rand < 0.02) return gothicSymbols[Math.floor(Math.random() * gothicSymbols.length)];
+                if (rand < 0.2) return ' ';
+                return standardChars[Math.floor(Math.random() * standardChars.length)];
+            }
+
+            function initMatrixGrid() {
+                grid = [];
+                drops = [];
                 for (let i = 0; i < cols; i++) {
-                    const v1 = (Math.sin((i / cols * Math.PI * 4) - phase) + 1) / 2;
-                    const v2 = (Math.sin((i / cols * Math.PI * 2) - phase * 0.7 + 1) + 1) / 2;
-                    r1 += WAVE[Math.floor(v1 * (WAVE.length - 1))];
-                    r2 += WAVE[Math.floor(v2 * (WAVE.length - 1))];
+                    drops[i] = Math.random() * -rows;
                 }
-                if (w1) w1.textContent = r1;
-                if (w2) w2.textContent = r2;
-                phase += 0.13;
+                for (let y = 0; y < rows; y++) {
+                    let row = [];
+                    for (let x = 0; x < cols; x++) {
+                        row.push({
+                            str: getRandomChar(),
+                            isFlickering: Math.random() < 0.12,
+                            color: Math.random() < 0.85 ? '#003311' : '#006622'
+                        });
+                    }
+                    grid.push(row);
+                }
             }
-            setInterval(update, 60);
-        })();
 
-        // ── Glitch Status & Glyph Cycle ──
-        (function() {
-            const STATES = ['ONLINE ●', 'SYN·ACK ⟁', 'ENCRYPT ✦', 'UPLINK ⌖', 'SECURE ⊗', 'ACTIVE ◈', 'STREAM ∿'];
-            const GLYPHS = [
-                '⌖ ✦ ✟ ⊗ ◈ ⟁', '✟ ⌖ ◈ ✦ ⊗ ∿',
-                '⊗ ⟁ ✦ ✟ ⌖ ◈', '◈ ∿ ⊗ ⌖ ✟ ⟁',
-                '∿ ◈ ⌖ ⊗ ⟁ ✦'
-            ];
-            let si = 0, gi = 0;
-            const statusEl = document.getElementById('glitch-status');
-            const glyphEl = document.getElementById('left-glyph');
-            setInterval(() => {
-                if (Math.random() > 0.55 && statusEl) {
-                    statusEl.textContent = STATES[si++ % STATES.length];
+            function drawLogo(time) {
+                if (!time) time = performance.now();
+                const deltaTime = time - lastTime;
+                if (deltaTime < frameInterval) {
+                    requestAnimationFrame(drawLogo);
+                    return;
                 }
-            }, 1400);
-            setInterval(() => {
-                if (glyphEl) glyphEl.textContent = GLYPHS[gi++ % GLYPHS.length];
-            }, 2800);
+                lastTime = time - (deltaTime % frameInterval);
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+                ctx.fillRect(0, 0, width, height);
+
+                ctx.font = `bold ${cellHeight}px "Courier New", monospace`;
+                ctx.textBaseline = 'top';
+
+                for (let i = 0; i < cols; i++) {
+                    drops[i] += 0.4;
+                    if (drops[i] > rows && Math.random() < 0.05) {
+                        drops[i] = Math.random() * -8;
+                    }
+                }
+
+                if (Math.random() < 0.08) {
+                    const randRow = Math.floor(Math.random() * rows);
+                    if (grid[randRow]) {
+                        if (Math.random() < 0.5) grid[randRow].unshift(grid[randRow].pop());
+                        else grid[randRow].push(grid[randRow].shift());
+                    }
+                }
+
+                for (let y = 0; y < rows; y++) {
+                    for (let x = 0; x < cols; x++) {
+                        let cell = grid[y][x];
+                        if (!cell) continue;
+                        if (cell.isFlickering && Math.random() < 0.08) {
+                            cell.str = getRandomChar();
+                        }
+                        let color = cell.color;
+                        const dropY = Math.floor(drops[x]);
+                        if (y === dropY) color = '#ffffff';
+                        else if (y >= dropY - 3 && y < dropY) color = '#00ff41';
+
+                        const dist = Math.abs(x * cellWidth - mouse.x) + Math.abs(y * cellHeight - mouse.y);
+                        if (dist < 80) {
+                            color = '#ffffff';
+                            if (Math.random() < 0.05) cell.str = getRandomChar();
+                        }
+
+                        if (cell.str !== ' ') {
+                            ctx.fillStyle = color;
+                            ctx.fillText(cell.str, x * cellWidth, y * cellHeight);
+                        }
+                    }
+                }
+
+                ctx.save();
+                const logoText = "TOOLS";
+                const breathe = Math.sin(time / 500);
+                const logoFontSize = height * 0.65 + breathe * 2;
+                ctx.font = `bold ${logoFontSize}px "Courier New", monospace`;
+                ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                const midX = width / 2;
+                const midY = height / 2;
+
+                if (Math.random() < 0.04) {
+                    const off = Math.random() * 10;
+                    ctx.globalAlpha = 0.8;
+                    ctx.fillStyle = '#ff003c';
+                    ctx.fillText(logoText, midX - off, midY);
+                    ctx.fillStyle = '#00eaff';
+                    ctx.fillText(logoText, midX + off, midY);
+                    ctx.globalAlpha = 1;
+                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                    ctx.fillText(logoText, midX, midY + (Math.random() * 8 - 4));
+                } else {
+                    ctx.shadowColor = '#ffffff';
+                    ctx.shadowBlur = 12 + breathe * 4;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(logoText, midX, midY);
+                }
+                ctx.restore();
+
+                requestAnimationFrame(drawLogo);
+            }
+
+            window.addEventListener('resize', resizeCanvas);
+            setTimeout(() => {
+                resizeCanvas();
+                requestAnimationFrame(drawLogo);
+            }, 100);
         })();
     </script>
 </body>

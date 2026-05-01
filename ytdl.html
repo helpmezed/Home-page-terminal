@@ -219,22 +219,45 @@
         log(`VIDEO ID: ${videoId}`, 'dim');
         log('PROBING INVIDIOUS NETWORK...', 'dim');
 
-        let data;
-        try {
-            const res = await fetch(`/api/yt?id=${encodeURIComponent(videoId)}`);
-            data = await res.json();
-            if (!res.ok || !data.ok) {
-                const msg = data.error || 'API error';
-                log('EXTRACTION FAILED: ' + msg, 'err');
-                if (data.details) data.details.forEach(d => log(d, 'dim'));
-                btn.disabled = false;
-                return;
-            }
-        } catch (e) {
-            log('EXTRACTION FAILED: ' + e.message, 'err');
+        const INSTANCES = ['https://yewtu.be', 'https://invidious.projectsegfau.lt', 'https://inv.tux.rs'];
+        const PROXIES = [
+            u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+            u => `https://corsproxy.io/?${encodeURIComponent(u)}`
+        ];
+
+        let title = '', formatMap = {};
+
+        // Gather data from public Invidious nodes via CORS proxies
+        for (const inst of INSTANCES) {
+            try {
+                const apiUrl = `${inst}/api/v1/videos/${videoId}?fields=title,formatStreams,adaptiveFormats`;
+                const res = await fetch(PROXIES0);
+                if (!res.ok) continue;
+                const json = await res.json();
+                if (!json.title) continue;
+
+                title = json.title;
+                (json.formatStreams || []).forEach(s => {
+                    const label = s.container === 'mp4' ? 'MP4' : s.container.toUpperCase();
+                    if (!formatMap[label]) formatMap[label] = { label, desc: s.qualityLabel || s.quality, urls: [] };
+                    if (!formatMap[label].urls.includes(s.url)) formatMap[label].urls.push(s.url);
+                });
+                const audio = (json.adaptiveFormats || []).find(s => s.type.includes('audio/mp4') || s.container === 'm4a');
+                if (audio) {
+                    if (!formatMap['M4A']) formatMap['M4A'] = { label: 'M4A', desc: 'AUDIO ONLY', urls: [] };
+                    if (!formatMap['M4A'].urls.includes(audio.url)) formatMap['M4A'].urls.push(audio.url);
+                }
+                if (title) break;
+            } catch (e) { console.warn(`Node ${inst} failed:`, e); }
+        }
+
+        if (!title) {
+            log('EXTRACTION FAILED: All nodes unreachable or video restricted.', 'err');
             btn.disabled = false;
             return;
         }
+
+        const data = { title, formats: Object.values(formatMap) };
 
         log(`TITLE: ${data.title}`, 'ok');
         log('BUILDING DOWNLOAD LINKS...', 'dim');
@@ -245,11 +268,14 @@
         // Track which server index each format button is on
         const srvIndex = [];
 
-        data.formats.forEach(({ label, desc, urls }, i) => {
+        (data.formats || []).forEach(({ label, desc, urls }, i) => {
+            if (!urls || urls.length === 0) return;
             const ext = EXT_MAP[label] || 'mp4';
             srvIndex[i] = 0;
 
-            const host = u => new URL(u).hostname;
+            const getHost = u => {
+                try { return new URL(u).hostname; } catch { return 'unknown node'; }
+            };
 
             const a = document.createElement('a');
             a.className = 'dl-link';
@@ -257,7 +283,7 @@
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
             a.download = `${safeName}.${ext}`;
-            a.innerHTML = `<span class="dl-fmt">${label}</span><span class="dl-desc">${desc}</span><span class="dl-srv">${host(urls[0])}</span>`;
+            a.innerHTML = `<span class="dl-fmt">${label}</span><span class="dl-desc">${desc}</span><span class="dl-srv">${getHost(urls[0])}</span>`;
 
             // Clicking the server label cycles to the next instance
             a.addEventListener('click', ev => {
@@ -266,7 +292,7 @@
                 srvIndex[i] = (srvIndex[i] + 1) % urls.length;
                 const nextUrl = urls[srvIndex[i]];
                 a.href = nextUrl;
-                a.querySelector('.dl-srv').textContent = host(nextUrl);
+                a.querySelector('.dl-srv').textContent = getHost(nextUrl);
             });
 
             row.appendChild(a);
