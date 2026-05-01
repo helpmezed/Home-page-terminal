@@ -677,9 +677,9 @@
                         </div>
                     </div>
 
-                    <!-- ── Tasks ── -->
+                    <!-- ── Open Tabs ── -->
                     <div class="bento-cell b-tasks">
-                        <div class="bento-cell-label"><span>◈ TASKS.LOG</span></div>
+                        <div class="bento-cell-label"><span>◈ TABS.LIVE</span><span id="tab-count" class="bcl-right"></span></div>
                         <div style="padding:8px 10px;">
                             <div class="tasks-list" id="tasks-list"></div>
                         </div>
@@ -815,8 +815,19 @@
             localStorage.setItem('startpage_bms', JSON.stringify(arr));
         }
         
-        // Task state initialization
-        let customTasks = JSON.parse(localStorage.getItem('startpage_tasks')) || [];
+        // Open-tab tracker via BroadcastChannel
+        const openTabs = new Map();
+        const _tabCh = ('BroadcastChannel' in window) ? new BroadcastChannel('hp_tabs') : null;
+
+        if (_tabCh) {
+            _tabCh.addEventListener('message', e => {
+                const { type, id, name, icon, href } = e.data;
+                if (type === 'open' || type === 'pong') openTabs.set(id, { name, icon, href });
+                else if (type === 'close') openTabs.delete(id);
+                renderTabs();
+            });
+            _tabCh.postMessage({ type: 'ping' });
+        }
 
         function updateTopClock() {
             const now = new Date();
@@ -1159,28 +1170,39 @@
 
         }
         
-        // Render Tasks logic
-        function renderTasks(animate = false) {
+        function renderTabs(animate = false) {
             const list = document.getElementById('tasks-list');
-            list.innerHTML = '';
-            
+            const countEl = document.getElementById('tab-count');
             if (animate) list.classList.add('visible');
-            
-            if (customTasks.length === 0) {
-                list.innerHTML = `<div class="task-item"><span class="task-text" style="opacity:0.6;">No pending tasks.</span></div>`;
+
+            if (openTabs.size === 0) {
+                list.innerHTML = `<div class="task-item"><span class="task-text" style="opacity:0.3; font-size:11px; letter-spacing:1px;">NO ACTIVE TABS</span></div>`;
+                if (countEl) countEl.textContent = '';
                 return;
             }
 
-            customTasks.forEach((t, i) => {
-                const checkbox = t.done ? '[x]' : '[ ]';
-                const doneClass = t.done ? 'done' : '';
-                list.innerHTML += `<div class="task-item"><span class="task-box">${checkbox}</span><span class="task-text ${doneClass}">${i}: ${t.text}</span></div>`;
-            });
+            if (countEl) countEl.textContent = openTabs.size + ' open';
+            list.innerHTML = '';
+            for (const [, tab] of openTabs) {
+                const a = document.createElement('a');
+                a.href = tab.href;
+                a.target = '_blank';
+                a.rel = 'noopener';
+                a.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 2px;text-decoration:none;border-radius:4px;transition:background 0.15s;';
+                a.onmouseenter = () => a.style.background = 'rgba(0,255,65,0.05)';
+                a.onmouseleave = () => a.style.background = '';
+                a.innerHTML = `
+                    <span style="color:#007a22;font-size:9px;flex-shrink:0;">◉</span>
+                    <span class="task-text" style="font-size:12px;letter-spacing:0.4px;">${tab.icon} ${tab.name}</span>
+                    <span style="margin-left:auto;font-size:9px;color:#003300;letter-spacing:0.5px;flex-shrink:0;">${tab.href.replace(/^\//, '').replace('.html','')}</span>
+                `;
+                list.appendChild(a);
+            }
         }
 
         function initShortcuts() {
             renderShortcuts(true);
-            renderTasks(true);
+            renderTabs(true);
             const totalItems = Math.max(MIN_SLOTS, getBookmarks().length);
             setTimeout(() => {
                 promptEl.classList.add('visible');
@@ -1410,38 +1432,6 @@
                 return;
             }
             
-            if (primary === 'task') {
-                const action = args[1];
-                if (action === 'add') {
-                    const taskText = args.slice(2).join(' ').trim();
-                    if (!taskText) {
-                        printResult("ERROR: Task text cannot be empty.");
-                        return;
-                    }
-                    customTasks.push({ text: taskText, done: false });
-                    localStorage.setItem('startpage_tasks', JSON.stringify(customTasks));
-                    renderTasks();
-                    printResult("Task appended successfully.");
-                } else if (action === 'done') {
-                    const idx = parseInt(args[2]);
-                    if (customTasks[idx]) {
-                        customTasks[idx].done = !customTasks[idx].done;
-                        localStorage.setItem('startpage_tasks', JSON.stringify(customTasks));
-                        renderTasks();
-                        printResult(`Task [${idx}] status updated.`);
-                    } else {
-                        printResult(`Task ID [${idx}] not found.`);
-                    }
-                } else if (action === 'clear') {
-                    customTasks = customTasks.filter(t => !t.done);
-                    localStorage.setItem('startpage_tasks', JSON.stringify(customTasks));
-                    renderTasks();
-                    printResult("Completed tasks pruned.");
-                } else {
-                    printResult("Invalid task argument. Use 'add', 'done [id]', or 'clear'.");
-                }
-                return;
-            }
 
             if (primary === 'tools') {
                 navigateWithTransition('tools.html');

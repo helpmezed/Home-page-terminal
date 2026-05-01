@@ -1133,5 +1133,8 @@
             }, 100);
         })();
     </script>
+<script>
+(function(){const _i=Math.random().toString(36).slice(2,9),_c=('BroadcastChannel'in window)?new BroadcastChannel('hp_tabs'):null,_d={id:_i,name:'Tools DB',icon:'{}',href:location.pathname};if(!_c)return;_c.postMessage({type:'open',..._d});_c.addEventListener('message',e=>{if(e.data.type==='ping')_c.postMessage({type:'pong',..._d});});addEventListener('beforeunload',()=>_c.postMessage({type:'close',id:_i}));})();
+</script>
 </body>
 </html>
