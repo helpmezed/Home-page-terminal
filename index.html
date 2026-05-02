@@ -69,7 +69,9 @@
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
         .right-panel { flex: 1; display: flex; flex-direction: column; gap: 8px; } /* Increased gap */
-        .info-container { line-height: 1.45; font-size: 13px; white-space: pre-wrap; font-variant-numeric: tabular-nums; } /* Increased font size and line height */
+        .info-container { display: flex; flex-wrap: wrap; align-items: baseline; font-size: 13px; font-variant-numeric: tabular-nums; gap: 0; }
+        .info-line { width: 50%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 4px 2px 0; box-sizing: border-box; }
+        .info-line-full { width: 100%; padding: 2px 0; }
 
         .title { color: #00ff41; font-weight: bold; text-shadow: 0 0 8px rgba(0, 255, 65, 0.6); font-size: 18px; margin-bottom: 2px; display: inline-block; }
         .label { color: #00cc44; font-weight: bold; margin-right: 6px; font-size: 12px; }
@@ -907,7 +909,7 @@
         let lineIndex = 0;
         function typeChar() {
             if (lineIndex >= systemData.length) {
-                textContainer.innerHTML += '<span class="cursor"></span>';
+                textContainer.innerHTML += '<div class="info-line-full"><span class="cursor"></span></div>';
                 setTimeout(initShortcuts, 200);
                 requestAnimationFrame(updateLiveMsClock);
                 startSysMonitor();
@@ -916,22 +918,22 @@
 
             const line = systemData[lineIndex];
             if (line.type === 'empty') {
-                textContainer.innerHTML += "<br>";
+                textContainer.innerHTML += `<div class="info-line-full" style="height:4px"></div>`;
             } else if (line.type === 'title') {
-                textContainer.innerHTML += `<span class="title">${line.text}</span><br>`;
+                textContainer.innerHTML += `<div class="info-line-full"><span class="title">${line.text}</span></div>`;
             } else if (line.type === 'sep') {
-                textContainer.innerHTML += `<span class="sys-sep">─────────────────────────</span><br>`;
+                textContainer.innerHTML += `<div class="info-line-full"><span class="sys-sep">─────────────────────────</span></div>`;
             } else if (line.type === 'info') {
                 const val = line.value || "";
                 const idAttr = line.id ? `id="${line.id}"` : "";
-                textContainer.innerHTML += `<span class="label">${line.label}:</span> <span class="value" ${idAttr}>${val}</span><br>`;
+                textContainer.innerHTML += `<div class="info-line"><span class="label">${line.label}:</span> <span class="value" ${idAttr}>${val}</span></div>`;
             } else if (line.type === 'bar-row') {
-                textContainer.innerHTML += `<span class="label">${line.label}:</span> <span id="${line.id}" class="sys-bar-row"><span class="sys-bar-empty">░░░░░░░░░░░░░░░░</span>  <span class="sys-bar-pct">···</span></span><br>`;
+                textContainer.innerHTML += `<div class="info-line-full"><span class="label">${line.label}:</span> <span id="${line.id}" class="sys-bar-row"><span class="sys-bar-empty">░░░░░░░░░░░░░░░░</span>  <span class="sys-bar-pct">···</span></span></div>`;
             } else if (line.type === 'spark') {
-                textContainer.innerHTML += `<span class="label">${line.label}:</span> <span id="${line.id}" class="sys-spark">↑ ··· ↓ ···</span><br>`;
+                textContainer.innerHTML += `<div class="info-line-full"><span class="label">${line.label}:</span> <span id="${line.id}" class="sys-spark">↑ ··· ↓ ···</span></div>`;
             } else if (line.type === 'palette') {
                 const cols = ['#007a22','#00aa33','#00cc44','#00ff41','#66ffaa','#ccffdd','#aaaaaa','#ffffff'];
-                textContainer.innerHTML += `<span class="sys-palette">${cols.map(c => `<span style="color:${c};text-shadow:0 0 5px ${c}99">█</span>`).join('')}</span>`;
+                textContainer.innerHTML += `<div class="info-line-full"><span class="sys-palette">${cols.map(c => `<span style="color:${c};text-shadow:0 0 5px ${c}99">█</span>`).join('')}</span></div>`;
             }
             lineIndex++;
             setTimeout(typeChar, 30 + Math.random() * 60);
