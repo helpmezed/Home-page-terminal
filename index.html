@@ -541,7 +541,8 @@
         .bento-cell:hover {
             border-color: rgba(0, 255, 65, 0.45);
             background: rgba(5, 15, 5, 0.9);
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1), inset 0 0 12px rgba(0,255,65,0.03);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.08);
+            transform: translateY(-2px);
         }
         .bento-cell-label {
             display: flex; justify-content: space-between; align-items: center;
@@ -833,7 +834,6 @@
                 if (!firefoxTabs) renderTabs();
             });
             _tabCh.postMessage({ type: 'ping' });
-            window.addEventListener('beforeunload', () => _tabCh.close());
         }
 
         function updateTopClock() {
@@ -1678,8 +1678,7 @@
             const cols = Math.floor(cssW / FONT_SIZE);
             const drops = Array.from({length: cols}, () => (Math.random() * -cssH / FONT_SIZE) | 0);
 
-            function draw() {
-                if (document.hidden) return;
+            function draw() { // Increased font size for mini-matrix
                 ctx.fillStyle = 'rgba(0,0,0,0.045)';
                 ctx.fillRect(0, 0, cssW, cssH);
                 ctx.font = `${FONT_SIZE}px monospace`;
@@ -1705,7 +1704,6 @@
             const w1 = document.getElementById('signal-wave-1');
             const w2 = document.getElementById('signal-wave-2'); // Increased cols for signal waveform
             function update() {
-                if (document.hidden) return;
                 const cols = 18;
                 let r1 = '', r2 = '';
                 for (let i = 0; i < cols; i++) {
@@ -2096,12 +2094,12 @@
             const statusEl = document.getElementById('glitch-status');
             const glyphEl = document.getElementById('left-glyph');
             setInterval(() => {
-                if (document.hidden) return;
-                if (Math.random() > 0.55 && statusEl) statusEl.textContent = STATES[si++ % STATES.length];
+                if (Math.random() > 0.55 && statusEl) {
+                    statusEl.textContent = STATES[si++ % STATES.length];
+                }
             }, 1400);
             setInterval(() => {
-                if (document.hidden || !glyphEl) return;
-                glyphEl.textContent = GLYPHS[gi++ % GLYPHS.length];
+                if (glyphEl) glyphEl.textContent = GLYPHS[gi++ % GLYPHS.length];
             }, 2800);
         })();
     </script>
