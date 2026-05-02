@@ -50,23 +50,7 @@
         .content { display: flex; gap: 14px; color: #00cc44; align-items: flex-start; padding: 4px 8px; } /* Increased gap and padding */
         .left-panel { display: flex; flex-direction: column; gap: 10px; align-items: center; } /* Increased gap */
 
-        .ascii-wrapper {
-            perspective: 800px; width: 100%; max-width: 200px; height: 160px; display: flex; align-items: center; justify-content: center;
-            animation: float 6s ease-in-out infinite;
-            isolation: isolate;
-        }
-        .ascii-art {
-            font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
-            white-space: pre; font-size: 14px; line-height: 1.35; /* Increased font size and line height */
-            transform-style: preserve-3d;
-            animation: spin 14s linear infinite;
-            will-change: transform;
-        }
-        .ascii-art .color1 { color: #00ff41; text-shadow: 0 0 6px rgba(0,255,65,0.5); }
-        .ascii-art .color2 { color: #00cc44; }
-
-        @keyframes spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        #avatar-canvas { display: block; width: 100%; height: 100%; }
 
         .right-panel { flex: 1; display: flex; flex-direction: column; gap: 8px; } /* Increased gap */
         .info-container { display: flex; flex-wrap: wrap; align-items: baseline; font-size: 13px; font-variant-numeric: tabular-nums; gap: 0; }
@@ -585,7 +569,7 @@
 
         .bcl-right { color: #002200; }
         .b-search  { grid-area: search; }
-        .b-ascii   { grid-area: ascii;   display: flex; align-items: center; justify-content: center; padding: 10px 6px; }
+        .b-ascii   { grid-area: ascii; overflow: hidden; }
         .b-info    { grid-area: info; display: flex; flex-direction: column; }
         .b-sidebar { grid-area: sidebar; display: flex; flex-direction: column; }
         .b-meta    { grid-area: meta; }
@@ -638,11 +622,9 @@
                         </div>
                     </div>
 
-                    <!-- ── ASCII art ── -->
+                    <!-- ── Particle avatar ── -->
                     <div class="bento-cell b-ascii">
-                        <div class="ascii-wrapper">
-                            <div class="ascii-art" id="ascii"></div>
-                        </div>
+                        <canvas id="avatar-canvas"></canvas>
                     </div>
 
                     <!-- ── System info ── -->
@@ -874,34 +856,6 @@
                 { type: 'empty' },
                 { type: 'palette' },
             ];
-        }
-
-        const asciiLines = [
-            { text: "┌──────────────────┐", color: "color2" },
-            { text: "│  ◈  CONSTRUCT  ◈  │", color: "color1" },
-            { text: "├──────────────────┤", color: "color2" },
-            { text: "│   ◉         ◉   │", color: "color1" },
-            { text: "│     ▄▄▄▄▄▄▄     │", color: "color1" },
-            { text: "├──────────────────┤", color: "color2" },
-            { text: "│   SYS  v2.077   │", color: "color2" },
-            { text: "└──────────────────┘", color: "color2" },
-        ];
-
-        const asciiEl = document.getElementById('ascii');
-        let asciiIndex = 0;
-
-        function typeAscii() {
-            if (asciiIndex < asciiLines.length) {
-                const item = asciiLines[asciiIndex];
-                const div = document.createElement('div');
-                const span = document.createElement('span');
-                span.className = item.color;
-                span.textContent = item.text;
-                div.appendChild(span);
-                asciiEl.appendChild(div);
-                asciiIndex++;
-                setTimeout(typeAscii, 5);
-            }
         }
 
         const textContainer = document.getElementById('terminal-text');
@@ -1519,7 +1473,6 @@
 
         function startPage() {
             initPage();
-            typeAscii();
             setTimeout(typeChar, 300);
         }
 
@@ -1820,6 +1773,143 @@
                 searchInput.focus();
             }
         });
+
+        // ── Particle Avatar ──
+        (function() {
+            const canvas = document.getElementById('avatar-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            function resize() {
+                canvas.width  = canvas.offsetWidth  || 220;
+                canvas.height = canvas.offsetHeight || 220;
+            }
+            resize();
+            new ResizeObserver(resize).observe(canvas);
+
+            const rightSide = [
+                {x:0,y:-160},{x:20,y:-150},{x:25,y:-120},{x:15,y:-100},
+                {x:50,y:-90},{x:80,y:-40},{x:95,y:40},{x:75,y:45},
+                {x:60,y:-20},{x:40,y:-40},{x:35,y:40},{x:40,y:140},
+                {x:45,y:240},{x:15,y:240},{x:10,y:120},{x:0,y:80}
+            ];
+            const leftSide = [];
+            for (let i = rightSide.length - 2; i > 0; i--)
+                leftSide.push({x: -rightSide[i].x, y: rightSide[i].y});
+            const basePts = rightSide.concat(leftSide);
+
+            function subdivide(points, maxLen) {
+                const out = [];
+                for (let i = 0; i < points.length; i++) {
+                    const p1 = points[i], p2 = points[(i+1) % points.length];
+                    out.push(p1);
+                    const dx = p2.x-p1.x, dy = p2.y-p1.y;
+                    const segs = Math.ceil(Math.hypot(dx,dy) / maxLen);
+                    for (let j = 1; j < segs; j++)
+                        out.push({x: p1.x+dx*j/segs, y: p1.y+dy*j/segs});
+                }
+                return out;
+            }
+            const pts = subdivide(basePts, 4);
+
+            const normals = pts.map((p1,i) => {
+                const p0 = pts[(i-1+pts.length)%pts.length], p2 = pts[(i+1)%pts.length];
+                const dx1=p1.x-p0.x, dy1=p1.y-p0.y, l1=Math.hypot(dx1,dy1)||1;
+                const dx2=p2.x-p1.x, dy2=p2.y-p1.y, l2=Math.hypot(dx2,dy2)||1;
+                const nx=(-dy1/l1)+(-dy2/l2), ny=(dx1/l1)+(dx2/l2);
+                const ln=Math.hypot(nx,ny)||1;
+                return {x:nx/ln, y:ny/ln};
+            });
+
+            const minX=Math.min(...pts.map(p=>p.x)), maxX=Math.max(...pts.map(p=>p.x));
+            const minY=Math.min(...pts.map(p=>p.y)), maxY=Math.max(...pts.map(p=>p.y));
+            const tileSize=5;
+            const cols=Math.ceil((maxX-minX)/tileSize), rows=Math.ceil((maxY-minY)/tileSize);
+
+            function inPoly(pt, vs) {
+                let [x,y]=pt, inside=false;
+                for (let i=0,j=vs.length-1; i<vs.length; j=i++) {
+                    const xi=vs[i].x,yi=vs[i].y,xj=vs[j].x,yj=vs[j].y;
+                    if (((yi>y)!==(yj>y)) && (x<(xj-xi)*(y-yi)/(yj-yi)+xi)) inside=!inside;
+                }
+                return inside;
+            }
+            const validCells=[];
+            for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
+                const cx=minX+c*tileSize+tileSize/2, cy=minY+r*tileSize+tileSize/2;
+                if (inPoly([cx,cy],pts)) validCells.push({cx,cy});
+            }
+
+            const palette=['#00ff41','#00cc44','#007a22','#ccffdd','#00ff41'];
+            const numWaves=50, maxDist=600;
+            const waves=Array.from({length:numWaves},(_,i)=>i*(maxDist/numWaves));
+            const particles=[];
+            let time=0;
+
+            function draw() {
+                time+=16;
+                const W=canvas.width, H=canvas.height;
+                ctx.fillStyle='rgba(3,10,3,0.88)';
+                ctx.fillRect(0,0,W,H);
+                ctx.save();
+                ctx.translate(W/2, H/2);
+                const scale=Math.min(W,H)/520;
+                ctx.scale(scale,scale);
+
+                // aura waves
+                waves.forEach((w,idx) => {
+                    waves[idx]+=1.2;
+                    if (waves[idx]>maxDist) waves[idx]=0;
+                    const d=waves[idx];
+                    const op=Math.max(0,1-(d/maxDist));
+                    ctx.beginPath();
+                    ctx.strokeStyle=`rgba(0,255,65,${op*0.35})`;
+                    ctx.lineWidth=0.7;
+                    ctx.setLineDash([2,5]);
+                    ctx.lineDashOffset=-time*0.04;
+                    for (let i=0;i<pts.length;i++) {
+                        const p=pts[i],n=normals[i];
+                        const wobble=Math.sin(i*0.1+time*0.003-d*0.01)*12*(Math.min(1,d/50));
+                        const ex=p.x+n.x*(d+wobble), ey=p.y+n.y*(d+wobble);
+                        i===0?ctx.moveTo(ex,ey):ctx.lineTo(ex,ey);
+                    }
+                    ctx.closePath(); ctx.stroke();
+                });
+                ctx.setLineDash([]);
+
+                // particles
+                ctx.shadowBlur=6; ctx.shadowColor='rgba(0,255,65,0.5)';
+                const spawnN=Math.floor(validCells.length*0.10);
+                for (let i=0;i<spawnN;i++) {
+                    const cell=validCells[Math.floor(Math.random()*validCells.length)];
+                    const dx=cell.cx, dy=cell.cy-40, dist=Math.hypot(dx,dy)||1;
+                    particles.push({
+                        x:cell.cx, y:cell.cy,
+                        vx:(dx/dist)*Math.random()*2+(Math.random()-0.5)*1.5,
+                        vy:(dy/dist)*Math.random()*2+(Math.random()-0.5)*1.5-0.8,
+                        size:tileSize*(0.5+Math.random()*0.8),
+                        color:palette[Math.floor(Math.random()*palette.length)],
+                        life:1.0, decay:0.025+Math.random()*0.035,
+                        rot:Math.random()*Math.PI*2, rotV:(Math.random()-0.5)*0.25
+                    });
+                }
+                for (let i=particles.length-1;i>=0;i--) {
+                    const p=particles[i];
+                    p.x+=p.vx; p.y+=p.vy; p.rot+=p.rotV; p.life-=p.decay;
+                    if (p.life<=0){particles.splice(i,1);continue;}
+                    ctx.save();
+                    ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+                    ctx.fillStyle=p.color; ctx.globalAlpha=Math.max(0,p.life);
+                    const s=p.size*(0.2+p.life*0.8);
+                    ctx.fillRect(-s/2,-s/2,s,s);
+                    ctx.restore();
+                }
+                ctx.globalAlpha=1; ctx.shadowBlur=0;
+                ctx.restore();
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
 
         // ── Mini Matrix Rain ──
         (function() {
