@@ -86,7 +86,6 @@
 
     let W, H, dpr, particles = [], mouse = { x: -9999, y: -9999 };
     let hovered = null, frameCount = 0;
-    const CR = 160, CR_SQ = CR * CR;
 
     function resize() {
         dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -279,11 +278,8 @@
         ctx.fillStyle = 'rgba(0,2,0,0.98)';
         ctx.fillRect(0, 0, W, H);
         ctx.strokeStyle = 'rgba(0,255,65,0.025)'; ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        for (let x = 0; x < W; x += 40) { ctx.moveTo(x,0); ctx.lineTo(x,H); }
-        for (let y = 0; y < H; y += 28) { ctx.moveTo(0,y); ctx.lineTo(W,y); }
-        ctx.stroke();
-
+        for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+        for (let y = 0; y < H; y += 28) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
         for (let y = 0; y < H; y += 3) { ctx.fillStyle='rgba(0,0,0,0.055)'; ctx.fillRect(0,y,W,1); }
 
         frameCount++;

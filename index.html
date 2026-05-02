@@ -17,7 +17,6 @@
             background: #050505; border-radius: 10px; padding: 16px; width: min(1600px, 97vw); /* Increased padding, width, border-radius */
             height: 96vh; box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 20px rgba(0, 255, 65, 0.05);
             position: relative; display: flex; flex-direction: column;
-            will-change: transform;
             border: 1px solid rgba(0, 255, 65, 0.2);
             clip-path: inset(0 round 8px);
             zoom: 1.05; /* Increased zoom */
@@ -91,8 +90,8 @@
             animation: cardPulse 3.5s ease-in-out infinite;
         }
         @keyframes cardPulse {
-            0%, 100% { border-color: rgba(0,255,65,0.25); opacity: 0.85; }
-            50%       { border-color: rgba(0,255,65,0.55); opacity: 1; }
+            0%, 100% { border-color: rgba(0,255,65,0.28); box-shadow: 0 0 6px rgba(0,255,65,0.1), inset 0 0 5px rgba(0,255,65,0.04); }
+            50% { border-color: rgba(0,255,65,0.65); box-shadow: 0 0 18px rgba(0,255,65,0.22), 0 0 6px rgba(0,255,65,0.1), inset 0 0 10px rgba(0,255,65,0.07); }
         }
         .shortcut-card.animate-in { animation: springIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, cardPulse 3.5s ease-in-out infinite; }
         @keyframes springIn { to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -103,8 +102,8 @@
             transition: 0.6s; transform: skewX(-20deg);
         }
         .shortcut-card:hover {
-            transform: scale(1.04); border-color: rgba(0, 255, 65, 0.6); color: #00ff41;
-            background: rgba(0, 255, 65, 0.08); box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+            transform: translateY(-5px) scale(1.05); border-color: rgba(0, 255, 65, 0.6); color: #00ff41;
+            background: rgba(0, 255, 65, 0.08); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 255, 65, 0.2);
         }
         .shortcut-card:hover::before { left: 150%; }
         .shortcut-card:active { transform: translateY(-2px) scale(0.98); transition: 0.1s; }
@@ -230,7 +229,6 @@
             inset: 0;
             pointer-events: none;
             z-index: 4;
-            will-change: transform;
             background:
                 repeating-linear-gradient(
                     to bottom,
@@ -916,8 +914,6 @@
         }
 
         function updateLiveMsClock() {
-            requestAnimationFrame(updateLiveMsClock);
-            if (document.hidden) return;
             const now = new Date();
             const dateEl = document.getElementById('info-date');
             if (dateEl && !dateEl.textContent) {
@@ -933,6 +929,7 @@
                 const milliseconds = now.getMilliseconds().toString().padStart(3, '0');
                 timeEl.textContent = `${hours}:${minutes}:${seconds}.${milliseconds} ${ampm}`;
             }
+            requestAnimationFrame(updateLiveMsClock);
         }
 
         const shortcutsEl = document.getElementById('shortcuts');
@@ -1680,13 +1677,9 @@
             const FONT_SIZE = 10;
             const cols = Math.floor(cssW / FONT_SIZE);
             const drops = Array.from({length: cols}, () => (Math.random() * -cssH / FONT_SIZE) | 0);
-            let lastTime = 0;
 
-            function draw(time) {
-                requestAnimationFrame(draw);
-                if (document.hidden || time - lastTime < 55) return;
-                lastTime = time;
-
+            function draw() {
+                if (document.hidden) return;
                 ctx.fillStyle = 'rgba(0,0,0,0.045)';
                 ctx.fillRect(0, 0, cssW, cssH);
                 ctx.font = `${FONT_SIZE}px monospace`;
@@ -1702,7 +1695,7 @@
                     drops[i]++;
                 });
             }
-            requestAnimationFrame(draw);
+            setInterval(draw, 55);
         })();
 
         // ── Signal Waveform ──
@@ -1711,11 +1704,8 @@
             let phase = 0;
             const w1 = document.getElementById('signal-wave-1');
             const w2 = document.getElementById('signal-wave-2'); // Increased cols for signal waveform
-            let _waveTs = 0;
-            function update(t) {
-                requestAnimationFrame(update);
-                if (document.hidden || t - _waveTs < 80) return;
-                _waveTs = t;
+            function update() {
+                if (document.hidden) return;
                 const cols = 18;
                 let r1 = '', r2 = '';
                 for (let i = 0; i < cols; i++) {
@@ -1728,7 +1718,7 @@
                 if (w2) w2.textContent = r2;
                 phase += 0.13;
             }
-            requestAnimationFrame(update);
+            setInterval(update, 60);
         })();
 
         // ── Countries Visualizer (Orbital Descent Style — compact) ──
@@ -1766,7 +1756,6 @@
                 .sort((a,b) => b[METRICS[mIdx].key]-a[METRICS[mIdx].key]).slice(0, 12);
             let top = getTop();
 
-            const PI_2 = Math.PI * 2;
             const cross = (x,y,s,a=0.6) => {
                 ctx.strokeStyle=`rgba(0,255,65,${a})`; ctx.lineWidth=1; ctx.beginPath();
                 ctx.moveTo(x,y-s); ctx.lineTo(x,y-s*0.3); ctx.moveTo(x,y+s*0.3); ctx.lineTo(x,y+s);
@@ -1775,8 +1764,6 @@
             };
 
             function draw() {
-                requestAnimationFrame(draw);
-                if (document.hidden) return;
                 ctx.clearRect(0,0,W,H);
                 ctx.fillStyle='#000200'; ctx.fillRect(0,0,W,H);
 
@@ -1785,24 +1772,21 @@
 
                 // Faint grid
                 ctx.strokeStyle='rgba(0,255,65,0.04)'; ctx.lineWidth=1;
-                ctx.beginPath();
-                for(let x=0;x<W;x+=20){ctx.moveTo(x,0);ctx.lineTo(x,H);}
-                for(let y=0;y<H;y+=15){ctx.moveTo(0,y);ctx.lineTo(W,y);}
-                ctx.stroke();
+                for(let x=0;x<W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+                for(let y=0;y<H;y+=15){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
 
                 // Topographic contour lines
-                const nLines=12;
+                const nLines=16;
                 for(let i=0;i<nLines;i++){
                     const norm=i/nLines, baseY=H*(0.04+norm*0.92);
                     const amp=7+norm*14, spd=0.22+norm*0.12;
                     ctx.beginPath();
-                    const steps=Math.floor(W/4);
+                    const steps=Math.floor(W/2);
                     for(let s=0;s<=steps;s++){
-                        const ratio = s/steps;
-                        const px=ratio*W;
-                        const py=baseY+Math.sin(ratio*PI_2*2+t*spd+i*0.55)*amp*0.5
-                            +Math.cos(ratio*PI_2*1.2+t*spd*0.65+i*0.38)*amp*0.32
-                            +Math.sin(ratio*PI_2*3+t*0.08+i*1.1)*amp*0.12;
+                        const px=(s/steps)*W;
+                        const py=baseY+Math.sin(s/steps*Math.PI*4+t*spd+i*0.55)*amp*0.5
+                            +Math.cos(s/steps*Math.PI*2.4+t*spd*0.65+i*0.38)*amp*0.32
+                            +Math.sin(s/steps*Math.PI*6+t*0.08+i*1.1)*amp*0.12;
                         s===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
                     }
                     let lc;
@@ -1849,6 +1833,7 @@
                 t+=0.016; tick++;
                 if(tick%200===0) nodeIdx=(nodeIdx+1)%top.length;
                 if(tick%840===0){mIdx=(mIdx+1)%METRICS.length;top=getTop();nodeIdx=0;}
+                requestAnimationFrame(draw);
             }
             draw();
         })();
@@ -1955,8 +1940,6 @@
             const ASCENT = 0.0022;
 
             function draw() {
-                requestAnimationFrame(draw);
-                if (document.hidden) return;
                 ctx.clearRect(0,0,W,H);
                 ctx.fillStyle='#000200'; ctx.fillRect(0,0,W,H);
 
@@ -1989,24 +1972,11 @@
                     const p=particles[i];
                     p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;
                     if(p.life<=0){particles.splice(i,1);continue;}
+                    ctx.fillStyle=p.life>0.5 // Adjusted particle color opacity
+                        ?`rgba(255,150,30,${(p.life*0.9).toFixed(2)})`
+                        :`rgba(210,40,0,${(p.life*0.65).toFixed(2)})`;
+                    ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); ctx.fill();
                 }
-
-                // Batch drawing exhaust particles (much faster than individual arc calls)
-                ctx.fillStyle = 'rgba(255,150,30,0.8)';
-                for(const p of particles) {
-                    if (p.life > 0.5) {
-                        const sz = p.r * p.life;
-                        ctx.fillRect(p.x - sz/2, p.y - sz/2, sz, sz);
-                    }
-                }
-                ctx.fillStyle = 'rgba(210,40,0,0.4)';
-                for(const p of particles) {
-                    if (p.life <= 0.5) {
-                        const sz = p.r * p.life;
-                        ctx.fillRect(p.x - sz/2, p.y - sz/2, sz, sz);
-                    }
-                }
-
                 if(ry>-35 && ry<H+35) drawRocket(rx, ry);
 
                 // ── Info panel ──
@@ -2058,6 +2028,7 @@
                 ctx.fillText(`ASCENT  ${(pct*100).toFixed(0)}%`, IX, 118); // Adjusted Y position
 
                 t+=0.016; tick++;
+                requestAnimationFrame(draw);
             }
             draw();
         })();
