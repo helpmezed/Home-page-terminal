@@ -247,7 +247,7 @@
                 repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px), /* Adjusted opacity */
                 radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.65) 100%),
                 #000000;
-            transition: opacity 0.7s ease;
+            transition: opacity 0.4s ease;
         }
         .login-box { width: 560px; max-width: 90vw; }
         .boot-line { white-space: pre; margin: 0; }
@@ -546,6 +546,20 @@
             font-weight: 600;
             text-transform: uppercase;
         }
+
+        @keyframes cellIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .bento-grid.page-in > *:nth-child(1) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.00s both; }
+        .bento-grid.page-in > *:nth-child(2) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.07s both; }
+        .bento-grid.page-in > *:nth-child(3) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.13s both; }
+        .bento-grid.page-in > *:nth-child(4) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.18s both; }
+        .bento-grid.page-in > *:nth-child(5) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.23s both; }
+        .bento-grid.page-in > *:nth-child(6) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.27s both; }
+        .bento-grid.page-in > *:nth-child(7) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.31s both; }
+        .bento-grid.page-in > *:nth-child(8) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
+        .bento-grid.page-in > *:nth-child(9) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.39s both; }
 
         @media (max-width: 1200px) {
             .bento-grid {
@@ -891,7 +905,7 @@
                 textContainer.innerHTML += `<div class="info-line-full"><canvas id="cpu-graph-canvas" class="cpu-graph"></canvas></div>`;
             }
             lineIndex++;
-            setTimeout(typeChar, 30 + Math.random() * 60);
+            setTimeout(typeChar, 10 + Math.random() * 12);
         }
 
         function updateLiveMsClock() {
@@ -1336,13 +1350,7 @@
         }
 
         function initShortcuts() {
-            renderShortcuts(true);
-            renderTabs(true);
-            const totalItems = Math.max(MIN_SLOTS, getBookmarks().length);
-            setTimeout(() => {
-                promptEl.classList.add('visible');
-                searchInput.focus();
-            }, (totalItems * 40) + 100);
+            searchInput.focus();
         }
 
         const addModal = document.getElementById('addModal');
@@ -1473,7 +1481,13 @@
 
         function startPage() {
             initPage();
-            setTimeout(typeChar, 300);
+            const grid = document.getElementById('neofetch-content');
+            grid.classList.add('page-in');
+            renderShortcuts(true);
+            renderTabs(true);
+            promptEl.classList.add('visible');
+            searchInput.focus();
+            setTimeout(typeChar, 150);
         }
 
         function submitLogin() {
@@ -1495,7 +1509,7 @@
             setTimeout(() => {
                 loginScreen.style.display = 'none';
                 startPage();
-            }, 700);
+            }, 420);
         }
 
         loginInput.addEventListener('keydown', e => {
