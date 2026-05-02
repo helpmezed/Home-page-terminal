@@ -69,12 +69,19 @@
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
         .right-panel { flex: 1; display: flex; flex-direction: column; gap: 8px; } /* Increased gap */
-        .info-container { line-height: 1.45; font-size: 15px; white-space: pre-wrap; font-variant-numeric: tabular-nums; } /* Increased font size and line height */
+        .info-container { line-height: 1.45; font-size: 13px; white-space: pre-wrap; font-variant-numeric: tabular-nums; } /* Increased font size and line height */
 
-
-        .title { color: #00ff41; font-weight: bold; text-shadow: 0 0 8px rgba(0, 255, 65, 0.6); font-size: 20px; margin-bottom: 6px; display: inline-block; } /* Increased font size and margin */
-        .label { color: #00cc44; font-weight: bold; margin-right: 6px; font-size: 15px; } /* Increased font size and margin */
-        .value { color: #00ff41; font-size: 15px; } /* Increased font size */
+        .title { color: #00ff41; font-weight: bold; text-shadow: 0 0 8px rgba(0, 255, 65, 0.6); font-size: 18px; margin-bottom: 2px; display: inline-block; }
+        .label { color: #00cc44; font-weight: bold; margin-right: 6px; font-size: 12px; }
+        .value { color: #00ff41; font-size: 12px; }
+        .sys-sep { color: #002200; display: block; letter-spacing: 1px; }
+        .sys-bar-row { font-size: 12px; }
+        .sys-bar-filled { color: #00ff41; text-shadow: 0 0 4px rgba(0,255,65,0.5); }
+        .sys-bar-empty { color: #001a00; }
+        .sys-bar-pct { color: #00cc44; }
+        .sys-bar-state { color: #007a22; font-size: 10px; }
+        .sys-spark { font-size: 11px; color: #00aa33; letter-spacing: 1px; }
+        .sys-palette { display: block; font-size: 15px; letter-spacing: 3px; margin-top: 2px; }
         .cursor { display: inline-block; width: 9px; height: 18px; background: #00ff41; animation: blink 1s ease-in-out infinite; vertical-align: middle; margin-left: 4px; box-shadow: 0 0 8px #00ff41; } /* Increased size and margin */
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
@@ -851,12 +858,19 @@
             updateTopClock();
             systemData = [
                 { type: 'title', text: `${config.username}@${config.hostname}` },
+                { type: 'sep' },
+                { type: 'info', label: "OS",     value: "WIN-NT 11.0 x64" },
+                { type: 'info', label: "Shell",  value: "pwsh 7.4.6" },
+                { type: 'info', label: "Date",   id: "info-date" },
+                { type: 'info', label: "Time",   id: "info-time" },
+                { type: 'info', label: "Uptime", id: "info-uptime", value: "00h 00m 00s" },
+                { type: 'info', label: "Engine", value: config.defaultEngine.includes('duckduckgo') ? 'DuckDuckGo' : 'Google' },
                 { type: 'empty' },
-                { type: 'info', label: "Date", id: "info-date" },
-                { type: 'info', label: "Time", id: "info-time" },
-                { type: 'info', label: "Location", value: "Salem, NH" },
-                { type: 'info', label: "Weather", value: "62°F / Clear" },
-                { type: 'info', label: "Engine", value: config.defaultEngine.includes('duckduckgo') ? 'DuckDuckGo' : 'Google' }
+                { type: 'bar-row', label: "CPU", id: "bar-cpu" },
+                { type: 'bar-row', label: "RAM", id: "bar-ram" },
+                { type: 'spark',   label: "NET", id: "sys-spark" },
+                { type: 'empty' },
+                { type: 'palette' },
             ];
         }
 
@@ -896,6 +910,7 @@
                 textContainer.innerHTML += '<span class="cursor"></span>';
                 setTimeout(initShortcuts, 200);
                 requestAnimationFrame(updateLiveMsClock);
+                startSysMonitor();
                 return;
             }
 
@@ -904,10 +919,19 @@
                 textContainer.innerHTML += "<br>";
             } else if (line.type === 'title') {
                 textContainer.innerHTML += `<span class="title">${line.text}</span><br>`;
+            } else if (line.type === 'sep') {
+                textContainer.innerHTML += `<span class="sys-sep">─────────────────────────</span><br>`;
             } else if (line.type === 'info') {
                 const val = line.value || "";
                 const idAttr = line.id ? `id="${line.id}"` : "";
                 textContainer.innerHTML += `<span class="label">${line.label}:</span> <span class="value" ${idAttr}>${val}</span><br>`;
+            } else if (line.type === 'bar-row') {
+                textContainer.innerHTML += `<span class="label">${line.label}:</span> <span id="${line.id}" class="sys-bar-row"><span class="sys-bar-empty">░░░░░░░░░░░░░░░░</span>  <span class="sys-bar-pct">···</span></span><br>`;
+            } else if (line.type === 'spark') {
+                textContainer.innerHTML += `<span class="label">${line.label}:</span> <span id="${line.id}" class="sys-spark">↑ ··· ↓ ···</span><br>`;
+            } else if (line.type === 'palette') {
+                const cols = ['#007a22','#00aa33','#00cc44','#00ff41','#66ffaa','#ccffdd','#aaaaaa','#ffffff'];
+                textContainer.innerHTML += `<span class="sys-palette">${cols.map(c => `<span style="color:${c};text-shadow:0 0 5px ${c}99">█</span>`).join('')}</span>`;
             }
             lineIndex++;
             setTimeout(typeChar, 30 + Math.random() * 60);
@@ -930,6 +954,59 @@
                 timeEl.textContent = `${hours}:${minutes}:${seconds}.${milliseconds} ${ampm}`;
             }
             requestAnimationFrame(updateLiveMsClock);
+        }
+
+        function startSysMonitor() {
+            let cpuT = 22, ramT = 50, cpu = 22, ram = 50;
+            const t0 = Date.now();
+            const sparkHistory = Array(16).fill(0);
+            const SPARK_CHARS = '▁▂▃▄▅▆▇█';
+            const BAR_W = 16;
+
+            function mkBar(v) {
+                const f = Math.round(v / 100 * BAR_W);
+                const state = v > 60 ? 'HIGH' : v > 30 ? 'NORM' : 'IDLE';
+                return `<span class="sys-bar-filled">${'▓'.repeat(f)}</span><span class="sys-bar-empty">${'░'.repeat(BAR_W - f)}</span>  <span class="sys-bar-pct">${v}%</span> <span class="sys-bar-state">${state}</span>`;
+            }
+
+            function tick() {
+                cpuT += (Math.random() - 0.46) * 10;
+                cpuT = Math.max(4, Math.min(55, cpuT));
+                cpu += (cpuT - cpu) * 0.25;
+                const cpuR = Math.round(cpu);
+
+                ramT += (Math.random() - 0.48) * 3;
+                ramT = Math.max(30, Math.min(75, ramT));
+                ram += (ramT - ram) * 0.1;
+                const ramR = Math.round(ram);
+
+                sparkHistory.push(cpuR);
+                sparkHistory.shift();
+
+                const barCpu = document.getElementById('bar-cpu');
+                const barRam = document.getElementById('bar-ram');
+                const sparkEl = document.getElementById('sys-spark');
+                const uptimeEl = document.getElementById('info-uptime');
+
+                if (barCpu) barCpu.innerHTML = mkBar(cpuR);
+                if (barRam) barRam.innerHTML = mkBar(ramR);
+
+                if (sparkEl) {
+                    const up = (Math.random() * 80).toFixed(1);
+                    const dn = (Math.random() * 320).toFixed(1);
+                    const spark = sparkHistory.map(v => SPARK_CHARS[Math.min(7, Math.floor(v / 100 * 8))]).join('');
+                    sparkEl.innerHTML = `<span style="color:#007a22">↑</span> ${up} KB/s  <span style="color:#007a22">↓</span> ${dn} KB/s  <span style="opacity:0.6">${spark}</span>`;
+                }
+
+                if (uptimeEl) {
+                    const s = Math.floor((Date.now() - t0) / 1000);
+                    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+                    uptimeEl.textContent = `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(sec).padStart(2,'0')}s`;
+                }
+            }
+
+            setInterval(tick, 1000);
+            tick();
         }
 
         const shortcutsEl = document.getElementById('shortcuts');
