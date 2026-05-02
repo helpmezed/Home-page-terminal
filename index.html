@@ -518,8 +518,8 @@
             grid-template-rows: auto;
             grid-template-areas:
                 "search  search  search"
-                "ascii   info    sidebar"
                 "links   links   tasks"
+                "ascii   info    sidebar"
                 "meta    geo     spacex";
             gap: 12px;
             padding: 10px 12px 0;
@@ -552,9 +552,9 @@
                 grid-template-columns: 240px 1fr;
                 grid-template-areas:
                     "search  search"
-                    "ascii   info"
-                    "sidebar tasks"
                     "links   links"
+                    "sidebar tasks"
+                    "ascii   info"
                     "meta    geo"
                     "spacex  spacex";
             }
@@ -562,7 +562,7 @@
         @media (max-width: 800px) {
             .bento-grid {
                 grid-template-columns: 1fr;
-                grid-template-areas: "search" "ascii" "info" "sidebar" "tasks" "links" "meta" "geo" "spacex";
+                grid-template-areas: "search" "links" "tasks" "ascii" "info" "sidebar" "meta" "geo" "spacex";
             }
             .terminal { zoom: 1; }
         }
