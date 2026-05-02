@@ -51,7 +51,7 @@
         .left-panel { display: flex; flex-direction: column; gap: 10px; align-items: center; } /* Increased gap */
 
         .ascii-wrapper {
-            perspective: 800px; width: 100%; max-width: 200px; height: 140px; display: flex; align-items: center; justify-content: center; /* Increased size */
+            perspective: 800px; width: 100%; max-width: 200px; height: 160px; display: flex; align-items: center; justify-content: center;
             animation: float 6s ease-in-out infinite;
             isolation: isolate;
         }
@@ -84,6 +84,7 @@
         .sys-bar-state { color: #007a22; font-size: 10px; }
         .sys-spark { font-size: 11px; color: #00aa33; letter-spacing: 1px; }
         .sys-palette { display: block; font-size: 15px; letter-spacing: 3px; margin-top: 2px; }
+        .cpu-graph { width: 100%; height: 30px; display: block; margin-top: 4px; border-top: 1px solid rgba(0,255,65,0.08); }
         .cursor { display: inline-block; width: 9px; height: 18px; background: #00ff41; animation: blink 1s ease-in-out infinite; vertical-align: middle; margin-left: 4px; box-shadow: 0 0 8px #00ff41; } /* Increased size and margin */
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
@@ -867,22 +868,23 @@
                 { type: 'empty' },
                 { type: 'bar-row', label: "CPU", id: "bar-cpu" },
                 { type: 'bar-row', label: "RAM", id: "bar-ram" },
+                { type: 'bar-row', label: "DSK", id: "bar-disk" },
                 { type: 'spark',   label: "NET", id: "sys-spark" },
+                { type: 'graph' },
                 { type: 'empty' },
                 { type: 'palette' },
             ];
         }
 
         const asciiLines = [
-            { text: "▓▒░                     ░▒▓", color: "color1" },
-            { text: "   ▓▒░               ░▒▓   ", color: "color1" },
-            { text: "      ▓▒░         ░▒▓      ", color: "color1" },
-            { text: "         ▓▒░   ░▒▓         ", color: "color1" },
-            { text: "            ▒█▒            ", color: "color1" },
-            { text: "         ░▒▓   ▓▒░         ", color: "color2" },
-            { text: "      ░▒▓         ▓▒░      ", color: "color2" },
-            { text: "   ░▒▓               ▓▒░   ", color: "color2" },
-            { text: "░▒▓                     ▓▒░", color: "color2" },
+            { text: "┌──────────────────┐", color: "color2" },
+            { text: "│  ◈  CONSTRUCT  ◈  │", color: "color1" },
+            { text: "├──────────────────┤", color: "color2" },
+            { text: "│   ◉         ◉   │", color: "color1" },
+            { text: "│     ▄▄▄▄▄▄▄     │", color: "color1" },
+            { text: "├──────────────────┤", color: "color2" },
+            { text: "│   SYS  v2.077   │", color: "color2" },
+            { text: "└──────────────────┘", color: "color2" },
         ];
 
         const asciiEl = document.getElementById('ascii');
@@ -931,6 +933,8 @@
             } else if (line.type === 'palette') {
                 const cols = ['#007a22','#00aa33','#00cc44','#00ff41','#66ffaa','#ccffdd','#aaaaaa','#ffffff'];
                 textContainer.innerHTML += `<div class="info-line-full"><span class="sys-palette">${cols.map(c => `<span style="color:${c};text-shadow:0 0 5px ${c}99">█</span>`).join('')}</span></div>`;
+            } else if (line.type === 'graph') {
+                textContainer.innerHTML += `<div class="info-line-full"><canvas id="cpu-graph-canvas" class="cpu-graph"></canvas></div>`;
             }
             lineIndex++;
             setTimeout(typeChar, 30 + Math.random() * 60);
@@ -956,16 +960,86 @@
         }
 
         function startSysMonitor() {
-            let cpuT = 22, ramT = 50, cpu = 22, ram = 50;
+            let cpuT = 22, ramT = 50, diskT = 44, cpu = 22, ram = 50, disk = 44;
             const t0 = Date.now();
-            const sparkHistory = Array(16).fill(0);
             const SPARK_CHARS = '▁▂▃▄▅▆▇█';
             const BAR_W = 16;
+            const cpuHistory = Array(60).fill(0);
 
-            function mkBar(v) {
+            function barColor(v) {
+                return v >= 70 ? '#ff4444' : v >= 40 ? '#ffaa00' : '#00ff41';
+            }
+            function mkBar(v, suffix) {
                 const f = Math.round(v / 100 * BAR_W);
-                const state = v > 60 ? 'HIGH' : v > 30 ? 'NORM' : 'IDLE';
-                return `<span class="sys-bar-filled">${'▓'.repeat(f)}</span><span class="sys-bar-empty">${'░'.repeat(BAR_W - f)}</span>  <span class="sys-bar-pct">${v}%</span> <span class="sys-bar-state">${state}</span>`;
+                const col = barColor(v);
+                const label = suffix || (v >= 70 ? 'HIGH' : v >= 40 ? 'NORM' : 'IDLE');
+                return `<span style="color:${col};text-shadow:0 0 4px ${col}55">${'▓'.repeat(f)}</span><span class="sys-bar-empty">${'░'.repeat(BAR_W - f)}</span> <span style="color:${col}">${v}%</span> <span class="sys-bar-state">${label}</span>`;
+            }
+
+            // Canvas graph setup
+            const graphEl = document.getElementById('cpu-graph-canvas');
+            let gCtx = null, gW = 0, gH = 30;
+            if (graphEl) {
+                const dpr = window.devicePixelRatio || 1;
+                gW = graphEl.offsetWidth || 200;
+                graphEl.width = Math.round(gW * dpr);
+                graphEl.height = Math.round(gH * dpr);
+                graphEl.style.width = gW + 'px';
+                graphEl.style.height = gH + 'px';
+                gCtx = graphEl.getContext('2d');
+                gCtx.scale(dpr, dpr);
+            }
+
+            function drawGraph(cpuR) {
+                if (!gCtx) return;
+                const col = barColor(cpuR);
+                gCtx.clearRect(0, 0, gW, gH);
+                gCtx.fillStyle = 'rgba(0,3,0,0.7)';
+                gCtx.fillRect(0, 0, gW, gH);
+                // grid lines
+                [0.25, 0.5, 0.75].forEach(t => {
+                    gCtx.strokeStyle = 'rgba(0,255,65,0.06)';
+                    gCtx.lineWidth = 0.5;
+                    gCtx.beginPath();
+                    gCtx.moveTo(0, t * gH);
+                    gCtx.lineTo(gW, t * gH);
+                    gCtx.stroke();
+                });
+                // 50% dashed threshold
+                gCtx.strokeStyle = 'rgba(255,170,0,0.12)';
+                gCtx.lineWidth = 0.5;
+                gCtx.setLineDash([2, 4]);
+                gCtx.beginPath(); gCtx.moveTo(0, gH * 0.5); gCtx.lineTo(gW, gH * 0.5); gCtx.stroke();
+                gCtx.setLineDash([]);
+                // fill under line
+                const n = cpuHistory.length;
+                const step = gW / n;
+                gCtx.beginPath();
+                for (let i = 0; i < n; i++) {
+                    const x = i * step;
+                    const y = gH - (cpuHistory[i] / 100 * gH * 0.92) - 1;
+                    i === 0 ? gCtx.moveTo(x, y) : gCtx.lineTo(x, y);
+                }
+                gCtx.lineTo(gW, gH); gCtx.lineTo(0, gH);
+                gCtx.fillStyle = cpuR >= 70 ? 'rgba(255,68,68,0.1)' : cpuR >= 40 ? 'rgba(255,170,0,0.1)' : 'rgba(0,255,65,0.07)';
+                gCtx.fill();
+                // line
+                gCtx.beginPath();
+                for (let i = 0; i < n; i++) {
+                    const x = i * step;
+                    const y = gH - (cpuHistory[i] / 100 * gH * 0.92) - 1;
+                    i === 0 ? gCtx.moveTo(x, y) : gCtx.lineTo(x, y);
+                }
+                gCtx.strokeStyle = col;
+                gCtx.lineWidth = 1.5;
+                gCtx.shadowColor = col;
+                gCtx.shadowBlur = 4;
+                gCtx.stroke();
+                gCtx.shadowBlur = 0;
+                // label
+                gCtx.fillStyle = 'rgba(0,255,65,0.25)';
+                gCtx.font = '7px monospace';
+                gCtx.fillText('CPU HISTORY', 3, 8);
             }
 
             function tick() {
@@ -979,22 +1053,30 @@
                 ram += (ramT - ram) * 0.1;
                 const ramR = Math.round(ram);
 
-                sparkHistory.push(cpuR);
-                sparkHistory.shift();
+                diskT += (Math.random() - 0.5) * 0.4;
+                diskT = Math.max(38, Math.min(58, diskT));
+                disk += (diskT - disk) * 0.05;
+                const diskR = Math.round(disk);
 
-                const barCpu = document.getElementById('bar-cpu');
-                const barRam = document.getElementById('bar-ram');
+                cpuHistory.push(cpuR);
+                cpuHistory.shift();
+
+                const sparkHistory = cpuHistory.slice(-16);
+                const barCpu  = document.getElementById('bar-cpu');
+                const barRam  = document.getElementById('bar-ram');
+                const barDisk = document.getElementById('bar-disk');
                 const sparkEl = document.getElementById('sys-spark');
                 const uptimeEl = document.getElementById('info-uptime');
 
-                if (barCpu) barCpu.innerHTML = mkBar(cpuR);
-                if (barRam) barRam.innerHTML = mkBar(ramR);
+                if (barCpu)  barCpu.innerHTML  = mkBar(cpuR);
+                if (barRam)  barRam.innerHTML  = mkBar(ramR, `${(ramR * 0.16).toFixed(1)}GB`);
+                if (barDisk) barDisk.innerHTML = mkBar(diskR, `${(diskR * 5.12).toFixed(0)}GB`);
 
                 if (sparkEl) {
                     const up = (Math.random() * 80).toFixed(1);
                     const dn = (Math.random() * 320).toFixed(1);
                     const spark = sparkHistory.map(v => SPARK_CHARS[Math.min(7, Math.floor(v / 100 * 8))]).join('');
-                    sparkEl.innerHTML = `<span style="color:#007a22">↑</span> ${up} KB/s  <span style="color:#007a22">↓</span> ${dn} KB/s  <span style="opacity:0.6">${spark}</span>`;
+                    sparkEl.innerHTML = `<span style="color:#007a22">↑</span> ${up} KB/s &nbsp;<span style="color:#007a22">↓</span> ${dn} KB/s &nbsp;<span style="opacity:0.5">${spark}</span>`;
                 }
 
                 if (uptimeEl) {
@@ -1002,6 +1084,8 @@
                     const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
                     uptimeEl.textContent = `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(sec).padStart(2,'0')}s`;
                 }
+
+                drawGraph(cpuR);
             }
 
             setInterval(tick, 1000);
