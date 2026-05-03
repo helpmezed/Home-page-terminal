@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Start Page</title>
+    <meta name="description" content="Matrix-themed terminal start page with bookmarks, system monitor, HN feed, and more.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌖</text></svg>">
+    <title>matrix://home</title>
     <style>
         :root {
             --green: #00ff41;
@@ -28,8 +30,8 @@
 
         .terminal {
             background: var(--bg); border-radius: 10px; padding: 16px;
-            width: min(1680px, 99vw);
-            height: 98vh;
+            width: min(1440px, 98vw);
+            height: 96vh;
             box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,255,65,0.05), 0 0 80px rgba(0,255,65,0.02), inset 0 0 20px rgba(0,255,65,0.04);
             position: relative; display: flex; flex-direction: column;
             border: 1px solid var(--border-glow);
@@ -68,12 +70,8 @@
 
         .terminal-title { color: var(--green-mid); font-size: 15px; margin-left: 8px; letter-spacing: 0.6px; text-shadow: 0 0 3px rgba(0,255,65,0.3); }
 
-        .content { display: flex; gap: 14px; color: #00cc44; align-items: flex-start; padding: 4px 8px; }
-        .left-panel { display: flex; flex-direction: column; gap: 10px; align-items: center; }
-
         #avatar-canvas { display: block; width: 100%; height: 100%; }
 
-        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 8px; }
         .info-container { display: flex; flex-wrap: wrap; align-items: baseline; font-size: 13px; font-variant-numeric: tabular-nums; gap: 0; }
         .info-line { width: 50%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 4px 2px 0; box-sizing: border-box; }
         .info-line-full { width: 100%; padding: 2px 0; }
@@ -153,6 +151,7 @@
             border-top: none; border-radius: 0 0 8px 8px;
             font-size: 14px;
             overflow: hidden;
+            z-index: 200;
             -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
         }
         .suggestion-item {
@@ -355,7 +354,7 @@
             font-size: 9px; color: #003000; letter-spacing: 1.2px;
             cursor: pointer; padding: 3px 8px;
             border: 1px solid rgba(0,255,65,0.12); border-radius: 3px;
-            transition: all 0.15s; font-family: var(--font);
+            transition: all 0.15s; font-family: var(--font-mono);
         }
         .tp-close-x:hover { color: var(--green); border-color: rgba(0,255,65,0.4); background: rgba(0,255,65,0.05); }
 
@@ -368,7 +367,7 @@
         .tp-prompt { color: var(--green-dim); font-size: 15px; }
         #tp-search {
             flex: 1; background: transparent; border: none; outline: none;
-            color: var(--green); font-family: var(--font); font-size: 15px;
+            color: var(--green); font-family: var(--font-mono); font-size: 15px;
             caret-color: var(--green);
         }
         #tp-search::placeholder { color: #003300; }
@@ -600,8 +599,8 @@
         }
 
         .bcl-right { color: #002200; }
-        .b-search  { grid-area: search; }
-        .b-ascii   { grid-area: ascii; overflow: hidden; }
+        .b-search  { grid-area: search; position: relative; z-index: 10; }
+        .b-ascii   { grid-area: ascii; overflow: hidden; height: 240px; }
         .b-info    { grid-area: info; display: flex; flex-direction: column; }
         .b-sidebar { grid-area: sidebar; display: flex; flex-direction: column; }
         .b-meta    { grid-area: meta; }
@@ -894,7 +893,7 @@
         let lineIndex = 0;
         function typeChar() {
             if (lineIndex >= systemData.length) {
-                textContainer.innerHTML += '<div class="info-line-full"><span class="cursor"></span></div>';
+                textContainer.insertAdjacentHTML('beforeend', '<div class="info-line-full"><span class="cursor"></span></div>');
                 setTimeout(initShortcuts, 200);
                 requestAnimationFrame(updateLiveMsClock);
                 startSysMonitor();
@@ -903,24 +902,24 @@
 
             const line = systemData[lineIndex];
             if (line.type === 'empty') {
-                textContainer.innerHTML += `<div class="info-line-full" style="height:4px"></div>`;
+                textContainer.insertAdjacentHTML('beforeend', `<div class="info-line-full" style="height:4px"></div>`);
             } else if (line.type === 'title') {
-                textContainer.innerHTML += `<div class="info-line-full"><span class="title">${line.text}</span></div>`;
+                textContainer.insertAdjacentHTML('beforeend', `<div class="info-line-full"><span class="title">${line.text}</span></div>`);
             } else if (line.type === 'sep') {
-                textContainer.innerHTML += `<div class="info-line-full"><span class="sys-sep">─────────────────────────</span></div>`;
+                textContainer.insertAdjacentHTML('beforeend', `<div class="info-line-full"><span class="sys-sep">─────────────────────────</span></div>`);
             } else if (line.type === 'info') {
                 const val = line.value || "";
                 const idAttr = line.id ? `id="${line.id}"` : "";
-                textContainer.innerHTML += `<div class="info-line"><span class="label">${line.label}:</span> <span class="value" ${idAttr}>${val}</span></div>`;
+                textContainer.insertAdjacentHTML('beforeend', `<div class="info-line"><span class="label">${line.label}:</span> <span class="value" ${idAttr}>${val}</span></div>`);
             } else if (line.type === 'bar-row') {
-                textContainer.innerHTML += `<div class="info-line-full"><span class="label">${line.label}:</span> <span id="${line.id}" class="sys-bar-row"><span class="sys-bar-empty">░░░░░░░░░░░░░░░░</span>  <span class="sys-bar-pct">···</span></span></div>`;
+                textContainer.insertAdjacentHTML('beforeend', `<div class="info-line-full"><span class="label">${line.label}:</span> <span id="${line.id}" class="sys-bar-row"><span class="sys-bar-empty">░░░░░░░░░░░░░░░░</span>  <span class="sys-bar-pct">···</span></span></div>`);
             } else if (line.type === 'spark') {
-                textContainer.innerHTML += `<div class="info-line-full"><span class="label">${line.label}:</span> <span id="${line.id}" class="sys-spark">↑ ··· ↓ ···</span></div>`;
+                textContainer.insertAdjacentHTML('beforeend', `<div class="info-line-full"><span class="label">${line.label}:</span> <span id="${line.id}" class="sys-spark">↑ ··· ↓ ···</span></div>`);
             } else if (line.type === 'palette') {
                 const cols = ['#007a22','#00aa33','#00cc44','#00ff41','#66ffaa','#ccffdd','#aaaaaa','#ffffff'];
-                textContainer.innerHTML += `<div class="info-line-full"><span class="sys-palette">${cols.map(c => `<span style="color:${c};text-shadow:0 0 5px ${c}99">█</span>`).join('')}</span></div>`;
+                textContainer.insertAdjacentHTML('beforeend', `<div class="info-line-full"><span class="sys-palette">${cols.map(c => `<span style="color:${c};text-shadow:0 0 5px ${c}99">█</span>`).join('')}</span></div>`);
             } else if (line.type === 'graph') {
-                textContainer.innerHTML += `<div class="info-line-full"><canvas id="cpu-graph-canvas" class="cpu-graph"></canvas></div>`;
+                textContainer.insertAdjacentHTML('beforeend', `<div class="info-line-full"><canvas id="cpu-graph-canvas" class="cpu-graph"></canvas></div>`);
             }
             lineIndex++;
             setTimeout(typeChar, 10 + Math.random() * 12);
@@ -1074,8 +1073,18 @@
                 drawGraph(cpuR);
             }
 
-            setInterval(tick, 1000);
+            let sysMonInterval = setInterval(tick, 1000);
             tick();
+            // Pause sys monitor when terminal is not visible
+            const sysMonObs = new IntersectionObserver(entries => {
+                const term = document.getElementById('terminal');
+                if (entries[0].isIntersecting) {
+                    if (!sysMonInterval) sysMonInterval = setInterval(tick, 1000);
+                } else {
+                    if (sysMonInterval) { clearInterval(sysMonInterval); sysMonInterval = null; }
+                }
+            }, { threshold: 0 });
+            setTimeout(() => { const t = document.getElementById('terminal'); if (t) sysMonObs.observe(t); }, 100);
         }
 
         const shortcutsEl = document.getElementById('shortcuts');
@@ -1136,6 +1145,7 @@
         }
         function closeTerminalPages() {
             document.getElementById('tp-overlay').classList.remove('tp-show');
+            searchInput.focus();
         }
         function handleTpOverlayClick(e) {
             if (e.target === document.getElementById('tp-overlay')) closeTerminalPages();
@@ -1546,6 +1556,10 @@
             }
         });
 
+        window.addEventListener('pageshow', e => {
+            if (e.persisted) window.location.reload();
+        });
+
         const outputEl = document.getElementById('output');
         const layerFgEl = document.getElementById('layer-fg');
         let commandHistory = JSON.parse(localStorage.getItem('startpage_history')) || [], historyIndex = -1;
@@ -1617,6 +1631,50 @@
                 return;
             }
 
+            if (primary === 'task') {
+                const sub = args[1] ? args[1].toLowerCase() : '';
+                if (sub === 'add' && args.length > 2) {
+                    const text = args.slice(2).join(' ');
+                    let tasks = JSON.parse(localStorage.getItem('startpage_tasks') || '[]');
+                    tasks.push({ id: Date.now(), text, done: false });
+                    localStorage.setItem('startpage_tasks', JSON.stringify(tasks));
+                    printResult(`Task added: "${text}"`);
+                } else if (sub === 'done' && args[2]) {
+                    let tasks = JSON.parse(localStorage.getItem('startpage_tasks') || '[]');
+                    const idx = tasks.findIndex(t => t.id == args[2]);
+                    if (idx !== -1) {
+                        tasks[idx].done = !tasks[idx].done;
+                        localStorage.setItem('startpage_tasks', JSON.stringify(tasks));
+                        printResult(`Task ${tasks[idx].done ? 'completed' : 'reopened'}: "${tasks[idx].text}"`);
+                    } else {
+                        printResult('Task not found. Use "task list" to see IDs.');
+                    }
+                } else if (sub === 'clear') {
+                    let tasks = JSON.parse(localStorage.getItem('startpage_tasks') || '[]');
+                    tasks = tasks.filter(t => !t.done);
+                    localStorage.setItem('startpage_tasks', JSON.stringify(tasks));
+                    printResult('Completed tasks removed.');
+                } else if (sub === 'list' || args.length === 1) {
+                    let tasks = JSON.parse(localStorage.getItem('startpage_tasks') || '[]');
+                    if (!tasks.length) {
+                        printResult('No tasks. Use "task add [text]" to create one.');
+                    } else {
+                        const div = document.createElement('div');
+                        div.className = 'command-result';
+                        tasks.forEach(t => {
+                            const row = document.createElement('div');
+                            row.textContent = `${t.done ? '✓' : '○'} [${t.id}] ${t.text}`;
+                            div.appendChild(row);
+                        });
+                        outputEl.appendChild(div);
+                        layerFgEl.scrollTop = layerFgEl.scrollHeight;
+                    }
+                } else {
+                    printResult('Usage: task add [text], task done [id], task clear, task list');
+                }
+                return;
+            }
+
             const bangMatch = config.searchBangs[primary];
             window.location.href = (bangMatch ? bangMatch + encodeURIComponent(args.slice(1).join(' ')) : config.defaultEngine + encodeURIComponent(cmd));
         }
@@ -1657,12 +1715,14 @@
             suggestIdx = -1;
         }
 
+        function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
         function renderSuggestions() {
             if (!currentSuggestions.length) { closeSuggestions(); return; }
             suggestionsEl.innerHTML = currentSuggestions.map((s, i) =>
                 `<div class="suggestion-item suggestion-${s.type}" data-idx="${i}">` +
-                `<span class="suggestion-text">${s.text}</span>` +
-                `<span class="suggestion-hint">${s.hint}</span></div>`
+                `<span class="suggestion-text">${escHtml(s.text)}</span>` +
+                `<span class="suggestion-hint">${escHtml(s.hint)}</span></div>`
             ).join('');
             suggestionsEl.querySelectorAll('.suggestion-item').forEach(el => {
                 el.addEventListener('mousedown', ev => {
@@ -1767,18 +1827,17 @@
             if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 if (open) navigateSuggestions(-1);
-                else if (historyIndex < commandHistory.length - 1) searchInput.value = commandHistory[++historyIndex];
+                else if (historyIndex < commandHistory.length - 1) { historyIndex++; searchInput.value = commandHistory[historyIndex]; }
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 if (open) navigateSuggestions(1);
-                else if (historyIndex > 0) searchInput.value = commandHistory[--historyIndex];
+                else if (historyIndex > 0) { historyIndex--; searchInput.value = commandHistory[historyIndex]; }
                 else if (historyIndex === 0) { historyIndex = -1; searchInput.value = ''; }
             } else if (e.key === 'Tab') {
                 e.preventDefault();
                 if (currentSuggestions.length) {
-                    searchInput.value = currentSuggestions[Math.max(0, suggestIdx)].text;
-                    setEngineBadge(searchInput.value);
-                    closeSuggestions();
+                    const pick = currentSuggestions[Math.max(0, suggestIdx)] || currentSuggestions[0];
+                    if (pick) { searchInput.value = pick.text; setEngineBadge(searchInput.value); closeSuggestions(); }
                 }
             } else if (e.key === 'Escape') {
                 if (open) closeSuggestions();
@@ -1801,7 +1860,8 @@
         });
 
         document.querySelector('.terminal').addEventListener('click', () => {
-            if (window.getSelection().toString().length === 0 && !addModal.classList.contains('show')) {
+            const sel = window.getSelection();
+            if ((!sel || sel.toString().length === 0) && !addModal.classList.contains('show')) {
                 searchInput.focus();
             }
         });
@@ -2345,7 +2405,7 @@
                 } catch { return []; }
             }
 
-            function esc(s) { return s.replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>'); }
+            function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
             async function load() {
                 const stories = await fetchStories();
@@ -2354,6 +2414,10 @@
                     const url = s.url || ('https://news.ycombinator.com/item?id=' + s.objectID);
                     return `<span style="color:#003b00">${i+1}.</span> <a href="${url}" target="_blank" rel="noopener">${esc(s.title)}</a>`;
                 }).join('<span style="color:#002200;padding:0 18px">◈</span>');
+                // Restart scroll animation from the beginning after content update
+                ticker.style.animation = 'none';
+                ticker.offsetHeight; // force reflow
+                ticker.style.animation = '';
                 if (liveDot) liveDot.style.opacity = '1';
                 if (liveLabel) { liveLabel.textContent = 'LIVE'; liveLabel.style.color = '#005c18'; }
             }
@@ -2385,3 +2449,4 @@
     </script>
 </body>
 </html>
+
