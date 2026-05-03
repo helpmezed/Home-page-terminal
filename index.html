@@ -143,12 +143,12 @@
         .command-echo { margin-bottom: 3px; color: var(--green); font-size: 16px; }
         .command-result { margin-bottom: 10px; color: var(--green-mid); font-size: 16px; }
 
-        .prompt-wrapper { position: relative; margin-bottom: 10px; z-index: 2; }
+        .prompt-wrapper { position: relative; z-index: 2; }
 
         .suggestions-dropdown {
-            display: none; position: absolute; top: 100%; left: 0; right: 0;
+            display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
             background: rgba(3,3,3,0.98); border: 1px solid rgba(0,255,65,0.2);
-            border-top: none; border-radius: 0 0 8px 8px;
+            border-radius: 8px;
             font-size: 14px;
             overflow: hidden;
             z-index: 200;
@@ -189,18 +189,18 @@
             overflow: hidden;
             -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
         }
-        .prompt-line.visible { opacity: 1; transform: translateY(0); font-size: 17px; }
+        .prompt-line.visible { opacity: 1; transform: translateY(0); }
 
         .prompt-prefix {
             display: flex; align-items: center; gap: 1px;
-            padding: 9px 14px;
+            padding: 7px 12px;
             background: rgba(0,255,65,0.04);
             border-right: 1px solid rgba(0,255,65,0.18);
             white-space: nowrap; flex-shrink: 0;
         }
         .prompt-bracket { color: var(--green-dim); }
 
-        .search-input { background: transparent; border: none; color: var(--green); font-family: system-ui, -apple-system, sans-serif; font-size: inherit; flex: 1; padding: 12px 14px; outline: none; caret-color: var(--green); text-shadow: 0 0 4px rgba(0,255,65,0.4); transition: all 0.3s ease; }
+        .search-input { background: transparent; border: none; color: var(--green); font-family: system-ui, -apple-system, sans-serif; font-size: inherit; flex: 1; padding: 7px 14px; outline: none; caret-color: var(--green); text-shadow: 0 0 4px rgba(0,255,65,0.4); transition: all 0.3s ease; }
         .search-input::placeholder { color: rgba(0,255,65,0.3); opacity: 1; }
         .prompt-line:focus-within {
             border-color: rgba(0, 255, 65, 0.9);
@@ -529,18 +529,27 @@
         @keyframes hnScroll { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
         @keyframes hn-pulse { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
 
+        /* ── Search Widget ── */
+        .search-widget-outer {
+            padding: 8px 12px 4px;
+            position: relative;
+            z-index: 20;
+        }
+        .search-widget-inner {
+            max-width: 640px;
+        }
+
         /* ── Bento Grid Layout ── */
         .bento-grid {
             display: grid;
             grid-template-columns: 240px 1fr 220px;
             grid-template-rows: auto;
             grid-template-areas:
-                "search  search  search"
                 "links   links   tasks"
                 "ascii   info    sidebar"
                 "meta    geo     spacex";
             gap: 12px;
-            padding: 10px 12px 0;
+            padding: 4px 12px 0;
         }
         .bento-cell {
             background: rgba(3, 10, 3, 0.75);
@@ -583,7 +592,6 @@
             .bento-grid {
                 grid-template-columns: 240px 1fr;
                 grid-template-areas:
-                    "search  search"
                     "links   links"
                     "sidebar tasks"
                     "ascii   info"
@@ -594,12 +602,11 @@
         @media (max-width: 800px) {
             .bento-grid {
                 grid-template-columns: 1fr;
-                grid-template-areas: "search" "links" "tasks" "ascii" "info" "sidebar" "meta" "geo" "spacex";
+                grid-template-areas: "links" "tasks" "ascii" "info" "sidebar" "meta" "geo" "spacex";
             }
         }
 
         .bcl-right { color: #002200; }
-        .b-search  { grid-area: search; position: relative; z-index: 10; }
         .b-ascii   { grid-area: ascii; overflow: hidden; height: 240px; }
         .b-info    { grid-area: info; display: flex; flex-direction: column; }
         .b-sidebar { grid-area: sidebar; display: flex; flex-direction: column; }
@@ -635,14 +642,13 @@
             </div>
 
             <div id="main-view">
-                <div class="bento-grid" id="neofetch-content">
-
-                    <!-- ── Search bar ── -->
-                    <div class="b-search">
+                <!-- ── Search widget ── -->
+                <div class="search-widget-outer">
+                    <div class="search-widget-inner">
                         <div class="prompt-wrapper">
                             <div class="prompt-line" id="prompt">
                                 <div class="prompt-prefix">
-                                    <span class="prompt-bracket">[</span><span class="user" id="prompt-user">user</span><span class="separator">@</span><span class="host" id="prompt-host">local</span><span class="prompt-bracket">]</span><span class="separator" style="margin-left:5px;">~$</span>
+                                    <span class="user" id="prompt-user" style="display:none"></span><span class="host" id="prompt-host" style="display:none"></span><span class="separator">~$</span>
                                 </div>
                                 <form id="searchForm" style="display: flex; flex: 1; width: 100%;">
                                     <input type="text" id="searchInput" class="search-input" placeholder="search · g · y · help" autocomplete="off">
@@ -652,6 +658,9 @@
                             <div id="suggestions" class="suggestions-dropdown"></div>
                         </div>
                     </div>
+                </div>
+
+                <div class="bento-grid" id="neofetch-content">
 
                     <!-- ── Particle avatar ── -->
                     <div class="bento-cell b-ascii">
