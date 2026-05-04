@@ -171,21 +171,22 @@
         .suggestion-item:hover .suggestion-hint, .suggestion-item.active .suggestion-hint { color: #005c18; }
 
         .engine-badge {
-            font-size: 13px; color: var(--green-dim); letter-spacing: 1.2px;
-            padding: 0 18px; border-left: 1px solid rgba(0,255,65,0.18);
+            font-size: 11px; color: var(--green-dim); letter-spacing: 1.8px;
+            padding: 0 20px; border-left: 1px solid rgba(0,255,65,0.15);
             transition: color 0.25s; flex-shrink: 0; white-space: nowrap;
             align-self: stretch; display: flex; align-items: center;
+            font-family: var(--font-mono);
         }
         .engine-badge.live { color: var(--green-mid); border-left-color: rgba(0,255,65,0.35); }
 
         .prompt-line {
             display: flex; align-items: stretch; opacity: 0; transform: translateY(-8px);
             transition: all 0.5s ease;
-            font-size: 14px;
+            font-size: 16px;
             background: rgba(0,22,8,0.92);
-            border: 1px solid rgba(0,255,65,0.55);
-            border-radius: 8px;
-            box-shadow: 0 0 28px rgba(0,255,65,0.14), 0 2px 10px rgba(0,0,0,0.7), inset 0 0 18px rgba(0,255,65,0.04);
+            border: 1px solid rgba(0,255,65,0.45);
+            border-radius: 10px;
+            box-shadow: 0 0 36px rgba(0,255,65,0.12), 0 4px 20px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,255,65,0.04);
             overflow: hidden;
             -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
         }
@@ -193,18 +194,18 @@
 
         .prompt-prefix {
             display: flex; align-items: center; gap: 1px;
-            padding: 7px 12px;
+            padding: 13px 16px;
             background: rgba(0,255,65,0.04);
-            border-right: 1px solid rgba(0,255,65,0.18);
+            border-right: 1px solid rgba(0,255,65,0.15);
             white-space: nowrap; flex-shrink: 0;
         }
         .prompt-bracket { color: var(--green-dim); }
 
-        .search-input { background: transparent; border: none; color: var(--green); font-family: system-ui, -apple-system, sans-serif; font-size: inherit; flex: 1; padding: 7px 14px; outline: none; caret-color: var(--green); text-shadow: 0 0 4px rgba(0,255,65,0.4); transition: all 0.3s ease; }
-        .search-input::placeholder { color: rgba(0,255,65,0.3); opacity: 1; }
+        .search-input { background: transparent; border: none; color: var(--green); font-family: system-ui, -apple-system, sans-serif; font-size: inherit; flex: 1; padding: 13px 18px; outline: none; caret-color: var(--green); text-shadow: 0 0 4px rgba(0,255,65,0.4); transition: all 0.3s ease; }
+        .search-input::placeholder { color: rgba(0,255,65,0.25); opacity: 1; }
         .prompt-line:focus-within {
-            border-color: rgba(0, 255, 65, 0.9);
-            box-shadow: 0 0 42px rgba(0,255,65,0.2), 0 2px 10px rgba(0,0,0,0.7), inset 0 0 22px rgba(0,255,65,0.06);
+            border-color: rgba(0, 255, 65, 0.85);
+            box-shadow: 0 0 60px rgba(0,255,65,0.18), 0 4px 20px rgba(0,0,0,0.8), inset 0 0 28px rgba(0,255,65,0.06);
         }
         .user { color: var(--green); font-weight: bold; text-shadow: 0 0 5px rgba(0,255,65,0.4); }
         .host { color: var(--green-mid); font-weight: bold; }
@@ -529,14 +530,42 @@
         @keyframes hnScroll { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
         @keyframes hn-pulse { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
 
-        /* ── Search Widget ── */
-        .search-widget-outer {
-            padding: 8px 12px 4px;
+        /* ── Search Hero ── */
+        .search-hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 18px 12px 10px;
+            gap: 10px;
             position: relative;
             z-index: 20;
         }
-        .search-widget-inner {
-            max-width: 640px;
+        .search-hero-tagline {
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: #004d14;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+            text-shadow: 0 0 12px rgba(0,255,65,0.1);
+            animation: taglinePulse 4s ease-in-out infinite;
+        }
+        @keyframes taglinePulse {
+            0%, 100% { color: #004d14; }
+            50% { color: #007a22; text-shadow: 0 0 14px rgba(0,255,65,0.18); }
+        }
+        .search-hero .prompt-wrapper {
+            width: 100%;
+            max-width: 720px;
+        }
+        .search-bang-hints {
+            font-size: 11px;
+            color: #002a00;
+            letter-spacing: 0.8px;
+            font-family: var(--font-mono);
+        }
+        .search-bang-hints b {
+            color: #005c18;
+            font-weight: normal;
         }
 
         /* ── Bento Grid Layout ── */
@@ -549,7 +578,7 @@
                 "ascii   info    sidebar"
                 "meta    geo     spacex";
             gap: 12px;
-            padding: 4px 12px 0;
+            padding: 0 12px 0;
         }
         .bento-cell {
             background: rgba(3, 10, 3, 0.75);
@@ -642,22 +671,22 @@
             </div>
 
             <div id="main-view">
-                <!-- ── Search widget ── -->
-                <div class="search-widget-outer">
-                    <div class="search-widget-inner">
-                        <div class="prompt-wrapper">
-                            <div class="prompt-line" id="prompt">
-                                <div class="prompt-prefix">
-                                    <span class="user" id="prompt-user" style="display:none"></span><span class="host" id="prompt-host" style="display:none"></span><span class="separator">~$</span>
-                                </div>
-                                <form id="searchForm" style="display: flex; flex: 1; width: 100%;">
-                                    <input type="text" id="searchInput" class="search-input" placeholder="search · g · y · help" autocomplete="off">
-                                </form>
-                                <span id="engine-badge" class="engine-badge">DDG</span>
+                <!-- ── Search hero ── -->
+                <div class="search-hero">
+                    <div class="search-hero-tagline" id="search-tagline">matrix://home</div>
+                    <div class="prompt-wrapper">
+                        <div class="prompt-line" id="prompt">
+                            <div class="prompt-prefix">
+                                <span class="user" id="prompt-user" style="display:none"></span><span class="host" id="prompt-host" style="display:none"></span><span class="separator">~$</span>
                             </div>
-                            <div id="suggestions" class="suggestions-dropdown"></div>
+                            <form id="searchForm" style="display: flex; flex: 1; width: 100%;">
+                                <input type="text" id="searchInput" class="search-input" placeholder="search the matrix…" autocomplete="off">
+                            </form>
+                            <span id="engine-badge" class="engine-badge">DDG</span>
                         </div>
+                        <div id="suggestions" class="suggestions-dropdown"></div>
                     </div>
+                    <div class="search-bang-hints"><b>g</b> google &nbsp;·&nbsp; <b>y</b> youtube &nbsp;·&nbsp; <b>r</b> reddit &nbsp;·&nbsp; <b>w</b> wiki &nbsp;·&nbsp; <b>gh</b> github &nbsp;·&nbsp; <b>help</b> commands</div>
                 </div>
 
                 <div class="bento-grid" id="neofetch-content">
@@ -876,6 +905,8 @@
             document.getElementById('terminal-title').textContent = `${config.username}@${config.hostname}: ~`;
             document.getElementById('prompt-user').textContent = config.username;
             document.getElementById('prompt-host').textContent = config.hostname;
+            const tl = document.getElementById('search-tagline');
+            if (tl && config.username) tl.textContent = `${config.username}@${config.hostname}:~`;
             setInterval(updateTopClock, 1000);
             updateTopClock();
             systemData = [
