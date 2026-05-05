@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Matrix-themed terminal start page with bookmarks, system monitor, HN feed, and more.">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌖</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <title>matrix://home</title>
     <style>
         :root {
@@ -17,7 +20,7 @@
             --bg-dark: #000000;
             --border-glow: rgba(0, 255, 65, 0.2);
             --border-dim: rgba(0, 255, 65, 0.14);
-            --font-mono: 'Courier New', monospace;
+            --font-mono: 'JetBrains Mono', 'Courier New', monospace;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,7 +38,7 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.9), 0 0 30px rgba(0,255,65,0.05), 0 0 80px rgba(0,255,65,0.02), inset 0 0 20px rgba(0,255,65,0.04);
             position: relative; display: flex; flex-direction: column;
             border: 1px solid var(--border-glow);
-            clip-path: inset(0 round 8px);
+            overflow: hidden;
             animation: terminalGlow 6s ease-in-out infinite;
         }
 
@@ -644,6 +647,66 @@
         .b-tasks   { grid-area: tasks;   display: flex; flex-direction: column; }
         .b-geo     { grid-area: geo; }
         .b-spacex  { grid-area: spacex;  display: flex; flex-direction: column; }
+
+        /* ── Scroll Indicator ── */
+        .scroll-indicator {
+            position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+            z-index: 15; display: flex; flex-direction: column; align-items: center; gap: 4px;
+            opacity: 0; transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        .scroll-indicator.visible { opacity: 1; }
+        .scroll-indicator-text {
+            font-size: 9px; letter-spacing: 2.5px; color: #004d14;
+            font-family: var(--font-mono); text-transform: uppercase;
+        }
+        .scroll-indicator-arrow {
+            font-size: 14px; color: var(--green-dim);
+            animation: scrollBounce 2s ease-in-out infinite;
+        }
+        @keyframes scrollBounce {
+            0%, 100% { transform: translateY(0); opacity: 0.5; }
+            50% { transform: translateY(6px); opacity: 1; }
+        }
+
+        /* ── Weather Widget ── */
+        .weather-widget {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 12px; width: 100%;
+            font-family: var(--font-mono); font-size: 12px;
+        }
+        .weather-icon { font-size: 28px; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(0,255,65,0.3)); }
+        .weather-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+        .weather-temp { font-size: 18px; font-weight: 600; color: var(--green); text-shadow: 0 0 10px rgba(0,255,65,0.4); }
+        .weather-desc { font-size: 10px; color: var(--green-mid); letter-spacing: 0.5px; text-transform: uppercase; }
+        .weather-detail { font-size: 9px; color: var(--green-dim); letter-spacing: 0.3px; }
+        .weather-loading { color: var(--green-dark); font-size: 10px; letter-spacing: 1.5px; padding: 12px; text-align: center; }
+
+        /* ── Command Feedback Toast ── */
+        .cmd-toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: rgba(0, 22, 8, 0.95); border: 1px solid rgba(0,255,65,0.4);
+            border-radius: 8px; padding: 8px 18px; font-size: 12px; color: var(--green-mid);
+            font-family: var(--font-mono); letter-spacing: 0.5px;
+            z-index: 100; opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 12px rgba(0,255,65,0.08);
+            -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+        }
+        .cmd-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ── Improved Suggestions ── */
+        .suggestions-dropdown { max-height: 260px; overflow-y: auto; }
+        .suggestion-item { font-family: var(--font-mono); }
+
+        /* ── Enhanced Terminal Typography ── */
+        .terminal-title, .bento-cell-label, .tp-title-text, .tp-ename,
+        .search-hero-tagline, .search-bang-hints, .prompt-prefix,
+        .hn-wire-tag, .hn-wire-info, .tp-close-x, .tp-statusbar,
+        .engine-badge, .tp-prompt, .boot-line, .login-label, .login-suffix {
+            font-family: var(--font-mono);
+        }
+        .command-echo, .command-result { font-family: var(--font-mono); }
     </style>
 </head>
 <body>
@@ -734,8 +797,12 @@
                         </div>
                     </div>
 
-                    <!-- ── Meta: mini matrix + glyph ── -->
+                    <!-- ── Meta: weather + mini matrix ── -->
                     <div class="bento-cell b-meta">
+                        <div class="bento-cell-label"><span>◈ WEATHER</span><span class="bcl-right" id="weather-loc"></span></div>
+                        <div id="weather-container">
+                            <div class="weather-loading">ACQUIRING SIGNAL…</div>
+                        </div>
                         <div class="bento-cell-label"><span>◈ MATRIX.FEED</span></div>
                         <div style="padding:8px; display:flex; flex-direction:column; align-items:center; gap:8px;">
                             <canvas id="mini-matrix" class="mini-matrix-canvas" width="190" height="48"></canvas>
@@ -778,6 +845,12 @@
 
         </div>
 
+        <!-- Scroll Indicator -->
+        <div class="scroll-indicator" id="scroll-indicator">
+            <span class="scroll-indicator-text">scroll</span>
+            <span class="scroll-indicator-arrow">⌄</span>
+        </div>
+
         <!-- Terminal Pages Hub -->
         <div id="tp-overlay" onclick="handleTpOverlayClick(event)">
             <div id="tp-modal">
@@ -818,6 +891,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Command Feedback Toast -->
+    <div class="cmd-toast" id="cmd-toast"></div>
 
     <script>
         const config = {
