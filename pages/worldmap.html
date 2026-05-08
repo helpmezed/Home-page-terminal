@@ -170,7 +170,7 @@
         <div class="hud">
             <div class="hud-tag">◈ GEO.SCAN <span>v2.1</span></div>
             <div class="hud-tag hud-coords" id="coordDisplay">LAT: ---.--- LON: ---.---</div>
-            <div class="hud-tag" id="zoomDisplay">ZOOM: <span id="zoomVal">1.0x</span></div>
+            <div class="hud-tag" id="zoomDisplay">ZOOM: <span id="zoomVal">1.00x</span></div>
         </div>
 
         <div class="legend">
@@ -233,7 +233,7 @@ const LANDS = [
     // Iceland
     [[-24,66],[-22,65],[-15,64],[-14,66],[-18,68],[-24,66]],
     // Japan simplified
-    [[130,32],[132,34],[136,36],[140,38],[142,40],[144,42],[144,44],[140,42],[136,36],[132,34],[130,32]],
+    [[130,31],[132,33],[136,35],[140,37],[142,39],[144,42],[145,44],[143,45],[140,41],[138,38],[135,36],[130,33],[130,31]],
     // Antarctica (simplified outline)
     [[-180,-70],[-150,-72],[-120,-70],[-90,-68],[-60,-72],[-30,-70],[0,-70],[30,-68],[60,-70],[90,-68],[120,-70],[150,-72],[180,-70],[180,-90],[-180,-90],[-180,-70]],
 ];
@@ -262,7 +262,8 @@ function resize() {
 }
 
 function lonLatToGrid(lon, lat) {
-    // Mercator projection
+    // Mercator projection - clamp lat to avoid Infinity at poles
+    lat = Math.max(-85, Math.min(85, lat));
     const x = (lon + 180) / 360;
     const latRad = lat * Math.PI / 180;
     const y = (1 - Math.log(Math.tan(latRad / 2 + Math.PI / 4)) / Math.PI) / 2;
@@ -344,10 +345,14 @@ function draw() {
                 const cx = c * CHAR_W + CHAR_W / 2;
                 const cy = r * CHAR_H + CHAR_H / 2;
                 if (pointInPolygon(cx, cy, pts)) {
-                    // Landmass character based on "elevation"
-                    const {lon, lat} = canvasToLonLat(cx, cy, W, H);
+                    // Fast inverse to get lon and pseudo-lat for noise
+                    const px = (cx - offsetX - (W / 2) * (1 - scale)) / (W * scale);
+                    const py = (cy - offsetY - (H / 2) * (1 - scale)) / (H * scale);
+                    const lon = px * 360 - 180;
+                    const pseudoLat = (0.5 - py) * 180;
+
                     let ch, col;
-                    const noise = (Math.sin(lon * 0.3 + lat * 0.5) + Math.cos(lon * 0.7 - lat * 0.4)) * 0.5;
+                    const noise = (Math.sin(lon * 0.3 + pseudoLat * 0.5) + Math.cos(lon * 0.7 - pseudoLat * 0.4)) * 0.5;
                     if (noise > 0.3) { ch = '▓'; col = 'rgba(0,255,65,0.85)'; }
                     else if (noise > -0.2) { ch = '▒'; col = 'rgba(0,200,50,0.75)'; }
                     else { ch = '░'; col = 'rgba(0,140,35,0.65)'; }
@@ -427,8 +432,9 @@ canvas.addEventListener('wheel', e => {
     const delta = e.deltaY > 0 ? 0.85 : 1.15;
     scale = Math.max(0.5, Math.min(12, scale * delta));
     // Zoom toward mouse
-    offsetX = mx - (mx - offsetX) * (scale / oldScale);
-    offsetY = my - (my - offsetY) * (scale / oldScale);
+    const ratio = scale / oldScale;
+    offsetX = (mx - W / 2) * (1 - ratio) + offsetX * ratio;
+    offsetY = (my - H / 2) * (1 - ratio) + offsetY * ratio;
     document.getElementById('zoomVal').textContent = scale.toFixed(2) + 'x';
     draw();
 }, { passive: false });
