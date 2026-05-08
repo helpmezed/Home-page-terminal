@@ -73,7 +73,7 @@
             display: flex;
             flex-direction: column;
             border: 1px solid rgba(0, 255, 65, 0.2);
-            animation: terminalGlow 6s ease-in-out infinite;
+            animation: terminalGlow 8s ease-in-out infinite;
             overflow: hidden;
         }
 
@@ -181,7 +181,7 @@
             top: 10%;
             left: 50%;
             transform: translateX(-50%);
-            opacity: 0.11;
+            opacity: 0.07;
             font-size: 15px;
             font-weight: bold;
             text-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
@@ -222,7 +222,7 @@
             color: #00ff41;
             bottom: 8%;
             right: 2%;
-            opacity: 0.13;
+            opacity: 0.08;
             font-size: 11px;
             animation: cathedralGlow 9s ease-in-out infinite;
         }
@@ -240,7 +240,7 @@
         .bg-spider {
             color: #00ff41;
             position: absolute;
-            opacity: 0.24;
+            opacity: 0.15;
             font-size: 11px;
             text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
             animation: spiderCrawl 20s linear infinite;
@@ -297,7 +297,7 @@
             width: 100%;
             display: flex;
             justify-content: space-around;
-            opacity: 0.4;
+            opacity: 0.2;
             font-size: 12px;
             font-weight: bold;
             animation: graveyardFlicker 11s ease-in-out infinite;
@@ -612,9 +612,9 @@
         .tool-card {
             border: 1px solid var(--border-color);
             background: var(--card-bg);
-            padding: 14px 16px;
-            border-radius: 10px;
-            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 18px 20px;
+            border-radius: 12px;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             backdrop-filter: blur(4px);
             display: flex;
             flex-direction: column;
@@ -642,9 +642,9 @@
             left: 100%;
         }
         .tool-card:hover {
-            transform: translateY(-5px) scale(1.02);
-            border-color: rgba(0, 255, 65, 0.6);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.9), 0 0 20px rgba(0, 255, 65, 0.15);
+            transform: translateY(-3px) scale(1.02);
+            border-color: rgba(0, 255, 65, 0.5);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.9), 0 0 25px rgba(0, 255, 65, 0.12);
             background: rgba(0, 10, 0, 0.75);
             z-index: 3;
         }
@@ -879,7 +879,7 @@
             </div>
 
             <div class="action-bar">
-                <a class="btn-return" href="index.html">&#x2190; Return to Nexus</a>
+                <a class="btn-return" href="../index.html">&#x2190; Return to Nexus</a>
             </div>
 
             <div class="tools-grid" id="tools-grid"></div>
@@ -937,7 +937,7 @@
         });
 
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') window.location.href = 'index.html';
+            if (e.key === 'Escape') window.location.href = '../index.html';
         });
 
         (function createParticles() {

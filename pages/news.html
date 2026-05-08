@@ -20,8 +20,8 @@
         #top-bar {
             position: fixed; top: 0; left: 0; right: 0; z-index: 300;
             height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 12px;
-            background: rgba(0,0,0,0.92); border-bottom: 1px solid rgba(0,255,65,0.18);
-            backdrop-filter: blur(6px); font-size: 10px; letter-spacing: 0.4px;
+            background: rgba(0,0,0,0.85); border-bottom: 1px solid rgba(0,255,65,0.15);
+            backdrop-filter: blur(10px); font-size: 10px; letter-spacing: 0.4px;
         }
         .back-btn {
             color: #005c18; text-decoration: none; border: 1px solid rgba(0,255,65,0.18);
@@ -45,12 +45,13 @@
 
         #hn-tooltip {
             position: fixed; z-index: 400; pointer-events: none;
-            background: rgba(0,3,0,0.96); border: 1px solid rgba(0,255,65,0.28);
-            padding: 12px 16px; font-size: 14px; color: #00cc44;
-            max-width: 420px; border-radius: 4px; opacity: 0; transition: opacity 0.12s;
-            box-shadow: 0 0 18px rgba(0,255,65,0.12);
+            background: rgba(0,5,0,0.92); border: 1px solid rgba(0,255,65,0.35);
+            padding: 16px 20px; font-size: 14px; color: #00cc44;
+            max-width: 440px; border-radius: 12px; opacity: 0; transition: opacity 0.2s, transform 0.2s;
+            box-shadow: 0 15px 45px rgba(0,0,0,0.9), 0 0 25px rgba(0,255,65,0.1);
             font-family: 'IBM Plex Mono', monospace;
-            line-height: 1.4;
+            line-height: 1.5;
+            -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
         }
         #hint {
             position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
@@ -62,7 +63,7 @@
 <body>
 
 <div id="top-bar">
-    <a class="back-btn" href="index.html">← back</a>
+    <a class="back-btn" href="../index.html">← back</a>
     <span class="top-sep">|</span>
     <span id="top-title">matrix://hn.nexus</span>
     <span class="top-sep">|</span>
@@ -291,15 +292,15 @@
                 if (dist < CR) {
                     const t = 1 - dist/CR;
                     const gb = Math.max(a.glow, b.glow);
-                    const alpha = t * 0.28 * (1 + gb);
+                    const alpha = t * 0.18 * (1 + gb);
                     ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
-                    ctx.strokeStyle = `rgba(0,255,65,${alpha})`;
-                    ctx.lineWidth = 0.5 + gb * 2;
+                    ctx.strokeStyle = `rgba(0,255,65,${alpha * 0.7})`;
+                    ctx.lineWidth = 0.5 + gb * 1.5;
                     ctx.stroke();
                     if (gb > 0.2) {
                         ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
-                        ctx.strokeStyle = `rgba(100,255,140,${alpha*0.38*gb})`;
-                        ctx.lineWidth = (0.5+gb*2)*2.2;
+                        ctx.strokeStyle = `rgba(100,255,140,${alpha * 0.25 * gb})`;
+                        ctx.lineWidth = (0.5 + gb * 1.5) * 2;
                         ctx.stroke();
                     }
                 }
@@ -324,27 +325,29 @@
         hovered = null;
         for (const p of particles) { if (p.hitTest(mouse.x, mouse.y)) { hovered = p; break; } }
         if (hovered) {
-            const typeColor = { ASK: '#00cc44', SHOW: '#00aa44', TELL: '#008833', JOB: '#007a22', LINK: '#005c18' };
+            const typeColor = { ASK: '#00cc44', SHOW: '#00aa44', TELL: '#008833', JOB: '#007a22', LINK: '#006622' };
             tooltip.innerHTML = `
-                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                    <span style="font-size:9px;color:${typeColor[hovered.type]||'#005c18'};letter-spacing:1.4px;border:1px solid rgba(0,255,65,0.22);padding:2px 7px;border-radius:2px;">${hovered.type}</span>
-                    <span style="font-size:9px;color:#004d14;letter-spacing:1px;">#${String(hovered.rank).padStart(2,'0')}</span>
-                    <span style="font-size:9px;color:#003b00;margin-left:auto;">▲${hovered.pts} · ⌘${hovered.cmt}</span>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <span style="font-size:9px;color:${typeColor[hovered.type]||'#006622'};letter-spacing:1.4px;border:1px solid rgba(0,255,65,0.25);padding:3px 8px;border-radius:3px;">${hovered.type}</span>
+                    <span style="font-size:9px;color:#007a22;letter-spacing:1.2px;">#${String(hovered.rank).padStart(2,'0')}</span>
+                    <span style="font-size:9px;color:#005c18;margin-left:auto;">▲${hovered.pts} · ⌘${hovered.cmt}</span>
                 </div>
-                <div style="font-weight:600;color:#00ff41;margin-bottom:${hovered.preview ? 9 : 8}px;line-height:1.45;font-size:13px;">${esc(hovered.title)}</div>
-                ${hovered.preview ? `<div style="font-size:11px;color:#007a22;margin-bottom:9px;line-height:1.55;border-left:2px solid rgba(0,255,65,0.22);padding-left:9px;">${esc(hovered.preview)}</div>` : ''}
-                <div style="font-size:10px;color:#004d14;display:flex;gap:10px;align-items:center;">
+                <div style="font-weight:600;color:#00ff41;margin-bottom:${hovered.preview ? 10 : 8}px;line-height:1.5;font-size:14px;text-shadow:0 0 12px rgba(0,255,65,0.3);">${esc(hovered.title)}</div>
+                ${hovered.preview ? `<div style="font-size:12px;color:#009933;margin-bottom:12px;line-height:1.6;border-left:2px solid rgba(0,255,65,0.3);padding-left:12px;">${esc(hovered.preview)}</div>` : ''}
+                <div style="font-size:10px;color:#005c18;display:flex;gap:12px;align-items:center;">
                     <span>${esc(hovered.domain)}</span>
-                    <span style="color:#002a00;">·</span>
+                    <span style="color:#003300;">·</span>
                     <span>@${esc(hovered.author)}</span>
                 </div>
             `;
             tooltip.style.opacity = '1';
-            tooltip.style.left = Math.min(e.clientX + 22, window.innerWidth - 440) + 'px';
-            tooltip.style.top  = Math.max(e.clientY - 38, 40) + 'px';
+            tooltip.style.transform = 'translateY(0)';
+            tooltip.style.left = Math.min(e.clientX + 25, window.innerWidth - 460) + 'px';
+            tooltip.style.top  = Math.max(e.clientY - 40, 40) + 'px';
             canvas.style.cursor = 'pointer';
         } else {
             tooltip.style.opacity = '0';
+            tooltip.style.transform = 'translateY(8px)';
             canvas.style.cursor = 'crosshair';
         }
     });
