@@ -987,18 +987,11 @@
             if (tl && config.username) tl.textContent = `${config.username}@${config.hostname}:~`;
             setInterval(updateTopClock, 1000);
             updateTopClock();
-
-            const isWin = navigator.platform.indexOf('Win') !== -1;
-            const isMac = navigator.platform.indexOf('Mac') !== -1;
-            const osName = isWin ? "Windows" : isMac ? "macOS" : "Linux";
-            const ua = navigator.userAgent;
-            const browser = ua.indexOf('Firefox') !== -1 ? 'Firefox' : ua.indexOf('Chrome') !== -1 ? 'Chrome' : 'Browser';
-
             systemData = [
                 { type: 'title', text: `${config.username}@${config.hostname}` },
                 { type: 'sep' },
-                { type: 'info', label: "OS",     value: `${osName} ${navigator.platform}` },
-                { type: 'info', label: "Client", value: `${browser} v${ua.match(/(Firefox|Chrome)\/([0-9.]+)/)?.[2] || '?'}` },
+                { type: 'info', label: "OS",     value: "WIN-NT 11.0 x64" },
+                { type: 'info', label: "Shell",  value: "pwsh 7.4.6" },
                 { type: 'info', label: "Date",   id: "info-date" },
                 { type: 'info', label: "Time",   id: "info-time" },
                 { type: 'info', label: "Uptime", id: "info-uptime", value: "00h 00m 00s" },
@@ -2301,144 +2294,198 @@
                 requestAnimationFrame(draw);
             }
             draw();
-        // ── Real Weather Integration ──
-        (async function() {
-            const container = document.getElementById('weather-container');
-            const locEl = document.getElementById('weather-loc');
-            if (!container) return;
-
-            async function fetchWeather() {
-                try {
-                    // Using wttr.in for a terminal-friendly weather feed
-                    const res = await fetch('https://wttr.in/?format=j1');
-                    const data = await res.json();
-                    const current = data.current_condition[0];
-                    const loc = data.nearest_area[0];
-                    
-                    const temp = current.temp_C;
-                    const desc = current.weatherDesc[0].value.toUpperCase();
-                    const city = loc.areaName[0].value.toUpperCase();
-                    const region = loc.region[0].value.toUpperCase();
-
-                    if (locEl) locEl.textContent = `${city}, ${region}`;
-                    
-                    container.innerHTML = `
-                        <div class="weather-main" style="display:flex; align-items:center; gap:12px; padding:10px;">
-                            <div class="weather-temp" style="font-size:32px; font-weight:bold; color:#00ff41; text-shadow:0 0 10px rgba(0,255,65,0.4)">${temp}°C</div>
-                            <div class="weather-info">
-                                <div class="weather-desc" style="font-size:12px; color:#00cc44">${desc}</div>
-                                <div class="weather-hum" style="font-size:10px; color:#005c18">HUMIDITY: ${current.humidity}%</div>
-                                <div class="weather-wind" style="font-size:10px; color:#005c18">WIND: ${current.windspeedKmph}KM/H</div>
-                            </div>
-                        </div>
-                    `;
-                } catch (e) {
-                    container.innerHTML = '<div class="weather-error" style="color:#ef2929; font-size:10px; padding:10px;">WEATHER LINK OFFLINE</div>';
-                }
-            }
-            fetchWeather();
-            setInterval(fetchWeather, 30 * 60 * 1000); // Update every 30 mins
         })();
 
-        // ── Real SpaceX Telemetry ──
-        (function() {
+        // ── SpaceX Launch Tracker ──
+        (async function() {
             const canvas = document.getElementById('spacex-viz');
             if (!canvas) return;
+            await new Promise(r => setTimeout(r, 500));
+            const dpr = window.devicePixelRatio || 1;
+            const cssW = canvas.offsetWidth || 700;
+            const cssH = canvas.offsetHeight || 120;
+            canvas.width = cssW * dpr;
+            canvas.height = cssH * dpr;
+            canvas.style.width = cssW + 'px';
+            canvas.style.height = cssH + 'px';
             const ctx = canvas.getContext('2d');
-            const SPLIT = 75; // Left panel width
-            let W, H;
-            let tick = 0, progress = 0;
-            let missionName = "FETCHING…", flightNum = "---", launchDate = "---", success = null, elapsed = "";
-            let particles = [];
-            const stars = Array.from({length: 40}, () => ({ x: 0, y: Math.random() * 100, vy: 0.5 + Math.random(), r: 0.5 + Math.random(), a: 0.2 + Math.random() * 0.5 }));
+            ctx.scale(dpr, dpr);
+            const W = cssW, H = cssH;
 
-            async function fetchNextLaunch() {
-                try {
-                    const res = await fetch('https://api.spacexdata.com/v4/launches/next');
-                    const data = await res.json();
-                    missionName = data.name.toUpperCase();
-                    flightNum = data.flight_number;
-                    const d = new Date(data.date_utc);
-                    launchDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    success = data.success;
-                    
-                    if (data.upcoming) {
-                        const now = Date.now();
-                        const diff = d.getTime() - now;
-                        if (diff > 0) {
-                            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-                            const hrs = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                            elapsed = `T-${days}D ${hrs}H`;
-                        } else {
-                            elapsed = "L-MINUS 0";
-                        }
-                    }
-                } catch (e) { missionName = "ERROR SYNCING"; }
+            let launch = null;
+            try {
+                const res = await fetch('https://api.spacexdata.com/v4/launches/latest');
+                launch = await res.json();
+            } catch(e) {
+                ctx.fillStyle='#003b00'; ctx.font='14px monospace';
+                ctx.fillText('[ SPACEX TELEMETRY OFFLINE ]', 20, H/2); return;
             }
-            fetchNextLaunch();
-            setInterval(fetchNextLaunch, 60000);
 
-            function resize() {
-                const rect = canvas.getBoundingClientRect();
-                const dpr = window.devicePixelRatio || 1;
-                W = rect.width; H = rect.height;
-                canvas.width = W * dpr; canvas.height = H * dpr;
-                ctx.scale(dpr, dpr);
-                stars.forEach(s => s.x = SPLIT + 4 + Math.random() * (W - SPLIT - 6));
-            }
-            resize();
-            new ResizeObserver(resize).observe(canvas);
+            const missionName = launch.name || 'UNKNOWN';
+            const flightNum   = launch.flight_number ?? '?';
+            const success     = launch.success;
+            const launchDate  = launch.date_utc
+                ? new Date(launch.date_utc).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})
+                : 'UNKNOWN';
+            const elapsed = launch.date_utc ? (() => {
+                const ms = Date.now() - new Date(launch.date_utc).getTime();
+                const d = Math.floor(ms/86400000);
+                return d > 0 ? `T+${d}d` : `T+${Math.floor(ms/3600000)}h`;
+            })() : '';
 
-            function drawRocket(x, y) {
-                ctx.fillStyle = '#00ff41';
-                ctx.fillRect(x - 1, y, 2, 12); // body
-                ctx.beginPath(); ctx.moveTo(x - 1, y); ctx.lineTo(x, y - 4); ctx.lineTo(x + 1, y); ctx.fill(); // nose
-                ctx.fillStyle = '#005c18';
-                ctx.fillRect(x - 2, y + 10, 4, 1); // fins
+            const SPLIT = W * 0.52;
+
+            const stars = Array.from({length:80}, () => ({
+                x: SPLIT + 4 + Math.random()*(W - SPLIT - 6),
+                y: Math.random()*H,
+                r: 0.3 + Math.random()*1.2,
+                vy: 0.12 + Math.random()*0.35,
+                a: 0.2 + Math.random()*0.75
+            }));
+
+            const particles = [];
+            function spawnParticle(cx, cy) {
+                particles.push({
+                    x: cx+(Math.random()-0.5)*9, y: cy,
+                    vx:(Math.random()-0.5)*0.7, vy:1.1+Math.random()*2.5,
+                    life:1, decay:0.038+Math.random()*0.045, r:1.2+Math.random()*2.8
+                });
             }
-            function spawnParticle(x, y) {
-                particles.push({ x, y, vx: (Math.random() - 0.5) * 0.8, vy: 1 + Math.random() * 1.5, life: 1, r: 1 + Math.random() * 2, decay: 0.04 + Math.random() * 0.04 });
+
+            function drawRocket(rx, ry) {
+                // Ambient glow
+                const glow = ctx.createRadialGradient(rx,ry,0,rx,ry,28);
+                glow.addColorStop(0,'rgba(0,255,65,0.15)');
+                glow.addColorStop(1,'rgba(0,255,65,0)');
+                ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(rx,ry,28,0,Math.PI*2); ctx.fill();
+
+                // Fins
+                ctx.fillStyle='#005c18';
+                ctx.beginPath(); ctx.moveTo(rx-5,ry+2); ctx.lineTo(rx-12,ry+15); ctx.lineTo(rx-5,ry+9); ctx.closePath(); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(rx+5,ry+2); ctx.lineTo(rx+12,ry+15); ctx.lineTo(rx+5,ry+9); ctx.closePath(); ctx.fill();
+
+                // Body (gradient)
+                const bg = ctx.createLinearGradient(rx-6,0,rx+6,0);
+                bg.addColorStop(0,'#007a22'); bg.addColorStop(0.45,'#00cc44'); bg.addColorStop(1,'#005c18');
+                ctx.fillStyle=bg; ctx.fillRect(rx-6, ry-22, 12, 26);
+
+                // Nose (gradient)
+                const ng = ctx.createLinearGradient(rx-6,ry-22,rx+6,ry-22);
+                ng.addColorStop(0,'#005c18'); ng.addColorStop(0.5,'#00ff41'); ng.addColorStop(1,'#005c18');
+                ctx.fillStyle=ng;
+                ctx.beginPath(); ctx.moveTo(rx,ry-36); ctx.lineTo(rx-6,ry-22); ctx.lineTo(rx+6,ry-22); ctx.closePath(); ctx.fill();
+
+                // Window
+                ctx.beginPath(); ctx.arc(rx,ry-10,4,0,Math.PI*2);
+                ctx.fillStyle='rgba(150,255,180,0.35)'; ctx.fill();
+                ctx.strokeStyle='#00ff41'; ctx.lineWidth=0.8; ctx.stroke();
+
+                // Exhaust flame (curved)
+                const fc = ctx.createLinearGradient(rx,ry+6,rx,ry+26);
+                fc.addColorStop(0,'rgba(255,200,60,0.95)');
+                fc.addColorStop(0.45,'rgba(255,90,0,0.7)');
+                fc.addColorStop(1,'rgba(255,20,0,0)');
+                ctx.fillStyle=fc;
+                ctx.beginPath();
+                ctx.moveTo(rx-5,ry+8);
+                ctx.quadraticCurveTo(rx-7,ry+20,rx,ry+30);
+                ctx.quadraticCurveTo(rx+7,ry+20,rx+5,ry+8);
+                ctx.closePath(); ctx.fill();
             }
+
+            let t=0, tick=0, progress=0;
+            const ASCENT = 0.0022;
 
             function draw() {
+                ctx.clearRect(0,0,W,H);
                 ctx.fillStyle='#000200'; ctx.fillRect(0,0,W,H);
+
+                // Scanlines
                 for(let y=0;y<H;y+=3){ctx.fillStyle='rgba(0,0,0,0.06)';ctx.fillRect(0,y,W,1);}
+
+                // Borders & divider
                 ctx.strokeStyle='rgba(0,255,65,0.25)'; ctx.lineWidth=1;
                 ctx.strokeRect(0.5,0.5,W-1,H-1);
                 ctx.beginPath(); ctx.moveTo(SPLIT,0); ctx.lineTo(SPLIT,H); ctx.stroke();
+
+                // Info panel tint
                 ctx.fillStyle='rgba(0,255,65,0.025)'; ctx.fillRect(0,0,SPLIT,H);
+
+                // Stars
                 stars.forEach(s => {
                     s.y+=s.vy; if(s.y>H){s.y=0;s.x=SPLIT+4+Math.random()*(W-SPLIT-6);}
-                    ctx.fillStyle=`rgba(200,255,215,${s.a})`; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle=`rgba(200,255,215,${(s.a*1.1).toFixed(2)})`;
+                    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
                 });
-                progress += 0.005; if(progress > 1.1) progress = 0;
-                const rx = SPLIT + (W-SPLIT)*0.5, ry = H*0.9 - progress*H*0.85;
+
+                // Rocket ascent: rises then resets
+                progress += ASCENT;
+                if(progress > 1.08) progress = 0;
+                const rx = SPLIT + (W-SPLIT)*0.5;
+                const ry = H*0.9 - progress*H*0.85;
+
                 if(tick%2===0 && ry<H+20) spawnParticle(rx, ry+8);
                 for(let i=particles.length-1;i>=0;i--){
-                    const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;
+                    const p=particles[i];
+                    p.x+=p.vx; p.y+=p.vy; p.life-=p.decay;
                     if(p.life<=0){particles.splice(i,1);continue;}
-                    ctx.fillStyle=p.life>0.5?`rgba(255,150,30,${p.life})`:`rgba(210,40,0,${p.life})`;
+                    ctx.fillStyle=p.life>0.5
+                        ?`rgba(255,150,30,${(p.life*0.9).toFixed(2)})`
+                        :`rgba(210,40,0,${(p.life*0.65).toFixed(2)})`;
                     ctx.beginPath(); ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2); ctx.fill();
                 }
                 if(ry>-35 && ry<H+35) drawRocket(rx, ry);
+
+                // ── Info panel ──
+                const IX=12;
+
+                // Header strip
                 ctx.fillStyle='rgba(0,255,65,0.09)'; ctx.fillRect(0,0,SPLIT,16);
                 ctx.fillStyle='#00cc44'; ctx.font='bold 9px monospace'; ctx.textAlign='center';
-                ctx.fillText('◈ NEXT LAUNCH', SPLIT/2, 9); ctx.textAlign='left';
-                ctx.fillStyle='#00ff41'; ctx.font='bold 10px monospace';
-                ctx.fillText(missionName.slice(0,12), 8, 28);
-                ctx.fillStyle='#005c18'; ctx.font='8px monospace';
-                ctx.fillText('FLT',8,42); ctx.fillText('DATE',38,42);
-                ctx.fillStyle='#00cc44'; ctx.font='bold 10px monospace';
-                ctx.fillText(`#${flightNum}`,8,52); ctx.fillText(launchDate,38,52);
-                ctx.fillStyle='#005c18'; ctx.font='8px monospace'; ctx.fillText('STATUS',8,66);
-                ctx.fillStyle='#ffaa00'; ctx.font='bold 11px monospace'; ctx.fillText(elapsed || "SYNCING",8,78);
+                ctx.fillText('▶  SPACEX LAUNCH TELEMETRY', SPLIT/2, 9);
+                ctx.textAlign='left';
+
+                // Mission name
+                ctx.fillStyle='#00ff41'; ctx.font='bold 11px monospace';
+                ctx.fillText(missionName.length>27?missionName.slice(0,26)+'…':missionName, IX, 28);
+
+                // Flight + date row
+                ctx.fillStyle='#005c18'; ctx.font='9px monospace';
+                ctx.fillText('FLT',IX,44); ctx.fillText('DATE',IX+60,44);
+                ctx.fillStyle='#00cc44'; ctx.font='bold 11px monospace';
+                ctx.fillText(`#${flightNum}`,IX,56); ctx.fillText(launchDate,IX+60,56);
+
+                // Status + elapsed row
+                ctx.fillStyle='#005c18'; ctx.font='9px monospace';
+                ctx.fillText('STATUS',IX,68);
+                if(elapsed) ctx.fillText('ELAPSED',IX+115,65);
+
+                if(success===true){
+                    ctx.fillStyle='#00ff41'; ctx.font='bold 11px monospace'; ctx.fillText('✓ SUCCESS',IX,77);
+                } else if(success===false){
+                    ctx.fillStyle='#ff3300'; ctx.font='bold 11px monospace'; ctx.fillText('✗ FAILURE',IX,77);
+                } else {
+                    ctx.fillStyle='#ffaa00'; ctx.font='bold 14px monospace'; ctx.fillText('⧖ UPCOMING',IX,80);
+                }
+                if(elapsed){ctx.fillStyle='#00cc44';ctx.font='bold 14px monospace';ctx.fillText(elapsed,IX+115,80);}
+
+                // Live telemetry (simulated, tied to progress)
                 const pct = Math.min(progress,1);
-                ctx.fillStyle='#003b00'; ctx.font='8px monospace';
-                ctx.fillText(`ALT ${(pct*650).toFixed(0)}km`, 8, 92);
-                const barW = SPLIT - 16;
-                ctx.fillStyle='rgba(0,255,65,0.09)'; ctx.fillRect(8,100,barW,4);
-                ctx.fillStyle='#00cc44'; ctx.fillRect(8,100,barW*pct,4);
-                tick++; requestAnimationFrame(draw);
+                ctx.fillStyle='#003b00'; ctx.font='9px monospace';
+                ctx.fillText(`ALT ${(pct*650).toFixed(1)} km   VEL ${(250+pct*8500).toFixed(0)} m/s`, IX, 95);
+
+                // Ascent progress bar
+                const barW = SPLIT - IX*2 - 2;
+                ctx.fillStyle='rgba(0,255,65,0.09)'; ctx.fillRect(IX,102,barW,6);
+                const pg=ctx.createLinearGradient(IX,0,IX+barW,0);
+                pg.addColorStop(0,'#004d10'); pg.addColorStop(1,'#00ff41');
+                ctx.fillStyle=pg; ctx.fillRect(IX,102,barW*pct,6);
+                ctx.strokeStyle='rgba(0,255,65,0.28)'; ctx.lineWidth=0.5; ctx.strokeRect(IX,102,barW,6);
+                ctx.fillStyle='#005c18'; ctx.font='9px monospace';
+                ctx.fillText(`ASCENT  ${(pct*100).toFixed(0)}%`, IX, 118);
+
+                t+=0.016; tick++;
+                requestAnimationFrame(draw);
             }
             draw();
         })();
@@ -2498,35 +2545,8 @@
             setInterval(load, 5 * 60 * 1000);
         })();
 
-        // ── Real Signal Monitor (Active Latency) ──
+        // ── Glitch Status & Glyph Cycle ──
         (function() {
-            const wave1 = document.getElementById('signal-wave-1');
-            const wave2 = document.getElementById('signal-wave-2');
-            const statusEl = document.getElementById('glitch-status');
-            const history = Array(24).fill(0);
-            
-            async function ping() {
-                const start = performance.now();
-                try {
-                    // Using a tiny fetch to a reliable CDN
-                    await fetch('https://1.1.1.1/cdn-cgi/trace', { mode: 'no-cors', cache: 'no-cache' });
-                    const rtt = Math.round(performance.now() - start);
-                    history.push(rtt);
-                    history.shift();
-                    
-                    if (wave1) {
-                        const chars = ' _.,-~:;!|#%@';
-                        const waveStr = history.map(v => chars[Math.min(chars.length-1, Math.floor(v/20))]).join('');
-                        wave1.textContent = `RTT ${rtt}ms ${waveStr}`;
-                    }
-                    if (statusEl) statusEl.textContent = rtt < 100 ? 'STABLE ●' : 'LAGGING ◈';
-                } catch (e) {
-                    if (statusEl) statusEl.textContent = 'DROPPED ✗';
-                }
-            }
-            setInterval(ping, 2000);
-            ping();
-
             const STATES = ['ONLINE ●', 'SYN·ACK ⟁', 'ENCRYPT ✦', 'UPLINK ⌖', 'SECURE ⊗', 'ACTIVE ◈', 'STREAM ∿'];
             const GLYPHS = [
                 '⌖ ✦ ✟ ⊗ ◈ ⟁', '✟ ⌖ ◈ ✦ ⊗ ∿',
@@ -2534,7 +2554,13 @@
                 '∿ ◈ ⌖ ⊗ ⟁ ✦'
             ];
             let si = 0, gi = 0;
+            const statusEl = document.getElementById('glitch-status');
             const glyphEl = document.getElementById('left-glyph');
+            setInterval(() => {
+                if (Math.random() > 0.55 && statusEl) {
+                    statusEl.textContent = STATES[si++ % STATES.length];
+                }
+            }, 1400);
             setInterval(() => {
                 if (glyphEl) glyphEl.textContent = GLYPHS[gi++ % GLYPHS.length];
             }, 2800);
