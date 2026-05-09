@@ -394,6 +394,10 @@ function draw(timestamp) {
         signalPulse = (timestamp / 1000) % 1;
 
         // Overlay: Signals (Pulse)
+        ctx.font = `${CHAR_H - 2}px 'JetBrains Mono', monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+
         CITIES.forEach(city => {
             const p = projectToCanvas(city.lon, city.lat, W, H);
             if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return;
@@ -426,9 +430,8 @@ function draw(timestamp) {
             let hudContent = `LAT: ${latStr} LON: ${lonStr}`;
             if (nearest) {
                 const now = new Date();
-                const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-                const cityTime = new Date(utc + (3600000 * nearest.tz));
-                const timeStr = cityTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                const cityTime = new Date(now.getTime() + (nearest.tz * 3600000));
+                const timeStr = cityTime.toLocaleTimeString([], { timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hour12: false });
                 hudContent += `  |  SIG: ${nearest.name} [${timeStr}]`;
             }
             document.getElementById('coordDisplay').textContent = hudContent;
@@ -463,10 +466,18 @@ canvas.addEventListener('wheel', e => {
     e.preventDefault();
     const rect = container.getBoundingClientRect();
     const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const W = rect.width, H = rect.height;
     const oldScale = scale, delta = e.deltaY > 0 ? 0.85 : 1.15;
     scale = Math.max(0.5, Math.min(12, scale * delta));
-    offsetX = mx - (mx - offsetX) * (scale / oldScale);
-    offsetY = my - (my - offsetY) * (scale / oldScale);
+    
+    // Calculate logical point under mouse before zoom
+    const px = (mx - offsetX - (W / 2) * (1 - oldScale)) / oldScale;
+    const py = (my - offsetY - (H / 2) * (1 - oldScale)) / oldScale;
+    
+    // Adjust offset to keep the logical point under the mouse
+    offsetX = mx - (px * scale) - (W / 2) * (1 - scale);
+    offsetY = my - (py * scale) - (H / 2) * (1 - scale);
+    
     const zVal = document.getElementById('zoomVal');
     if (zVal) zVal.textContent = scale.toFixed(2) + 'x';
 }, { passive: false });
