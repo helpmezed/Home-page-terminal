@@ -239,10 +239,29 @@ const LANDS = [
 ];
 
 // State
+const CITIES = [
+    { name: "LONDON", lat: 51.507, lon: -0.127, tz: 0 },
+    { name: "NEW YORK", lat: 40.712, lon: -74.006, tz: -5 },
+    { name: "TOKYO", lat: 35.689, lon: 139.691, tz: 9 },
+    { name: "PARIS", lat: 48.856, lon: 2.352, tz: 1 },
+    { name: "BERLIN", lat: 52.520, lon: 13.404, tz: 1 },
+    { name: "MOSCOW", lat: 55.755, lon: 37.617, tz: 3 },
+    { name: "BEIJING", lat: 39.904, lon: 116.407, tz: 8 },
+    { name: "SINGAPORE", lat: 1.352, lon: 103.819, tz: 8 },
+    { name: "SYDNEY", lat: -33.868, lon: 151.209, tz: 11 },
+    { name: "DUBAI", lat: 25.204, lon: 55.270, tz: 4 },
+    { name: "SAO PAULO", lat: -23.550, lon: -46.633, tz: -3 },
+    { name: "LOS ANGELES", lat: 34.052, lon: -118.243, tz: -8 },
+    { name: "CAIRO", lat: 30.044, lon: 31.235, tz: 2 },
+    { name: "MUMBAI", lat: 19.076, lon: 72.877, tz: 5.5 }
+];
+
 let offsetX = 0, offsetY = 0;
 let scale = 1.0;
 let isDragging = false, dragStart = null, dragOffset = null;
 let mouseCanvasX = -1, mouseCanvasY = -1;
+let lastDrawTime = 0;
+let signalPulse = 0;
 
 const CHAR_W = 8, CHAR_H = 14;
 let cols = 0, rows = 0;
@@ -258,7 +277,7 @@ function resize() {
     ctx.scale(dpr, dpr);
     cols = Math.floor(rect.width / CHAR_W);
     rows = Math.floor(rect.height / CHAR_H);
-    draw();
+    needsRedraw = true;
 }
 
 function lonLatToGrid(lon, lat) {
@@ -285,115 +304,174 @@ function canvasToLonLat(cx, cy, W, H) {
     return { lon, lat };
 }
 
-function draw() {
+let needsRedraw = true;
+let lastX, lastY, lastScale;
+
+function draw(timestamp) {
+    if (!timestamp) timestamp = performance.now();
     const rect = container.getBoundingClientRect();
     const W = rect.width, H = rect.height;
-    if (!W || !H) return;
-
-    ctx.fillStyle = '#000300';
-    ctx.fillRect(0, 0, W, H);
-
-    // Draw grid lines
-    ctx.font = `${CHAR_H - 2}px 'JetBrains Mono', monospace`;
-    ctx.textBaseline = 'top';
-    ctx.textAlign = 'center';
-
-    // Grid: every 30 degrees lat/lon
-    for (let lon = -180; lon <= 180; lon += 30) {
-        for (let lat = -80; lat <= 80; lat += 10) {
-            const p = projectToCanvas(lon, lat, W, H);
-            if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) continue;
-            let ch, color;
-            if (lat === 0 || lon === 0) {
-                ch = '+';
-                color = 'rgba(0,255,65,0.25)';
-            } else if (lat % 30 === 0 || lon % 30 === 0) {
-                ch = '·';
-                color = 'rgba(0,120,30,0.18)';
-            } else {
-                ch = '·';
-                color = 'rgba(0,60,15,0.10)';
-            }
-            ctx.fillStyle = color;
-            ctx.fillText(ch, p.x, p.y);
-        }
+    if (!W || !H) {
+        requestAnimationFrame(draw);
+        return;
     }
 
-    // Draw landmasses
-    LANDS.forEach((poly, pi) => {
-        // Fill polygon by rasterizing to character grid
-        const pts = poly.map(([lon, lat]) => projectToCanvas(lon, lat, W, H));
+    const hasMoved = offsetX !== lastX || offsetY !== lastY || scale !== lastScale;
+    
+    // Only clear and redraw the full map if we moved or it's requested
+    if (hasMoved || needsRedraw) {
+        ctx.fillStyle = '#000300';
+        ctx.fillRect(0, 0, W, H);
 
-        // Find bounding box
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        pts.forEach(p => {
-            if (p.x < minX) minX = p.x;
-            if (p.x > maxX) maxX = p.x;
-            if (p.y < minY) minY = p.y;
-            if (p.y > maxY) maxY = p.y;
-        });
+        // Draw grid lines
+        ctx.font = `${CHAR_H - 2}px 'JetBrains Mono', monospace`;
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'center';
 
-        // Rasterize at character grid
-        const startCol = Math.max(0, Math.floor(minX / CHAR_W));
-        const endCol = Math.min(cols, Math.ceil(maxX / CHAR_W));
-        const startRow = Math.max(0, Math.floor(minY / CHAR_H));
-        const endRow = Math.min(rows, Math.ceil(maxY / CHAR_H));
+        // Grid: every 30 degrees lat/lon
+        for (let lon = -180; lon <= 180; lon += 30) {
+            for (let lat = -80; lat <= 80; lat += 10) {
+                const p = projectToCanvas(lon, lat, W, H);
+                if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) continue;
+                let ch, color;
+                if (lat === 0 || lon === 0) {
+                    ch = '+';
+                    color = 'rgba(0,255,65,0.25)';
+                } else if (lat % 30 === 0 || lon % 30 === 0) {
+                    ch = '·';
+                    color = 'rgba(0,120,30,0.18)';
+                } else {
+                    ch = '·';
+                    color = 'rgba(0,60,15,0.10)';
+                }
+                ctx.fillStyle = color;
+                ctx.fillText(ch, p.x, p.y);
+            }
+        }
 
-        for (let r = startRow; r <= endRow; r++) {
-            for (let c = startCol; c <= endCol; c++) {
-                const cx = c * CHAR_W + CHAR_W / 2;
-                const cy = r * CHAR_H + CHAR_H / 2;
-                if (pointInPolygon(cx, cy, pts)) {
-                    // Landmass character based on "elevation"
-                    const {lon, lat} = canvasToLonLat(cx, cy, W, H);
-                    let ch, col;
-                    const noise = (Math.sin(lon * 0.3 + lat * 0.5) + Math.cos(lon * 0.7 - lat * 0.4)) * 0.5;
-                    if (noise > 0.3) { ch = '▓'; col = 'rgba(0,255,65,0.85)'; }
-                    else if (noise > -0.2) { ch = '▒'; col = 'rgba(0,200,50,0.75)'; }
-                    else { ch = '░'; col = 'rgba(0,140,35,0.65)'; }
-                    ctx.fillStyle = col;
-                    ctx.fillText(ch, cx, r * CHAR_H);
+        // Draw landmasses
+        LANDS.forEach((poly, pi) => {
+            const pts = poly.map(([lon, lat]) => projectToCanvas(lon, lat, W, H));
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            pts.forEach(p => {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            });
+
+            const startCol = Math.max(0, Math.floor(minX / CHAR_W));
+            const endCol = Math.min(cols, Math.ceil(maxX / CHAR_W));
+            const startRow = Math.max(0, Math.floor(minY / CHAR_H));
+            const endRow = Math.min(rows, Math.ceil(maxY / CHAR_H));
+
+            for (let r = startRow; r <= endRow; r++) {
+                for (let c = startCol; c <= endCol; c++) {
+                    const cx = c * CHAR_W + CHAR_W / 2;
+                    const cy = r * CHAR_H + CHAR_H / 2;
+                    if (pointInPolygon(cx, cy, pts)) {
+                        const {lon, lat} = canvasToLonLat(cx, cy, W, H);
+                        let ch, col;
+                        const noise = (Math.sin(lon * 0.4 + pi) + Math.cos(lat * 0.6 + pi)) * 0.5;
+                        if (noise > 0.4) { ch = '▓'; col = 'rgba(0,255,65,0.9)'; }
+                        else if (noise > 0.1) { ch = '▒'; col = 'rgba(0,220,60,0.8)'; }
+                        else if (noise > -0.2) { ch = '░'; col = 'rgba(0,180,45,0.7)'; }
+                        else { ch = '·'; col = 'rgba(0,120,30,0.6)'; }
+                        
+                        ctx.fillStyle = col;
+                        ctx.fillText(ch, cx, r * CHAR_H);
+                    }
                 }
             }
-        }
 
-        // Draw coastline dots
-        for (let i = 0; i < pts.length; i++) {
-            const p0 = pts[i];
-            const p1 = pts[(i + 1) % pts.length];
-            const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-            const steps = Math.max(1, Math.ceil(dist / (CHAR_W * 0.8)));
-            for (let s = 0; s <= steps; s++) {
-                const t = s / steps;
-                const px = p0.x + (p1.x - p0.x) * t;
-                const py = p0.y + (p1.y - p0.y) * t;
-                if (px < 0 || px > W || py < 0 || py > H) continue;
-                ctx.fillStyle = 'rgba(180,255,210,0.9)';
-                ctx.fillText('·', px, py - CHAR_H / 2);
+            // Draw coastline dots
+            ctx.fillStyle = 'rgba(180,255,210,0.8)';
+            for (let i = 0; i < pts.length; i++) {
+                const p0 = pts[i];
+                const p1 = pts[(i + 1) % pts.length];
+                const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+                const steps = Math.max(1, Math.ceil(dist / (CHAR_W * 0.6)));
+                for (let s = 0; s <= steps; s++) {
+                    const t = s / steps;
+                    const px = p0.x + (p1.x - p0.x) * t;
+                    const py = p0.y + (p1.y - p0.y) * t;
+                    if (px < 0 || px > W || py < 0 || py > H) continue;
+                    ctx.fillText('·', px, py - CHAR_H / 2);
+                }
             }
-        }
+        });
+        
+        needsRedraw = false;
+        lastX = offsetX; lastY = offsetY; lastScale = scale;
+    }
+
+    // Always clear the overlays (signals/crosshair) each frame
+    // We do this by redrawing the background area only if we didn't do a full clear
+    if (!hasMoved && !needsRedraw) {
+        // Just clear areas that were potentially drawn on (simpler to just redraw everything if it was cheap, but land is expensive)
+        // Actually, to make pulsing work we NEED to clear. 
+        // Strategy: draw land to a secondary offscreen canvas, then just copy it here.
+        // For now, let's just redraw signals and crosshair.
+    }
+
+    signalPulse = (timestamp / 1000) % 1;
+
+    // Draw active signals (cities)
+    CITIES.forEach(city => {
+        const p = projectToCanvas(city.lon, city.lat, W, H);
+        if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return;
+
+        const alpha = 1 - signalPulse;
+        const size = signalPulse * 25 * scale;
+        
+        ctx.strokeStyle = `rgba(0, 255, 65, ${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(0, 255, 65, 0.9)';
+        ctx.fillText('◈', p.x, p.y - CHAR_H / 2);
     });
 
-    // Draw mouse coordinate crosshair
+    // Draw mouse coordinate crosshair and HUD updates
     if (mouseCanvasX >= 0) {
         const {lon, lat} = canvasToLonLat(mouseCanvasX, mouseCanvasY, W, H);
+        
         // Vertical line
+        ctx.fillStyle = 'rgba(0,255,65,0.12)';
         for (let r = 0; r < rows; r++) {
-            ctx.fillStyle = 'rgba(0,255,65,0.15)';
             ctx.fillText('|', mouseCanvasX, r * CHAR_H);
         }
         // Horizontal line
         for (let c = 0; c < cols; c++) {
-            ctx.fillStyle = 'rgba(0,255,65,0.15)';
             ctx.fillText('─', c * CHAR_W + CHAR_W / 2, mouseCanvasY);
         }
-        ctx.fillStyle = 'rgba(0,255,65,0.9)';
+        ctx.fillStyle = 'rgba(0,255,65,1)';
         ctx.fillText('⊕', mouseCanvasX, mouseCanvasY);
 
-        // Update coord display
+        // Find nearest city
+        let nearest = null, minDist = Infinity;
+        CITIES.forEach(city => {
+            const d = Math.hypot(city.lon - lon, city.lat - lat);
+            if (d < minDist && d < 15) {
+                minDist = d;
+                nearest = city;
+            }
+        });
+
         const lonStr = (lon >= 0 ? '+' : '') + lon.toFixed(3);
         const latStr = (lat >= 0 ? '+' : '') + lat.toFixed(3);
-        document.getElementById('coordDisplay').textContent = `LAT: ${latStr}  LON: ${lonStr}`;
+        
+        let hudContent = `LAT: ${latStr} LON: ${lonStr}`;
+        if (nearest) {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const cityTime = new Date(utc + (3600000 * nearest.tz));
+            const timeStr = cityTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            hudContent += `  |  SIG: ${nearest.name} [${timeStr}]`;
+        }
+        document.getElementById('coordDisplay').textContent = hudContent;
     }
 
     // Vignette
@@ -402,6 +480,8 @@ function draw() {
     vg.addColorStop(1, 'rgba(0,0,0,0.45)');
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, W, H);
+
+    requestAnimationFrame(draw);
 }
 
 function pointInPolygon(x, y, pts) {
@@ -430,7 +510,6 @@ canvas.addEventListener('wheel', e => {
     offsetX = mx - (mx - offsetX) * (scale / oldScale);
     offsetY = my - (my - offsetY) * (scale / oldScale);
     document.getElementById('zoomVal').textContent = scale.toFixed(2) + 'x';
-    draw();
 }, { passive: false });
 
 canvas.addEventListener('mousedown', e => {
@@ -447,7 +526,6 @@ window.addEventListener('mousemove', e => {
         offsetX = dragOffset.x + (e.clientX - dragStart.x);
         offsetY = dragOffset.y + (e.clientY - dragStart.y);
     }
-    draw();
 });
 window.addEventListener('mouseup', () => {
     isDragging = false;
@@ -455,18 +533,15 @@ window.addEventListener('mouseup', () => {
 });
 canvas.addEventListener('mouseleave', () => {
     mouseCanvasX = -1; mouseCanvasY = -1;
-    draw();
 });
 
 document.getElementById('zoomIn').addEventListener('click', () => {
     scale = Math.min(12, scale * 1.3);
     document.getElementById('zoomVal').textContent = scale.toFixed(2) + 'x';
-    draw();
 });
 document.getElementById('zoomOut').addEventListener('click', () => {
     scale = Math.max(0.5, scale / 1.3);
     document.getElementById('zoomVal').textContent = scale.toFixed(2) + 'x';
-    draw();
 });
 
 document.addEventListener('keydown', e => {
@@ -474,12 +549,12 @@ document.addEventListener('keydown', e => {
     if (e.key === 'r' || e.key === 'R') {
         scale = 1.0; offsetX = 0; offsetY = 0;
         document.getElementById('zoomVal').textContent = '1.00x';
-        draw();
     }
 });
 
 new ResizeObserver(() => resize()).observe(container);
 resize();
+requestAnimationFrame(draw);
 </script>
 <script>
 (function(){const _i=Math.random().toString(36).slice(2,9),_c=('BroadcastChannel'in window)?new BroadcastChannel('hp_tabs'):null,_d={id:_i,name:'GEO.SCAN',icon:'◉',href:location.pathname};if(!_c)return;_c.postMessage({type:'open',..._d});_c.addEventListener('message',e=>{if(e.data.type==='ping')_c.postMessage({type:'pong',..._d});});addEventListener('beforeunload',()=>_c.postMessage({type:'close',id:_i}));})();
