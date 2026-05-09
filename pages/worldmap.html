@@ -280,6 +280,8 @@ function resize() {
 }
 
 function lonLatToGrid(lon, lat) {
+    // Clamp latitude between -85 and 85 to prevent Infinity errors at the poles
+    lat = Math.max(-85, Math.min(85, lat));
     const x = (lon + 180) / 360;
     const latRad = lat * Math.PI / 180;
     const y = (1 - Math.log(Math.tan(latRad / 2 + Math.PI / 4)) / Math.PI) / 2;
