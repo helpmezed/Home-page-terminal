@@ -1290,8 +1290,19 @@
         });
 
         function navigateWithTransition(url) {
+            if (!url) return;
+            
+            // Fail-safe: if animation hangs, redirect anyway after 1.2s
+            const failSafe = setTimeout(() => {
+                window.location.href = url;
+            }, 1200);
+
             let host;
-            try { host = new URL(url).hostname; } catch { host = url; }
+            try { 
+                // Try to get a clean display name (e.g. "worldmap" from "pages/worldmap.html")
+                const parts = url.split('/');
+                host = parts[parts.length - 1].replace('.html', '').toUpperCase();
+            } catch { host = "NODE"; }
 
             const canvas = document.getElementById('nav-overlay');
             const dpr = window.devicePixelRatio || 1;
@@ -1302,91 +1313,73 @@
             const ctx = canvas.getContext('2d');
             ctx.scale(dpr, dpr);
 
-            const TOTAL = 700, start = performance.now();
-            let typed = 0, lastType = 0;
-            const typeSpeed = Math.max(16, Math.min(45, 260 / host.length));
+            const TOTAL = 650; 
+            const start = performance.now();
+            let typed = 0;
+            let lastType = 0;
+            const typeSpeed = 30;
 
             function frame(ts) {
-                const p = Math.min((ts - start) / TOTAL, 1);
+                const elapsed = ts - start;
+                const p = Math.min(elapsed / TOTAL, 1);
                 ctx.clearRect(0, 0, W, H);
 
-                // Background — goes near-opaque in first ~80ms
-                ctx.fillStyle = `rgba(0,3,1,${Math.min(p * 9, 0.97)})`;
+                // Background
+                ctx.fillStyle = `rgba(0,3,1,${Math.min(p * 5, 0.96)})`;
                 ctx.fillRect(0, 0, W, H);
 
-                // Scanlines
-                for (let y = 0; y < H; y += 4) {
-                    ctx.fillStyle = 'rgba(0,0,0,0.07)';
-                    ctx.fillRect(0, y, W, 1);
-                }
-
-                // Expanding concentric rings from center
-                for (let i = 0; i < 5; i++) {
-                    const rp = ((p * 1.7) + i * 0.24) % 1.7;
+                // Expanding concentric rings
+                for (let i = 0; i < 4; i++) {
+                    const rp = ((p * 1.5) + i * 0.25) % 1.5;
                     if (rp > 1) continue;
-                    const r = rp * Math.hypot(W, H) * 0.6;
-                    ctx.strokeStyle = `rgba(0,255,65,${(1 - rp) * 0.28})`;
+                    const r = rp * Math.hypot(W, H) * 0.5;
+                    ctx.strokeStyle = `rgba(0,255,65,${(1 - rp) * 0.3})`;
                     ctx.lineWidth = 1;
                     ctx.beginPath(); ctx.arc(W / 2, H / 2, r, 0, Math.PI * 2); ctx.stroke();
                 }
 
-                // Scan sweep line
-                const sy = (p / 0.9) * (H + 14);
-                if (sy < H + 14) {
-                    const sg = ctx.createLinearGradient(0, sy - 10, 0, sy + 10);
+                // Scan sweep
+                const sy = (p / 0.8) * (H + 20);
+                if (sy < H + 20) {
+                    const sg = ctx.createLinearGradient(0, sy - 15, 0, sy + 15);
                     sg.addColorStop(0, 'rgba(0,255,65,0)');
-                    sg.addColorStop(0.5, 'rgba(0,255,65,0.5)');
+                    sg.addColorStop(0.5, 'rgba(0,255,65,0.4)');
                     sg.addColorStop(1, 'rgba(0,255,65,0)');
-                    ctx.fillStyle = sg; ctx.fillRect(0, sy - 10, W, 20);
+                    ctx.fillStyle = sg; ctx.fillRect(0, sy - 15, W, 30);
                 }
 
-                // Centre content — fades in after first 12%
-                const ca = Math.max(0, Math.min((p - 0.12) / 0.22, 1));
+                const ca = Math.max(0, Math.min((p - 0.1) / 0.2, 1));
                 if (ca > 0) {
-                    // Typewriter
-                    if (ts - lastType > typeSpeed && typed < host.length) { typed++; lastType = ts; }
-                    const shown = host.slice(0, typed);
+                    if (ts - lastType > typeSpeed && typed < host.length) { 
+                        typed++; 
+                        lastType = ts; 
+                    }
+                    const shown = "ACCESSING: " + host.slice(0, typed);
 
                     ctx.textAlign = 'center';
-
-                    // Label
                     ctx.fillStyle = `rgba(0,92,24,${ca})`;
                     ctx.font = '10px monospace';
-                    ctx.fillText('ACCESSING REMOTE NODE', W / 2, H / 2 - 38);
+                    ctx.fillText('ESTABLISHING SECURE UPLINK', W / 2, H / 2 - 38);
 
-                    // Domain with glow
-                    ctx.font = 'bold 24px monospace';
-                    ctx.shadowColor = '#00ff41'; ctx.shadowBlur = 24 * ca;
+                    ctx.font = 'bold 20px monospace';
+                    ctx.shadowColor = '#00ff41'; ctx.shadowBlur = 15 * ca;
                     ctx.fillStyle = `rgba(0,255,65,${ca})`;
                     ctx.fillText(shown, W / 2, H / 2 + 2);
                     ctx.shadowBlur = 0;
 
-                    // Blinking cursor
-                    if (typed < host.length || Math.floor(ts / 380) % 2 === 0) {
-                        const tw = ctx.measureText(shown).width;
-                        ctx.fillStyle = `rgba(0,255,65,${ca})`;
-                        ctx.fillRect(W / 2 + tw / 2 + 4, H / 2 - 18, 2, 22);
-                    }
-
                     // Progress bar
-                    const bw = 280, bx = W / 2 - bw / 2, by = H / 2 + 22;
-                    ctx.fillStyle = `rgba(0,255,65,${ca * 0.1})`; ctx.fillRect(bx, by, bw, 2);
-                    const pg = ctx.createLinearGradient(bx, 0, bx + bw, 0);
-                    pg.addColorStop(0, `rgba(0,100,28,${ca})`);
-                    pg.addColorStop(1, `rgba(0,255,65,${ca})`);
-                    ctx.fillStyle = pg;
-                    ctx.shadowColor = '#00ff41'; ctx.shadowBlur = 10 * ca;
-                    ctx.fillRect(bx, by, bw * Math.min(p * 1.35, 1), 2);
-                    ctx.shadowBlur = 0;
-
-                    // Status
-                    ctx.fillStyle = `rgba(0,70,20,${ca})`;
-                    ctx.font = '9px monospace';
-                    ctx.fillText('ESTABLISHING SECURE CONNECTION', W / 2, H / 2 + 44);
+                    const bw = 240, bx = W / 2 - bw / 2, by = H / 2 + 22;
+                    ctx.fillStyle = `rgba(0,255,65,0.1)`; ctx.fillRect(bx, by, bw, 2);
+                    ctx.fillStyle = `rgba(0,255,65,${ca})`;
+                    ctx.fillRect(bx, by, bw * Math.min(p * 1.2, 1), 2);
                 }
 
-                if (p < 1) requestAnimationFrame(frame);
-                else window.location.href = url;
+                if (p < 1) {
+                    requestAnimationFrame(frame);
+                } else {
+                    clearTimeout(failSafe);
+                    window.location.href = url;
+                }
             }
             requestAnimationFrame(frame);
         }
