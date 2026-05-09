@@ -14,7 +14,6 @@ homepage/
 │   ├── background.js
 │   └── content.js
 └── pages/
-    ├── worldmap.html       # Full-screen ASCII world map (Mercator, zoom/pan)
     ├── board.html          # Real-time bulletin board (MQTT via HiveMQ)
     ├── news.html           # Hacker News stories as floating particle nodes
     ├── nature.html         # Live iNaturalist observations grid
@@ -32,7 +31,6 @@ homepage/
   - Neofetch-style system info (OS, shell, CPU/RAM bars)
   - Live Hacker News ticker (HN API)
   - Weather widget (wttr.in)
-  - Mini GEO.SCAN world map (canvas)
   - SpaceX telemetry widget (canvas)
   - TABS.LIVE — tracks open sub-pages via BroadcastChannel
   - Mini matrix rain animation (canvas)

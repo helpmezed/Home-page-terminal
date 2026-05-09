@@ -579,7 +579,7 @@
             grid-template-areas:
                 "links   links   tasks"
                 "ascii   info    sidebar"
-                "meta    geo     spacex";
+                "meta    spacex  spacex";
             gap: 12px;
             padding: 0 12px 0;
         }
@@ -828,11 +828,6 @@
                         </div>
                     </div>
 
-                    <!-- ── Geo viz ── -->
-                    <div class="bento-cell b-geo">
-                        <div class="bento-cell-label"><span>◈ GEO.SCAN</span></div>
-                        <canvas id="countries-viz" class="countries-viz"></canvas>
-                    </div>
 
                     <!-- ── SpaceX viz ── -->
                     <div class="bento-cell b-spacex">
@@ -1217,7 +1212,6 @@
             { icon: '◈', name: 'Bulletin Board', desc: 'live shared board · real-time pins',        href: 'pages/board.html'      },
             { icon: '◉', name: 'Nature Scan',    desc: 'live observations · bioscan · iNaturalist', href: 'pages/nature.html'     },
             { icon: '◈', name: 'HN Nexus',       desc: 'front page constellation · live stories',   href: 'pages/news.html'       },
-            { icon: '◉', name: 'GEO.SCAN',       desc: 'ASCII world map · zoom & pan · coordinates', href: 'pages/worldmap.html'  },
         ];
 
         let tpActive = 0;
@@ -2172,122 +2166,6 @@
             setInterval(update, 33);
         })();
 
-        // ── Countries Visualizer (Orbital Descent Style — compact) ──
-        (async function() {
-            const canvas = document.getElementById('countries-viz');
-            if (!canvas) return;
-            await new Promise(r => setTimeout(r, 700));
-            const dpr = window.devicePixelRatio || 1;
-            const cssW = canvas.offsetWidth || 190;
-            const cssH = canvas.offsetHeight || 120;
-            canvas.width  = cssW * dpr;
-            canvas.height = cssH * dpr;
-            canvas.style.width  = cssW + 'px';
-            canvas.style.height = cssH + 'px';
-            const ctx = canvas.getContext('2d');
-            ctx.scale(dpr, dpr);
-            const W = cssW, H = cssH;
-
-            const METRICS = [
-                { key: 'population', label: 'POPULATION', fmt: n => n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':(n/1e3|0)+'K' },
-                { key: 'area',       label: 'LAND AREA',  fmt: n => n>=1e6?(n/1e6).toFixed(2)+'Mkm²':(n/1e3|0)+'Kkm²' }
-            ];
-
-            let all = [];
-            try {
-                const res = await fetch('https://restcountries.com/v3.1/all?fields=name,population,area,region');
-                all = await res.json();
-            } catch(e) {
-                ctx.fillStyle = '#003b00'; ctx.font = '11px monospace';
-                ctx.fillText('[ NEXUS UNREACHABLE ]', 8, H / 2); return;
-            }
-
-            let mIdx = 0, nodeIdx = 0, t = 0, tick = 0;
-            const getTop = () => [...all].filter(c => (c[METRICS[mIdx].key]||0)>0)
-                .sort((a,b) => b[METRICS[mIdx].key]-a[METRICS[mIdx].key]).slice(0, 12);
-            let top = getTop();
-
-            const cross = (x,y,s,a=0.6) => {
-                ctx.strokeStyle=`rgba(0,255,65,${a})`; ctx.lineWidth=1; ctx.beginPath();
-                ctx.moveTo(x,y-s); ctx.lineTo(x,y-s*0.3); ctx.moveTo(x,y+s*0.3); ctx.lineTo(x,y+s);
-                ctx.moveTo(x-s,y); ctx.lineTo(x-s*0.3,y); ctx.moveTo(x+s*0.3,y); ctx.lineTo(x+s,y);
-                ctx.stroke();
-            };
-
-            function draw() {
-                ctx.clearRect(0,0,W,H);
-                ctx.fillStyle='#000200'; ctx.fillRect(0,0,W,H);
-
-                // Scanlines
-                for(let y=0;y<H;y+=3){ctx.fillStyle='rgba(0,0,0,0.08)';ctx.fillRect(0,y,W,1);}
-
-                // Faint grid
-                ctx.strokeStyle='rgba(0,255,65,0.04)'; ctx.lineWidth=1;
-                for(let x=0;x<W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-                for(let y=0;y<H;y+=15){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-
-                // Topographic contour lines
-                const nLines=16;
-                for(let i=0;i<nLines;i++){
-                    const norm=i/nLines, baseY=H*(0.04+norm*0.92);
-                    const amp=7+norm*14, spd=0.22+norm*0.12;
-                    ctx.beginPath();
-                    const steps=Math.floor(W/2);
-                    for(let s=0;s<=steps;s++){
-                        const px=(s/steps)*W;
-                        const py=baseY+Math.sin(s/steps*Math.PI*4+t*spd+i*0.55)*amp*0.5
-                            +Math.cos(s/steps*Math.PI*2.4+t*spd*0.65+i*0.38)*amp*0.32
-                            +Math.sin(s/steps*Math.PI*6+t*0.08+i*1.1)*amp*0.12;
-                        s===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
-                    }
-                    let lc;
-                    if(i<4){const r=180+i*10,g=Math.max(0,35-i*8);lc=`rgba(${r},${g},0,${0.3+i*0.04})`;}
-                    else{const g=80+((i-4)/(nLines-4))*175;lc=`rgba(0,${g|0},15,${0.18+norm*0.6})`;}
-                    ctx.strokeStyle=lc; ctx.lineWidth=0.85; ctx.stroke();
-                }
-
-                // Header bar
-                ctx.fillStyle='rgba(0,255,65,0.07)'; ctx.fillRect(0,0,W,16);
-                ctx.strokeStyle='rgba(0,255,65,0.3)'; ctx.lineWidth=1; ctx.strokeRect(0.5,0.5,W-1,16);
-                ctx.fillStyle='#00cc44'; ctx.font='bold 8px monospace'; ctx.textAlign='center';
-                ctx.fillText('GLOBAL NEXUS — ORBITAL SCAN', W/2, 11);
-                ctx.textAlign='left';
-
-                // Crosshairs
-                cross(W*0.1, H*0.42, 7, 0.45);
-                cross(W*0.9, H*0.70, 6, 0.38);
-
-                // Central targeting box
-                const node=top[nodeIdx]||top[0];
-                const tbw=152, tbh=38, tbx=W/2-tbw/2, tby=H*0.38;
-                ctx.fillStyle='rgba(0,10,0,0.65)'; ctx.fillRect(tbx,tby,tbw,tbh);
-                ctx.strokeStyle='rgba(0,255,65,0.75)'; ctx.lineWidth=1; ctx.strokeRect(tbx+0.5,tby+0.5,tbw,tbh);
-                const cn=node?.name?.common||'—';
-                ctx.fillStyle='#00ff41'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
-                ctx.fillText(cn.length>14?cn.slice(0,13)+'…':cn, W/2, tby+17);
-                ctx.fillStyle='#00cc44'; ctx.font='12px monospace';
-                ctx.fillText(METRICS[mIdx].fmt(node?.[METRICS[mIdx].key]||0), W/2, tby+32);
-                ctx.textAlign='left';
-
-                // Warning tag
-                ctx.fillStyle='rgba(0,5,0,0.6)'; ctx.fillRect(tbx,tby+tbh+2,tbw,13);
-                ctx.strokeStyle='rgba(0,255,65,0.45)'; ctx.strokeRect(tbx+0.5,tby+tbh+2.5,tbw,13);
-                ctx.fillStyle='#cc2200'; ctx.font='bold 8px monospace'; ctx.fillText('NOT',tbx+4,tby+tbh+11);
-                ctx.fillStyle='#00cc44'; ctx.font='10px monospace'; ctx.fillText(' DEEPNAV PRECISE',tbx+22,tby+tbh+11);
-                
-                // Scan sweep
-                const sy=H*0.18+((t*18)%(H*0.72));
-                const sg=ctx.createLinearGradient(0,sy-3,0,sy+3);
-                sg.addColorStop(0,'rgba(0,255,65,0)');sg.addColorStop(0.5,'rgba(0,255,65,0.11)');sg.addColorStop(1,'rgba(0,255,65,0)');
-                ctx.fillStyle=sg; ctx.fillRect(0,sy-3,W,6);
-
-                t+=0.016; tick++;
-                if(tick%200===0) nodeIdx=(nodeIdx+1)%top.length;
-                if(tick%840===0){mIdx=(mIdx+1)%METRICS.length;top=getTop();nodeIdx=0;}
-                requestAnimationFrame(draw);
-            }
-            draw();
-        })();
 
         // ── SpaceX Launch Tracker ──
         (async function() {
