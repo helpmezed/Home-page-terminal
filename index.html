@@ -1188,16 +1188,15 @@
 
             let sysMonInterval = setInterval(tick, 1000);
             tick();
-            // Pause sys monitor when terminal is not visible
+            // Pause sys monitor when the info panel is not visible
             const sysMonObs = new IntersectionObserver(entries => {
-                const term = document.getElementById('terminal');
                 if (entries[0].isIntersecting) {
-                    if (!sysMonInterval) sysMonInterval = setInterval(tick, 1000);
+                    if (!sysMonInterval) { tick(); sysMonInterval = setInterval(tick, 1000); }
                 } else {
                     if (sysMonInterval) { clearInterval(sysMonInterval); sysMonInterval = null; }
                 }
             }, { threshold: 0 });
-            setTimeout(() => { const t = document.getElementById('terminal'); if (t) sysMonObs.observe(t); }, 100);
+            setTimeout(() => { if (textContainer) sysMonObs.observe(textContainer); }, 100);
         }
 
         const shortcutsEl = document.getElementById('shortcuts');
@@ -2104,9 +2103,17 @@
                 }
                 ctx.globalAlpha=1; ctx.shadowBlur=0;
                 ctx.restore();
-                requestAnimationFrame(draw);
+                animId = requestAnimationFrame(draw);
             }
-            draw();
+            let animId;
+            new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) {
+                    if (!animId) draw();
+                } else {
+                    cancelAnimationFrame(animId);
+                    animId = null;
+                }
+            }).observe(canvas);
         })();
 
         // ── Mini Matrix Rain ──
@@ -2125,6 +2132,7 @@
             const cols = Math.floor(cssW / FONT_SIZE);
             const drops = Array.from({length: cols}, () => (Math.random() * -cssH / FONT_SIZE) | 0);
 
+            let animId;
             function draw() {
                 ctx.fillStyle = 'rgba(0,0,0,0.045)';
                 ctx.fillRect(0, 0, cssW, cssH);
@@ -2140,8 +2148,16 @@
                     if (y * FONT_SIZE > cssH && Math.random() > 0.975) drops[i] = 0;
                     drops[i]++;
                 });
+                animId = requestAnimationFrame(draw);
             }
-            setInterval(draw, 16);
+            new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) {
+                    if (!animId) draw();
+                } else {
+                    cancelAnimationFrame(animId);
+                    animId = null;
+                }
+            }).observe(canvas);
         })();
 
         // ── Signal Waveform ──
@@ -2150,20 +2166,35 @@
             let phase = 0;
             const w1 = document.getElementById('signal-wave-1');
             const w2 = document.getElementById('signal-wave-2');
-            function update() {
-                const cols = 24;
-                let r1 = '', r2 = '';
-                for (let i = 0; i < cols; i++) {
-                    const v1 = (Math.sin((i / cols * Math.PI * 4) - phase) + 1) / 2;
-                    const v2 = (Math.sin((i / cols * Math.PI * 2) - phase * 0.7 + 1.5) + 1) / 2;
-                    r1 += WAVE[Math.floor(v1 * (WAVE.length - 1))];
-                    r2 += WAVE[Math.floor(v2 * (WAVE.length - 1))];
+            let animId;
+            let lastTime = 0;
+            function update(time) {
+                if (time - lastTime > 33) {
+                    const cols = 24;
+                    let r1 = '', r2 = '';
+                    for (let i = 0; i < cols; i++) {
+                        const v1 = (Math.sin((i / cols * Math.PI * 4) - phase) + 1) / 2;
+                        const v2 = (Math.sin((i / cols * Math.PI * 2) - phase * 0.7 + 1.5) + 1) / 2;
+                        r1 += WAVE[Math.floor(v1 * (WAVE.length - 1))];
+                        r2 += WAVE[Math.floor(v2 * (WAVE.length - 1))];
+                    }
+                    if (w1) w1.textContent = r1;
+                    if (w2) w2.textContent = r2;
+                    phase += 0.13;
+                    lastTime = time;
                 }
-                if (w1) w1.textContent = r1;
-                if (w2) w2.textContent = r2;
-                phase += 0.13;
+                animId = requestAnimationFrame(update);
             }
-            setInterval(update, 33);
+            if (w1 && w1.parentElement) {
+                new IntersectionObserver(entries => {
+                    if (entries[0].isIntersecting) {
+                        if (!animId) animId = requestAnimationFrame(update);
+                    } else {
+                        cancelAnimationFrame(animId);
+                        animId = null;
+                    }
+                }).observe(w1.parentElement);
+            }
         })();
 
 
@@ -2356,9 +2387,17 @@
                 ctx.fillText(`ASCENT  ${(pct*100).toFixed(0)}%`, IX, 118);
 
                 t+=0.016; tick++;
-                requestAnimationFrame(draw);
+                animId = requestAnimationFrame(draw);
             }
-            draw();
+            let animId;
+            new IntersectionObserver(entries => {
+                if (entries[0].isIntersecting) {
+                    if (!animId) draw();
+                } else {
+                    cancelAnimationFrame(animId);
+                    animId = null;
+                }
+            }).observe(canvas);
         })();
 
         // ── HN Wire Feed (ticker) ──
