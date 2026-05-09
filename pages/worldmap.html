@@ -316,7 +316,8 @@ function draw(timestamp) {
         
         if (hasMoved || needsRedraw || !cacheValid) {
             // Render heavy map to CACHE
-            cacheCtx.fillStyle = '#000300';
+            cacheCtx.save();
+            cacheCtx.fillStyle = '#000400';
             cacheCtx.fillRect(0, 0, W, H);
 
             // Grid
@@ -328,7 +329,7 @@ function draw(timestamp) {
                 for (let lat = -80; lat <= 80; lat += 10) {
                     const p = projectToCanvas(lon, lat, W, H);
                     if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) continue;
-                    cacheCtx.fillStyle = (lat === 0 || lon === 0) ? 'rgba(0,255,65,0.2)' : 'rgba(0,120,30,0.1)';
+                    cacheCtx.fillStyle = (lat === 0 || lon === 0) ? 'rgba(0,255,65,0.25)' : 'rgba(0,120,30,0.12)';
                     cacheCtx.fillText(lat === 0 || lon === 0 ? '+' : '·', p.x, p.y);
                 }
             }
@@ -375,6 +376,7 @@ function draw(timestamp) {
                     }
                 }
             });
+            cacheCtx.restore();
             
             needsRedraw = false;
             cacheValid = true;
@@ -382,8 +384,12 @@ function draw(timestamp) {
         }
 
         // --- Main Frame Draw ---
+        ctx.save();
         ctx.clearRect(0, 0, W, H);
+        // Reset transform temporarily to draw the HiDPI cache 1:1
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.drawImage(cacheCanvas, 0, 0);
+        ctx.restore();
 
         signalPulse = (timestamp / 1000) % 1;
 
