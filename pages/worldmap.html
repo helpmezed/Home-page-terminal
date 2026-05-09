@@ -149,6 +149,7 @@
         .legend-title { font-size: 9px; color: var(--green-dark); letter-spacing: 2px; margin-bottom: 5px; }
         .legend-item { font-size: 10px; color: var(--green-dim); display: flex; align-items: center; gap: 8px; }
         .legend-item span:first-child { color: var(--green); }
+        .legend-item span { color: var(--green); }
     </style>
 </head>
 <body>
@@ -196,7 +197,8 @@ function updateClock() {
     const h = String(n.getHours()).padStart(2,'0');
     const m = String(n.getMinutes()).padStart(2,'0');
     const s = String(n.getSeconds()).padStart(2,'0');
-    document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+    const el = document.getElementById('clock');
+    if (el) el.textContent = `${h}:${m}:${s}`;
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -207,38 +209,22 @@ const ctx = canvas.getContext('2d');
 const container = document.getElementById('mapContainer');
 
 // Simplified world coastline/landmass data as lat/lon polygons
-// Each polygon is an array of [lon, lat] pairs
-// Simplified from Natural Earth 110m data
 const LANDS = [
-    // North America
     [[-168,72],[-140,72],[-120,80],[-85,80],[-70,73],[-65,68],[-55,65],[-60,50],[-65,44],[-80,44],[-82,42],[-76,44],[-70,45],[-67,47],[-60,46],[-63,46],[-66,50],[-60,46],[-65,40],[-75,34],[-80,25],[-87,30],[-90,29],[-97,26],[-97,22],[-88,16],[-83,10],[-77,8],[-75,10],[-77,8],[-83,9],[-83,18],[-88,18],[-90,20],[-92,19],[-94,18],[-97,19],[-104,19],[-105,20],[-109,22],[-110,23],[-117,32],[-120,34],[-122,37],[-124,41],[-124,47],[-125,49],[-130,54],[-136,58],[-145,60],[-152,58],[-155,60],[-160,60],[-163,60],[-168,60],[-165,67],[-168,72]],
-    // Greenland simplified
     [[-72,76],[-30,84],[-20,76],[-30,70],[-45,60],[-58,62],[-68,66],[-72,76]],
-    // South America
     [[-80,12],[-75,12],[-65,10],[-61,11],[-60,6],[-52,4],[-50,2],[-49,-2],[-44,-3],[-37,-5],[-35,-8],[-35,-12],[-39,-15],[-40,-20],[-41,-22],[-43,-23],[-45,-24],[-48,-28],[-50,-30],[-52,-33],[-56,-34],[-58,-38],[-62,-40],[-65,-55],[-68,-55],[-68,-50],[-72,-46],[-75,-40],[-72,-36],[-70,-30],[-72,-26],[-70,-18],[-76,-10],[-80,-2],[-80,0],[-80,12]],
-    // Europe
     [[25,71],[28,69],[30,65],[28,60],[23,60],[18,60],[13,58],[8,58],[5,59],[3,52],[2,51],[-2,51],[-5,48],[-10,44],[-9,40],[-9,36],[-5,36],[0,38],[3,44],[5,44],[10,44],[14,42],[16,40],[18,40],[22,38],[26,38],[28,36],[35,37],[36,42],[35,47],[30,47],[24,47],[22,44],[20,44],[20,48],[18,50],[14,55],[10,58],[8,60],[12,62],[16,68],[18,70],[25,71]],
-    // Scandinavian peninsula
     [[5,58],[8,56],[10,58],[12,56],[16,56],[18,58],[20,62],[26,68],[28,70],[30,68],[28,65],[24,60],[20,60],[16,60],[12,62],[8,62],[5,60],[5,58]],
-    // Africa
     [[32,30],[37,22],[45,12],[43,12],[43,5],[40,0],[38,-5],[34,-10],[34,-18],[30,-22],[28,-30],[26,-35],[18,-35],[16,-30],[12,-20],[10,-5],[10,5],[5,5],[0,5],[-5,5],[-15,10],[-17,15],[-17,20],[-14,25],[-10,30],[-5,32],[5,36],[12,35],[20,37],[25,34],[32,30]],
-    // Asia - simplified large chunk
     [[35,37],[40,38],[45,42],[50,45],[55,48],[60,55],[65,55],[70,58],[80,62],[90,70],[100,72],[110,74],[120,72],[130,68],[140,70],[150,60],[155,60],[160,55],[168,54],[170,50],[172,46],[165,50],[160,54],[155,57],[145,55],[140,48],[136,46],[132,44],[130,42],[128,38],[122,32],[120,25],[115,22],[108,20],[105,10],[103,2],[100,2],[98,6],[96,8],[98,18],[100,24],[98,28],[95,28],[92,28],[88,26],[82,28],[76,24],[72,22],[68,22],[65,25],[62,24],[58,22],[55,22],[50,18],[45,12],[43,12],[40,15],[38,22],[35,30],[35,37]],
-    // Indian subcontinent
     [[68,22],[72,22],[76,20],[80,14],[78,8],[76,10],[74,18],[70,20],[68,22]],
-    // Australia
     [[114,-22],[118,-20],[122,-18],[130,-12],[136,-12],[138,-16],[140,-18],[148,-20],[155,-28],[150,-34],[146,-38],[144,-38],[140,-36],[134,-34],[128,-34],[124,-32],[116,-34],[114,-30],[114,-22]],
-    // UK simplified
     [[-6,58],[-2,58],[2,52],[0,50],[-2,50],[-5,50],[-6,52],[-6,58]],
-    // Iceland
     [[-24,66],[-22,65],[-15,64],[-14,66],[-18,68],[-24,66]],
-    // Japan simplified
     [[130,32],[132,34],[136,36],[140,38],[142,40],[144,42],[144,44],[140,42],[136,36],[132,34],[130,32]],
-    // Antarctica (simplified outline)
     [[-180,-70],[-150,-72],[-120,-70],[-90,-68],[-60,-72],[-30,-70],[0,-70],[30,-68],[60,-70],[90,-68],[120,-70],[150,-72],[180,-70],[180,-90],[-180,-90],[-180,-70]],
 ];
 
-// State
 const CITIES = [
     { name: "LONDON", lat: 51.507, lon: -0.127, tz: 0 },
     { name: "NEW YORK", lat: 40.712, lon: -74.006, tz: -5 },
@@ -260,28 +246,40 @@ let offsetX = 0, offsetY = 0;
 let scale = 1.0;
 let isDragging = false, dragStart = null, dragOffset = null;
 let mouseCanvasX = -1, mouseCanvasY = -1;
-let lastDrawTime = 0;
 let signalPulse = 0;
 
 const CHAR_W = 8, CHAR_H = 14;
 let cols = 0, rows = 0;
-let mapGrid = null;
+
+// Offscreen cache for the heavy landmass
+const cacheCanvas = document.createElement('canvas');
+const cacheCtx = cacheCanvas.getContext('2d');
+let cacheValid = false;
+let needsRedraw = true;
+let lastX, lastY, lastScale;
 
 function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const rect = container.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    if (rect.width <= 0 || rect.height <= 0) return;
+
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     canvas.style.width = rect.width + 'px';
     canvas.style.height = rect.height + 'px';
-    ctx.scale(dpr, dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    
+    cacheCanvas.width = canvas.width;
+    cacheCanvas.height = canvas.height;
+    cacheCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
     cols = Math.floor(rect.width / CHAR_W);
     rows = Math.floor(rect.height / CHAR_H);
     needsRedraw = true;
+    cacheValid = false;
 }
 
 function lonLatToGrid(lon, lat) {
-    // Mercator projection
     const x = (lon + 180) / 360;
     const latRad = lat * Math.PI / 180;
     const y = (1 - Math.log(Math.tan(latRad / 2 + Math.PI / 4)) / Math.PI) / 2;
@@ -304,184 +302,142 @@ function canvasToLonLat(cx, cy, W, H) {
     return { lon, lat };
 }
 
-let needsRedraw = true;
-let lastX, lastY, lastScale;
-
 function draw(timestamp) {
-    if (!timestamp) timestamp = performance.now();
-    const rect = container.getBoundingClientRect();
-    const W = rect.width, H = rect.height;
-    if (!W || !H) {
-        requestAnimationFrame(draw);
-        return;
-    }
-
-    const hasMoved = offsetX !== lastX || offsetY !== lastY || scale !== lastScale;
-    
-    // Only clear and redraw the full map if we moved or it's requested
-    if (hasMoved || needsRedraw) {
-        ctx.fillStyle = '#000300';
-        ctx.fillRect(0, 0, W, H);
-
-        // Draw grid lines
-        ctx.font = `${CHAR_H - 2}px 'JetBrains Mono', monospace`;
-        ctx.textBaseline = 'top';
-        ctx.textAlign = 'center';
-
-        // Grid: every 30 degrees lat/lon
-        for (let lon = -180; lon <= 180; lon += 30) {
-            for (let lat = -80; lat <= 80; lat += 10) {
-                const p = projectToCanvas(lon, lat, W, H);
-                if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) continue;
-                let ch, color;
-                if (lat === 0 || lon === 0) {
-                    ch = '+';
-                    color = 'rgba(0,255,65,0.25)';
-                } else if (lat % 30 === 0 || lon % 30 === 0) {
-                    ch = '·';
-                    color = 'rgba(0,120,30,0.18)';
-                } else {
-                    ch = '·';
-                    color = 'rgba(0,60,15,0.10)';
-                }
-                ctx.fillStyle = color;
-                ctx.fillText(ch, p.x, p.y);
-            }
+    try {
+        if (!timestamp) timestamp = performance.now();
+        const rect = container.getBoundingClientRect();
+        const W = rect.width, H = rect.height;
+        if (W <= 0 || H <= 0) {
+            requestAnimationFrame(draw);
+            return;
         }
 
-        // Draw landmasses
-        LANDS.forEach((poly, pi) => {
-            const pts = poly.map(([lon, lat]) => projectToCanvas(lon, lat, W, H));
-            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-            pts.forEach(p => {
-                if (p.x < minX) minX = p.x;
-                if (p.x > maxX) maxX = p.x;
-                if (p.y < minY) minY = p.y;
-                if (p.y > maxY) maxY = p.y;
-            });
+        const hasMoved = offsetX !== lastX || offsetY !== lastY || scale !== lastScale;
+        
+        if (hasMoved || needsRedraw || !cacheValid) {
+            // Render heavy map to CACHE
+            cacheCtx.fillStyle = '#000300';
+            cacheCtx.fillRect(0, 0, W, H);
 
-            const startCol = Math.max(0, Math.floor(minX / CHAR_W));
-            const endCol = Math.min(cols, Math.ceil(maxX / CHAR_W));
-            const startRow = Math.max(0, Math.floor(minY / CHAR_H));
-            const endRow = Math.min(rows, Math.ceil(maxY / CHAR_H));
+            // Grid
+            cacheCtx.font = `${CHAR_H - 2}px 'JetBrains Mono', monospace`;
+            cacheCtx.textBaseline = 'top';
+            cacheCtx.textAlign = 'center';
 
-            for (let r = startRow; r <= endRow; r++) {
-                for (let c = startCol; c <= endCol; c++) {
-                    const cx = c * CHAR_W + CHAR_W / 2;
-                    const cy = r * CHAR_H + CHAR_H / 2;
-                    if (pointInPolygon(cx, cy, pts)) {
-                        const {lon, lat} = canvasToLonLat(cx, cy, W, H);
-                        let ch, col;
-                        const noise = (Math.sin(lon * 0.4 + pi) + Math.cos(lat * 0.6 + pi)) * 0.5;
-                        if (noise > 0.4) { ch = '▓'; col = 'rgba(0,255,65,0.9)'; }
-                        else if (noise > 0.1) { ch = '▒'; col = 'rgba(0,220,60,0.8)'; }
-                        else if (noise > -0.2) { ch = '░'; col = 'rgba(0,180,45,0.7)'; }
-                        else { ch = '·'; col = 'rgba(0,120,30,0.6)'; }
-                        
-                        ctx.fillStyle = col;
-                        ctx.fillText(ch, cx, r * CHAR_H);
+            for (let lon = -180; lon <= 180; lon += 30) {
+                for (let lat = -80; lat <= 80; lat += 10) {
+                    const p = projectToCanvas(lon, lat, W, H);
+                    if (p.x < -10 || p.x > W + 10 || p.y < -10 || p.y > H + 10) continue;
+                    cacheCtx.fillStyle = (lat === 0 || lon === 0) ? 'rgba(0,255,65,0.2)' : 'rgba(0,120,30,0.1)';
+                    cacheCtx.fillText(lat === 0 || lon === 0 ? '+' : '·', p.x, p.y);
+                }
+            }
+
+            // Land
+            LANDS.forEach((poly, pi) => {
+                const pts = poly.map(([lon, lat]) => projectToCanvas(lon, lat, W, H));
+                let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                pts.forEach(p => {
+                    if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+                    if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+                });
+
+                const sC = Math.max(0, Math.floor(minX / CHAR_W)), eC = Math.min(cols, Math.ceil(maxX / CHAR_W));
+                const sR = Math.max(0, Math.floor(minY / CHAR_H)), eR = Math.min(rows, Math.ceil(maxY / CHAR_H));
+
+                for (let r = sR; r <= eR; r++) {
+                    for (let c = sC; c <= eC; c++) {
+                        const cx = c * CHAR_W + CHAR_W / 2, cy = r * CHAR_H + CHAR_H / 2;
+                        if (pointInPolygon(cx, cy, pts)) {
+                            const {lon, lat} = canvasToLonLat(cx, cy, W, H);
+                            const noise = (Math.sin(lon * 0.4 + pi) + Math.cos(lat * 0.6 + pi)) * 0.5;
+                            let ch, col;
+                            if (noise > 0.4) { ch = '▓'; col = 'rgba(0,255,65,0.9)'; }
+                            else if (noise > 0.1) { ch = '▒'; col = 'rgba(0,220,60,0.8)'; }
+                            else if (noise > -0.2) { ch = '░'; col = 'rgba(0,180,45,0.7)'; }
+                            else { ch = '·'; col = 'rgba(0,120,30,0.6)'; }
+                            cacheCtx.fillStyle = col;
+                            cacheCtx.fillText(ch, cx, r * CHAR_H);
+                        }
                     }
                 }
-            }
 
-            // Draw coastline dots
-            ctx.fillStyle = 'rgba(180,255,210,0.8)';
-            for (let i = 0; i < pts.length; i++) {
-                const p0 = pts[i];
-                const p1 = pts[(i + 1) % pts.length];
-                const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-                const steps = Math.max(1, Math.ceil(dist / (CHAR_W * 0.6)));
-                for (let s = 0; s <= steps; s++) {
-                    const t = s / steps;
-                    const px = p0.x + (p1.x - p0.x) * t;
-                    const py = p0.y + (p1.y - p0.y) * t;
-                    if (px < 0 || px > W || py < 0 || py > H) continue;
-                    ctx.fillText('·', px, py - CHAR_H / 2);
+                // Coastline
+                cacheCtx.fillStyle = 'rgba(180,255,210,0.8)';
+                for (let i = 0; i < pts.length; i++) {
+                    const p0 = pts[i], p1 = pts[(i + 1) % pts.length];
+                    const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+                    const steps = Math.max(1, Math.ceil(dist / (CHAR_W * 0.6)));
+                    for (let s = 0; s <= steps; s++) {
+                        const t = s / steps;
+                        const px = p0.x + (p1.x - p0.x) * t, py = p0.y + (p1.y - p0.y) * t;
+                        if (px >= 0 && px <= W && py >= 0 && py <= H) cacheCtx.fillText('·', px, py - CHAR_H / 2);
+                    }
                 }
-            }
-        });
-        
-        needsRedraw = false;
-        lastX = offsetX; lastY = offsetY; lastScale = scale;
-    }
-
-    // Always clear the overlays (signals/crosshair) each frame
-    // We do this by redrawing the background area only if we didn't do a full clear
-    if (!hasMoved && !needsRedraw) {
-        // Just clear areas that were potentially drawn on (simpler to just redraw everything if it was cheap, but land is expensive)
-        // Actually, to make pulsing work we NEED to clear. 
-        // Strategy: draw land to a secondary offscreen canvas, then just copy it here.
-        // For now, let's just redraw signals and crosshair.
-    }
-
-    signalPulse = (timestamp / 1000) % 1;
-
-    // Draw active signals (cities)
-    CITIES.forEach(city => {
-        const p = projectToCanvas(city.lon, city.lat, W, H);
-        if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return;
-
-        const alpha = 1 - signalPulse;
-        const size = signalPulse * 25 * scale;
-        
-        ctx.strokeStyle = `rgba(0, 255, 65, ${alpha})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.fillStyle = 'rgba(0, 255, 65, 0.9)';
-        ctx.fillText('◈', p.x, p.y - CHAR_H / 2);
-    });
-
-    // Draw mouse coordinate crosshair and HUD updates
-    if (mouseCanvasX >= 0) {
-        const {lon, lat} = canvasToLonLat(mouseCanvasX, mouseCanvasY, W, H);
-        
-        // Vertical line
-        ctx.fillStyle = 'rgba(0,255,65,0.12)';
-        for (let r = 0; r < rows; r++) {
-            ctx.fillText('|', mouseCanvasX, r * CHAR_H);
+            });
+            
+            needsRedraw = false;
+            cacheValid = true;
+            lastX = offsetX; lastY = offsetY; lastScale = scale;
         }
-        // Horizontal line
-        for (let c = 0; c < cols; c++) {
-            ctx.fillText('─', c * CHAR_W + CHAR_W / 2, mouseCanvasY);
-        }
-        ctx.fillStyle = 'rgba(0,255,65,1)';
-        ctx.fillText('⊕', mouseCanvasX, mouseCanvasY);
 
-        // Find nearest city
-        let nearest = null, minDist = Infinity;
+        // --- Main Frame Draw ---
+        ctx.clearRect(0, 0, W, H);
+        ctx.drawImage(cacheCanvas, 0, 0);
+
+        signalPulse = (timestamp / 1000) % 1;
+
+        // Overlay: Signals (Pulse)
         CITIES.forEach(city => {
-            const d = Math.hypot(city.lon - lon, city.lat - lat);
-            if (d < minDist && d < 15) {
-                minDist = d;
-                nearest = city;
-            }
+            const p = projectToCanvas(city.lon, city.lat, W, H);
+            if (p.x < 0 || p.x > W || p.y < 0 || p.y > H) return;
+            const alpha = 1 - signalPulse;
+            const size = signalPulse * 25 * scale;
+            ctx.strokeStyle = `rgba(0, 255, 65, ${alpha})`;
+            ctx.beginPath(); ctx.arc(p.x, p.y, size, 0, Math.PI * 2); ctx.stroke();
+            ctx.fillStyle = 'rgba(0, 255, 65, 0.9)';
+            ctx.fillText('◈', p.x, p.y - CHAR_H / 2);
         });
 
-        const lonStr = (lon >= 0 ? '+' : '') + lon.toFixed(3);
-        const latStr = (lat >= 0 ? '+' : '') + lat.toFixed(3);
-        
-        let hudContent = `LAT: ${latStr} LON: ${lonStr}`;
-        if (nearest) {
-            const now = new Date();
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const cityTime = new Date(utc + (3600000 * nearest.tz));
-            const timeStr = cityTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            hudContent += `  |  SIG: ${nearest.name} [${timeStr}]`;
+        // HUD & Crosshair
+        if (mouseCanvasX >= 0) {
+            const {lon, lat} = canvasToLonLat(mouseCanvasX, mouseCanvasY, W, H);
+            ctx.fillStyle = 'rgba(0,255,65,0.1)';
+            ctx.fillRect(mouseCanvasX - 0.5, 0, 1, H);
+            ctx.fillRect(0, mouseCanvasY - 0.5, W, 1);
+            
+            ctx.fillStyle = 'rgba(0,255,65,1)';
+            ctx.fillText('⊕', mouseCanvasX, mouseCanvasY);
+
+            let nearest = null, minDist = Infinity;
+            CITIES.forEach(city => {
+                const d = Math.hypot(city.lon - lon, city.lat - lat);
+                if (d < minDist && d < 15) { minDist = d; nearest = city; }
+            });
+
+            const lonStr = (lon >= 0 ? '+' : '') + lon.toFixed(3);
+            const latStr = (lat >= 0 ? '+' : '') + lat.toFixed(3);
+            let hudContent = `LAT: ${latStr} LON: ${lonStr}`;
+            if (nearest) {
+                const now = new Date();
+                const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+                const cityTime = new Date(utc + (3600000 * nearest.tz));
+                const timeStr = cityTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                hudContent += `  |  SIG: ${nearest.name} [${timeStr}]`;
+            }
+            document.getElementById('coordDisplay').textContent = hudContent;
         }
-        document.getElementById('coordDisplay').textContent = hudContent;
+
+        // Vignette
+        const vg = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, Math.max(W, H)*0.75);
+        vg.addColorStop(0, 'transparent'); vg.addColorStop(1, 'rgba(0,0,0,0.4)');
+        ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+        requestAnimationFrame(draw);
+    } catch (e) {
+        console.error("Draw Loop Error:", e);
+        requestAnimationFrame(draw);
     }
-
-    // Vignette
-    const vg = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, Math.max(W, H)*0.75);
-    vg.addColorStop(0, 'transparent');
-    vg.addColorStop(1, 'rgba(0,0,0,0.45)');
-    ctx.fillStyle = vg;
-    ctx.fillRect(0, 0, W, H);
-
-    requestAnimationFrame(draw);
 }
 
 function pointInPolygon(x, y, pts) {
@@ -500,16 +456,13 @@ function pointInPolygon(x, y, pts) {
 canvas.addEventListener('wheel', e => {
     e.preventDefault();
     const rect = container.getBoundingClientRect();
-    const W = rect.width, H = rect.height;
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-    const oldScale = scale;
-    const delta = e.deltaY > 0 ? 0.85 : 1.15;
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const oldScale = scale, delta = e.deltaY > 0 ? 0.85 : 1.15;
     scale = Math.max(0.5, Math.min(12, scale * delta));
-    // Zoom toward mouse
     offsetX = mx - (mx - offsetX) * (scale / oldScale);
     offsetY = my - (my - offsetY) * (scale / oldScale);
-    document.getElementById('zoomVal').textContent = scale.toFixed(2) + 'x';
+    const zVal = document.getElementById('zoomVal');
+    if (zVal) zVal.textContent = scale.toFixed(2) + 'x';
 }, { passive: false });
 
 canvas.addEventListener('mousedown', e => {
@@ -527,28 +480,29 @@ window.addEventListener('mousemove', e => {
         offsetY = dragOffset.y + (e.clientY - dragStart.y);
     }
 });
-window.addEventListener('mouseup', () => {
-    isDragging = false;
-    canvas.style.cursor = 'crosshair';
-});
-canvas.addEventListener('mouseleave', () => {
-    mouseCanvasX = -1; mouseCanvasY = -1;
+window.addEventListener('mouseup', () => { isDragging = false; canvas.style.cursor = 'crosshair'; });
+canvas.addEventListener('mouseleave', () => { mouseCanvasX = -1; mouseCanvasY = -1; });
+
+const zIn = document.getElementById('zoomIn');
+if (zIn) zIn.addEventListener('click', () => {
+    scale = Math.min(12, scale * 1.3);
+    const zVal = document.getElementById('zoomVal');
+    if (zVal) zVal.textContent = scale.toFixed(2) + 'x';
 });
 
-document.getElementById('zoomIn').addEventListener('click', () => {
-    scale = Math.min(12, scale * 1.3);
-    document.getElementById('zoomVal').textContent = scale.toFixed(2) + 'x';
-});
-document.getElementById('zoomOut').addEventListener('click', () => {
+const zOut = document.getElementById('zoomOut');
+if (zOut) zOut.addEventListener('click', () => {
     scale = Math.max(0.5, scale / 1.3);
-    document.getElementById('zoomVal').textContent = scale.toFixed(2) + 'x';
+    const zVal = document.getElementById('zoomVal');
+    if (zVal) zVal.textContent = scale.toFixed(2) + 'x';
 });
 
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') window.location.href = '../index.html';
     if (e.key === 'r' || e.key === 'R') {
         scale = 1.0; offsetX = 0; offsetY = 0;
-        document.getElementById('zoomVal').textContent = '1.00x';
+        const zVal = document.getElementById('zoomVal');
+        if (zVal) zVal.textContent = '1.00x';
     }
 });
 
