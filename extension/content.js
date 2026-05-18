@@ -1,5 +1,5 @@
 (function () {
-    if (!document.getElementById('tasks-list')) return;
+    if (!document.getElementById('tabs-list')) return;
 
     const port = browser.runtime.connect({ name: 'hp' });
     port.onMessage.addListener(msg => {
