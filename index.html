@@ -135,12 +135,23 @@
         .placeholder-x { font-size: 36px; color: var(--green); line-height: 1; text-shadow: 0 0 12px rgba(0,255,65,0.6); }
 
         /* Tabs widget */
-        .tasks-list { display: flex; flex-direction: column; gap: 2px; color: var(--green-mid); opacity: 0; transition: opacity 0.5s; max-height: 180px; overflow-y: auto; }
-        .tasks-list.visible { opacity: 1; }
-        .tasks-list::-webkit-scrollbar { width: 3px; }
-        .tasks-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.12); border-radius: 2px; }
+        .tabs-list { display: flex; flex-direction: column; gap: 2px; color: var(--green-mid); opacity: 0; transition: opacity 0.5s; max-height: 180px; overflow-y: auto; }
+        .tabs-list.visible { opacity: 1; }
+        .tabs-list::-webkit-scrollbar { width: 3px; }
+        .tabs-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.12); border-radius: 2px; }
         .task-item { display: flex; align-items: flex-start; gap: 8px; }
         .task-text { color: var(--green-mid); }
+
+        /* Tasks Widget */
+        .todo-list { display: flex; flex-direction: column; gap: 4px; color: var(--green-mid); opacity: 0; transition: opacity 0.5s; max-height: 180px; overflow-y: auto; }
+        .todo-list.visible { opacity: 1; }
+        .todo-list::-webkit-scrollbar { width: 3px; }
+        .todo-list::-webkit-scrollbar-thumb { background: rgba(0,255,65,0.12); border-radius: 2px; }
+        .todo-item { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; cursor: pointer; transition: color 0.15s; padding: 4px 2px; border-radius: 3px; }
+        .todo-item:hover { background: rgba(0,255,65,0.05); }
+        .todo-item.done { color: #005c18; text-decoration: line-through; }
+        .todo-icon { flex-shrink: 0; color: var(--green-dim); font-size: 10px; }
+        .todo-item.done .todo-icon { color: #004d14; }
 
         .output-area { display: flex; flex-direction: column; gap: 4px; padding: 0 10px; font-size: 13px; z-index: 2;}
         .command-echo { margin-bottom: 3px; color: var(--green); font-size: 16px; }
@@ -577,9 +588,9 @@
             grid-template-columns: 240px 1fr 220px;
             grid-template-rows: auto;
             grid-template-areas:
-                "links   links   tasks"
+                "links   links   tabs"
                 "ascii   info    sidebar"
-                "meta    spacex  spacex";
+                "meta    tasks   spacex";
             gap: 12px;
             padding: 0 12px 0;
         }
@@ -627,16 +638,16 @@
                 grid-template-columns: 240px 1fr;
                 grid-template-areas:
                     "links   links"
-                    "sidebar tasks"
+                    "sidebar tabs"
                     "ascii   info"
-                    "meta    geo"
+                    "meta    tasks"
                     "spacex  spacex";
             }
         }
         @media (max-width: 800px) {
             .bento-grid {
                 grid-template-columns: 1fr;
-                grid-template-areas: "links" "tasks" "ascii" "info" "sidebar" "meta" "geo" "spacex";
+                grid-template-areas: "links" "tabs" "tasks" "ascii" "info" "sidebar" "meta" "geo" "spacex";
             }
         }
 
@@ -646,6 +657,7 @@
         .b-sidebar { grid-area: sidebar; display: flex; flex-direction: column; }
         .b-meta    { grid-area: meta; }
         .b-links   { grid-area: links; }
+        .b-tabs    { grid-area: tabs;    display: flex; flex-direction: column; }
         .b-tasks   { grid-area: tasks;   display: flex; flex-direction: column; }
         .b-geo     { grid-area: geo; }
         .b-spacex  { grid-area: spacex;  display: flex; flex-direction: column; }
@@ -821,10 +833,18 @@
                     </div>
 
                     <!-- ── Open Tabs ── -->
-                    <div class="bento-cell b-tasks">
+                    <div class="bento-cell b-tabs">
                         <div class="bento-cell-label"><span>◈ TABS.LIVE</span><span id="tab-count" class="bcl-right"></span></div>
                         <div style="padding:8px 10px;">
-                            <div class="tasks-list" id="tasks-list"></div>
+                            <div class="tabs-list" id="tabs-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- ── To-Do Tasks ── -->
+                    <div class="bento-cell b-tasks">
+                        <div class="bento-cell-label"><span>◈ TASKS</span><span id="todo-count" class="bcl-right"></span></div>
+                        <div style="padding:8px 10px;">
+                            <div class="todo-list" id="todo-list"></div>
                         </div>
                     </div>
 
@@ -1438,7 +1458,7 @@
         }
         
         function renderTabs(animate = false) {
-            const list = document.getElementById('tasks-list');
+            const list = document.getElementById('tabs-list');
             const countEl = document.getElementById('tab-count');
             if (animate) list.classList.add('visible');
             list.innerHTML = '';
@@ -1612,12 +1632,51 @@
             }, totalDelay + 50);
         }
 
+        window.toggleTask = function(id) {
+            let tasks = JSON.parse(localStorage.getItem('startpage_tasks') || '[]');
+            const idx = tasks.findIndex(t => t.id == id);
+            if (idx !== -1) {
+                tasks[idx].done = !tasks[idx].done;
+                localStorage.setItem('startpage_tasks', JSON.stringify(tasks));
+                renderTasks();
+            }
+        };
+
+        function renderTasks(animate = false) {
+            const list = document.getElementById('todo-list');
+            const countEl = document.getElementById('todo-count');
+            if (!list) return;
+            if (animate) list.classList.add('visible');
+
+            let tasks = JSON.parse(localStorage.getItem('startpage_tasks') || '[]');
+            list.innerHTML = '';
+
+            if (countEl) countEl.textContent = tasks.length + ' tasks';
+
+            if (tasks.length === 0) {
+                list.innerHTML = `<div class="todo-item" style="opacity:0.3;cursor:default;"><span class="todo-icon"></span><span class="task-text" style="letter-spacing:1px;">NO TASKS</span></div>`;
+                return;
+            }
+
+            tasks.forEach(t => {
+                const row = document.createElement('div');
+                row.className = `todo-item ${t.done ? 'done' : ''}`;
+                row.onclick = () => window.toggleTask(t.id);
+                row.innerHTML = `
+                    <span class="todo-icon">${t.done ? '✓' : '○'}</span>
+                    <span class="task-text" style="flex:1;">${t.text}</span>
+                `;
+                list.appendChild(row);
+            });
+        }
+
         function startPage() {
             initPage();
             const grid = document.getElementById('neofetch-content');
             grid.classList.add('page-in');
             renderShortcuts(true);
             renderTabs(true);
+            renderTasks(true);
             promptEl.classList.add('visible');
             searchInput.focus();
             setTimeout(typeChar, 150);
@@ -1744,6 +1803,7 @@
                     tasks.push({ id: Date.now(), text, done: false });
                     localStorage.setItem('startpage_tasks', JSON.stringify(tasks));
                     printResult(`Task added: "${text}"`);
+                    renderTasks();
                 } else if (sub === 'done' && args[2]) {
                     let tasks = JSON.parse(localStorage.getItem('startpage_tasks') || '[]');
                     const idx = tasks.findIndex(t => t.id == args[2]);
@@ -1751,6 +1811,7 @@
                         tasks[idx].done = !tasks[idx].done;
                         localStorage.setItem('startpage_tasks', JSON.stringify(tasks));
                         printResult(`Task ${tasks[idx].done ? 'completed' : 'reopened'}: "${tasks[idx].text}"`);
+                        renderTasks();
                     } else {
                         printResult('Task not found. Use "task list" to see IDs.');
                     }
@@ -1759,6 +1820,7 @@
                     tasks = tasks.filter(t => !t.done);
                     localStorage.setItem('startpage_tasks', JSON.stringify(tasks));
                     printResult('Completed tasks removed.');
+                    renderTasks();
                 } else if (sub === 'list' || args.length === 1) {
                     let tasks = JSON.parse(localStorage.getItem('startpage_tasks') || '[]');
                     if (!tasks.length) {
