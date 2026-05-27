@@ -38,23 +38,6 @@
             background-image:
                 radial-gradient(ellipse at 50% 50%, rgba(0, 255, 65, 0.015) 0%, transparent 70%),
                 radial-gradient(ellipse at 20% 80%, rgba(0, 200, 60, 0.01) 0%, transparent 50%);
-            animation: bodyPulse 8s ease-in-out infinite;
-        }
-
-        @keyframes bodyPulse {
-            0%,
-            100% {
-                background-color: #000000;
-            }
-            25% {
-                background-color: #000100;
-            }
-            50% {
-                background-color: #000200;
-            }
-            75% {
-                background-color: #000100;
-            }
         }
 
         .terminal {
@@ -175,6 +158,7 @@
         .bg-element {
             position: absolute;
             transition: all 0.5s ease;
+            will-change: transform, opacity;
         }
         .bg-skull {
             color: #00cc44;

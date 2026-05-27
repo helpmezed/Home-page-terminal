@@ -7,6 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌖</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" as="style">
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <title>matrix://home</title>
     <style>
@@ -535,10 +536,12 @@
 
         /* ── Search Hero ── */
         .search-hero {
+            grid-area: search;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 18px 12px 10px;
+            justify-content: center;
+            padding: 10px 12px 20px;
             gap: 10px;
             position: relative;
             z-index: 20;
@@ -571,17 +574,19 @@
             font-weight: normal;
         }
 
-        /* ── Bento Grid Layout ── */
+        /* ── Command Center Grid Layout ── */
         .bento-grid {
             display: grid;
-            grid-template-columns: 240px 1fr 220px;
+            grid-template-columns: 280px 1fr 280px;
             grid-template-rows: auto;
             grid-template-areas:
-                "links   links   tasks"
-                "ascii   info    sidebar"
-                "meta    spacex  spacex";
-            gap: 12px;
-            padding: 0 12px 0;
+                "ascii   search  meta"
+                "info    links   sidebar"
+                "spacex  links   tasks";
+            gap: 16px;
+            padding: 10px 20px 20px;
+            max-width: 1600px;
+            margin: 0 auto;
         }
         .bento-cell {
             background: rgba(3, 10, 3, 0.65);
@@ -591,6 +596,8 @@
             transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             -webkit-backdrop-filter: blur(4px);
             backdrop-filter: blur(4px);
+            will-change: transform;
+            contain: layout style;
         }
         .bento-cell:hover {
             border-color: rgba(0, 255, 65, 0.35);
@@ -621,22 +628,23 @@
         .bento-grid.page-in > *:nth-child(7) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.31s both; }
         .bento-grid.page-in > *:nth-child(8) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.35s both; }
         .bento-grid.page-in > *:nth-child(9) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.39s both; }
+        .bento-grid.page-in > *:nth-child(10) { animation: cellIn 0.55s cubic-bezier(0.22,1,0.36,1) 0.43s both; }
 
-        @media (max-width: 1200px) {
+        @media (max-width: 1300px) {
             .bento-grid {
-                grid-template-columns: 240px 1fr;
+                grid-template-columns: 280px 1fr;
                 grid-template-areas:
-                    "links   links"
-                    "sidebar tasks"
-                    "ascii   info"
-                    "meta    geo"
-                    "spacex  spacex";
+                    "search  search"
+                    "ascii   links"
+                    "info    links"
+                    "spacex  tasks"
+                    "meta    sidebar";
             }
         }
-        @media (max-width: 800px) {
+        @media (max-width: 900px) {
             .bento-grid {
                 grid-template-columns: 1fr;
-                grid-template-areas: "links" "tasks" "ascii" "info" "sidebar" "meta" "geo" "spacex";
+                grid-template-areas: "search" "links" "tasks" "ascii" "info" "sidebar" "meta" "spacex";
             }
         }
 
@@ -736,25 +744,27 @@
             </div>
 
             <div id="main-view">
-                <!-- ── Search hero ── -->
-                <div class="search-hero">
-                    <div class="search-hero-tagline" id="search-tagline">matrix://home</div>
-                    <div class="prompt-wrapper">
-                        <div class="prompt-line" id="prompt">
-                            <div class="prompt-prefix">
-                                <span class="user" id="prompt-user" style="display:none"></span><span class="host" id="prompt-host" style="display:none"></span><span class="separator">~$</span>
-                            </div>
-                            <form id="searchForm" style="display: flex; flex: 1; width: 100%;">
-                                <input type="text" id="searchInput" class="search-input" placeholder="search the matrix…" autocomplete="off">
-                            </form>
-                            <span id="engine-badge" class="engine-badge">DDG</span>
-                        </div>
-                        <div id="suggestions" class="suggestions-dropdown"></div>
-                    </div>
-                    <div class="search-bang-hints"><b>g</b> google &nbsp;·&nbsp; <b>y</b> youtube &nbsp;·&nbsp; <b>r</b> reddit &nbsp;·&nbsp; <b>w</b> wiki &nbsp;·&nbsp; <b>gh</b> github &nbsp;·&nbsp; <b>help</b> commands</div>
-                </div>
+
 
                 <div class="bento-grid" id="neofetch-content">
+
+                    <!-- ── Search hero ── -->
+                    <div class="search-hero">
+                        <div class="search-hero-tagline" id="search-tagline">matrix://home</div>
+                        <div class="prompt-wrapper">
+                            <div class="prompt-line" id="prompt">
+                                <div class="prompt-prefix">
+                                    <span class="user" id="prompt-user" style="display:none"></span><span class="host" id="prompt-host" style="display:none"></span><span class="separator">~$</span>
+                                </div>
+                                <form id="searchForm" style="display: flex; flex: 1; width: 100%;">
+                                    <input type="text" id="searchInput" class="search-input" placeholder="search the matrix…" autocomplete="off">
+                                </form>
+                                <span id="engine-badge" class="engine-badge">DDG</span>
+                            </div>
+                            <div id="suggestions" class="suggestions-dropdown"></div>
+                        </div>
+                        <div class="search-bang-hints"><b>g</b> google &nbsp;·&nbsp; <b>y</b> youtube &nbsp;·&nbsp; <b>r</b> reddit &nbsp;·&nbsp; <b>w</b> wiki &nbsp;·&nbsp; <b>gh</b> github &nbsp;·&nbsp; <b>help</b> commands</div>
+                    </div>
 
                     <!-- ── Particle avatar ── -->
                     <div class="bento-cell b-ascii">
@@ -1008,7 +1018,7 @@
             if (lineIndex >= systemData.length) {
                 textContainer.insertAdjacentHTML('beforeend', '<div class="info-line-full"><span class="cursor"></span></div>');
                 setTimeout(initShortcuts, 200);
-                requestAnimationFrame(updateLiveMsClock);
+                startMsClock();
                 startSysMonitor();
                 return;
             }
@@ -1054,7 +1064,10 @@
                 const milliseconds = now.getMilliseconds().toString().padStart(3, '0');
                 timeEl.textContent = `${hours}:${minutes}:${seconds}.${milliseconds} ${ampm}`;
             }
-            requestAnimationFrame(updateLiveMsClock);
+        }
+        function startMsClock() {
+            updateLiveMsClock();
+            setInterval(updateLiveMsClock, 100);
         }
 
         function startSysMonitor() {
@@ -1976,10 +1989,16 @@
             const canvas = document.getElementById('avatar-canvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
+            let avDpr = 1;
 
             function resize() {
-                canvas.width  = canvas.offsetWidth  || 220;
-                canvas.height = canvas.offsetHeight || 220;
+                avDpr = Math.min(window.devicePixelRatio || 1, 2);
+                const cssW = canvas.offsetWidth  || 220;
+                const cssH = canvas.offsetHeight || 220;
+                canvas.width  = cssW * avDpr;
+                canvas.height = cssH * avDpr;
+                canvas.style.width  = cssW + 'px';
+                canvas.style.height = cssH + 'px';
             }
             resize();
             new ResizeObserver(resize).observe(canvas);
@@ -2008,9 +2027,10 @@
                 return out;
             }
             const pts = subdivide(basePts, 4);
+            const ptsLen = pts.length;
 
             const normals = pts.map((p1,i) => {
-                const p0 = pts[(i-1+pts.length)%pts.length], p2 = pts[(i+1)%pts.length];
+                const p0 = pts[(i-1+ptsLen)%ptsLen], p2 = pts[(i+1)%ptsLen];
                 const dx1=p1.x-p0.x, dy1=p1.y-p0.y, l1=Math.hypot(dx1,dy1)||1;
                 const dx2=p2.x-p1.x, dy2=p2.y-p1.y, l2=Math.hypot(dx2,dy2)||1;
                 const nx=(-dy1/l1)+(-dy2/l2), ny=(dx1/l1)+(dx2/l2);
@@ -2038,14 +2058,16 @@
             }
 
             const palette=['#00ff41','#00cc44','#007a22','#ccffdd','#00ff41'];
-            const numWaves=50, maxDist=600;
+            const MAX_PARTICLES=500;
+            const numWaves=20, maxDist=600;
             const waves=Array.from({length:numWaves},(_,i)=>i*(maxDist/numWaves));
             const particles=[];
             let time=0;
 
             function draw() {
                 time+=16;
-                const W=canvas.width, H=canvas.height;
+                const W=canvas.width/avDpr, H=canvas.height/avDpr;
+                ctx.setTransform(avDpr,0,0,avDpr,0,0);
                 ctx.fillStyle='rgba(3,10,3,0.88)';
                 ctx.fillRect(0,0,W,H);
                 ctx.save();
@@ -2053,31 +2075,34 @@
                 const scale=Math.min(W,H)/520;
                 ctx.scale(scale,scale);
 
-                // aura waves
-                waves.forEach((w,idx) => {
+                // aura waves (reduced from 50 to 20)
+                ctx.setLineDash([2,5]);
+                ctx.lineWidth=0.7;
+                ctx.lineDashOffset=-time*0.04;
+                for (let idx=0;idx<numWaves;idx++) {
                     waves[idx]+=1.2;
                     if (waves[idx]>maxDist) waves[idx]=0;
                     const d=waves[idx];
                     const op=Math.max(0,1-(d/maxDist));
+                    if (op < 0.02) continue;
                     ctx.beginPath();
                     ctx.strokeStyle=`rgba(0,255,65,${op*0.35})`;
-                    ctx.lineWidth=0.7;
-                    ctx.setLineDash([2,5]);
-                    ctx.lineDashOffset=-time*0.04;
-                    for (let i=0;i<pts.length;i++) {
+                    for (let i=0;i<ptsLen;i++) {
                         const p=pts[i],n=normals[i];
                         const wobble=Math.sin(i*0.1+time*0.003-d*0.01)*12*(Math.min(1,d/50));
                         const ex=p.x+n.x*(d+wobble), ey=p.y+n.y*(d+wobble);
                         i===0?ctx.moveTo(ex,ey):ctx.lineTo(ex,ey);
                     }
                     ctx.closePath(); ctx.stroke();
-                });
+                }
                 ctx.setLineDash([]);
 
-                // particles
+                // particles — capped at MAX_PARTICLES with swap-remove
                 ctx.shadowBlur=6; ctx.shadowColor='rgba(0,255,65,0.5)';
                 const spawnN=Math.floor(validCells.length*0.10);
-                for (let i=0;i<spawnN;i++) {
+                const canSpawn=MAX_PARTICLES-particles.length;
+                const actualSpawn=Math.min(spawnN, canSpawn);
+                for (let i=0;i<actualSpawn;i++) {
                     const cell=validCells[Math.floor(Math.random()*validCells.length)];
                     const dx=cell.cx, dy=cell.cy-40, dist=Math.hypot(dx,dy)||1;
                     particles.push({
@@ -2093,7 +2118,12 @@
                 for (let i=particles.length-1;i>=0;i--) {
                     const p=particles[i];
                     p.x+=p.vx; p.y+=p.vy; p.rot+=p.rotV; p.life-=p.decay;
-                    if (p.life<=0){particles.splice(i,1);continue;}
+                    if (p.life<=0){
+                        // swap-remove: O(1) instead of splice O(n)
+                        particles[i]=particles[particles.length-1];
+                        particles.pop();
+                        continue;
+                    }
                     ctx.save();
                     ctx.translate(p.x,p.y); ctx.rotate(p.rot);
                     ctx.fillStyle=p.color; ctx.globalAlpha=Math.max(0,p.life);
@@ -2116,7 +2146,7 @@
             }).observe(canvas);
         })();
 
-        // ── Mini Matrix Rain ──
+        // ── Mini Matrix Rain ── (throttled to ~20fps)
         (function() {
             const canvas = document.getElementById('mini-matrix');
             const ctx = canvas.getContext('2d');
@@ -2133,7 +2163,12 @@
             const drops = Array.from({length: cols}, () => (Math.random() * -cssH / FONT_SIZE) | 0);
 
             let animId;
-            function draw() {
+            let lastDraw = 0;
+            const FRAME_INTERVAL = 50; // ~20fps instead of 60fps
+            function draw(ts) {
+                animId = requestAnimationFrame(draw);
+                if (ts - lastDraw < FRAME_INTERVAL) return;
+                lastDraw = ts;
                 ctx.fillStyle = 'rgba(0,0,0,0.045)';
                 ctx.fillRect(0, 0, cssW, cssH);
                 ctx.font = `${FONT_SIZE}px monospace`;
@@ -2148,11 +2183,10 @@
                     if (y * FONT_SIZE > cssH && Math.random() > 0.975) drops[i] = 0;
                     drops[i]++;
                 });
-                animId = requestAnimationFrame(draw);
             }
             new IntersectionObserver(entries => {
                 if (entries[0].isIntersecting) {
-                    if (!animId) draw();
+                    if (!animId) animId = requestAnimationFrame(draw);
                 } else {
                     cancelAnimationFrame(animId);
                     animId = null;
@@ -2298,12 +2332,24 @@
             let t=0, tick=0, progress=0;
             const ASCENT = 0.0022;
 
+            // Pre-render scanline overlay (drawn once, reused every frame)
+            const scanlineCanvas = document.createElement('canvas');
+            scanlineCanvas.width = W * dpr;
+            scanlineCanvas.height = H * dpr;
+            const scanCtx = scanlineCanvas.getContext('2d');
+            scanCtx.scale(dpr, dpr);
+            scanCtx.fillStyle = 'rgba(0,0,0,0.06)';
+            for (let sy = 0; sy < H; sy += 3) scanCtx.fillRect(0, sy, W, 1);
+
             function draw() {
                 ctx.clearRect(0,0,W,H);
                 ctx.fillStyle='#000200'; ctx.fillRect(0,0,W,H);
 
-                // Scanlines
-                for(let y=0;y<H;y+=3){ctx.fillStyle='rgba(0,0,0,0.06)';ctx.fillRect(0,y,W,1);}
+                // Scanlines (cached overlay)
+                ctx.save();
+                ctx.setTransform(1,0,0,1,0,0);
+                ctx.drawImage(scanlineCanvas,0,0);
+                ctx.restore();
 
                 // Borders & divider
                 ctx.strokeStyle='rgba(0,255,65,0.25)'; ctx.lineWidth=1;
